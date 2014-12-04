@@ -145,9 +145,15 @@ void RenderObjects(void)
 	glPopMatrix();
 }
 
+Branches branches;
+static glm::vec3 tree_x0(-10000.0f);
+static glm::vec3 tree_x1(10000.0f);
+
 void RenderObjects2(int t)
 {
 	Frame & f = u[universe_index]->get_frame(t);
+
+	glColor3f(0.0,1.0,1.0);
 
 	for(unsigned int i = 0; i < f.size(); i++)
 	{
@@ -166,23 +172,30 @@ void RenderObjects2(int t)
 		glPopMatrix();
 	}
 
-	if(0)
+	if(1)
 	{	
-		Branches branches;
-		branches.init(f);
+		if(t == 0) branches.init(f, tree_x0, tree_x1);
+
+		glColor3f(1.0,1.0,1.0);
 
 		for(unsigned int i = 0; i < branches._M_num_branches; i++)
 		{
 			Branch & b = branches.get_branch(i);
 
-			glm::vec3 c = (b._M_x0_glm + b._M_x1_glm) * 0.5f;
-			glm::vec3 w = b._M_x1_glm - b._M_x0_glm;
+			if(b._M_flag & Branch::FLAG_IS_LEAF)
+			{
+				if(b._M_num_elements > 0)
+				{
+					glm::vec3 c = (b._M_x0_glm + b._M_x1_glm) * 0.5f;
+					glm::vec3 w = b._M_x1_glm - b._M_x0_glm;
 
-			glPushMatrix();
-			glTranslatef(c.x, c.y, c.z);
-			glScalef(w.x, w.y, w.z);
-			glutWireCube(1.0);
-			glPopMatrix();
+					glPushMatrix();
+					glTranslatef(c.x, c.y, c.z);
+					glScalef(w.x, w.y, w.z);
+					glutWireCube(1.0);
+					glPopMatrix();
+				}
+			}
 		}
 	}
 }

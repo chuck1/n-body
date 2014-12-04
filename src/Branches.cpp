@@ -12,7 +12,7 @@ void			Branches::print()
 }
 void			Branches::init(Frame & f)
 {
-	printf("Branches::init f.size() = %i\n", f.size());
+	//printf("Branches::init f.size() = %i\n", f.size());
 
 	glm::vec3 mass_center;
 	glm::vec3 std;
@@ -20,10 +20,10 @@ void			Branches::init(Frame & f)
 	
 	f.mass_center(&mass_center.x, &std.x, &mass);
 	
-	_M_num_branches = 1;
-	
-	_M_branches[0] = Branch(mass_center - std * 10.0f, mass_center + std * 10.0f);
+	glm::vec3 x0 = mass_center - std * 10.0f;
+	glm::vec3 x1 = mass_center + std * 10.0f;
 
+	/*
 	printf("extents:\n");
 	printf("%16f%16f%16f\n",
 			mass_center.x,
@@ -33,18 +33,28 @@ void			Branches::init(Frame & f)
 			std.x,
 			std.y,
 			std.z);
+	*/
+
+	init(f, x0, x1);
+}
+void			Branches::init(Frame & f, glm::vec3 x0, glm::vec3 x1)
+{
+	_M_num_branches = 1;
+	
+	_M_branches[0] = Branch(x0, x1);
+
 
 	int ret;
 
 	for(unsigned int i = 0; i < f.size(); i++)
 	{
-		printf("add body index %i\n", i);
+		//printf("add body index %i\n", i);
 
 		ret = _M_branches[0].add(*this, f.b(0), i);
 
 		if(ret)
 		{
-			printf("not added\n");
+			//printf("not added\n");
 			//abort();
 		}
 	}
@@ -65,7 +75,7 @@ int			Branches::alloc(Branch & b)
 	
 	for(unsigned int i = 0; i < 8; i++)
 	{
-		printf("%i\n", _M_num_branches + i);
+		//printf("%i\n", _M_num_branches + i);
 		b._M_branches[i] = _M_num_branches + i;
 	}
 

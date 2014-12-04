@@ -7,8 +7,8 @@
 #define DIM 3
 #define SPLIT 8
 #define COOR_BYTE_LEN 2
-#define BTREE_LEAF_SIZE 64
-#define BTREE_MAX_BRANCHES 2048
+#define BTREE_LEAF_SIZE 32
+#define BTREE_MAX_BRANCHES 4096
 
 
 /**
@@ -63,6 +63,7 @@ struct Branch
 			unsigned int i,
 			unsigned int j,
 			unsigned int k);
+	void			mass_center(Branches * branches, Body * bodies, float * x, float * m);
 	// parent branch idx in Branches
 	unsigned int		_M_parent_idx;
 	// branch indicies
@@ -101,6 +102,7 @@ struct Branches
 {
 	Branches();
 	void			init(Frame & f);
+	void			init(Frame & f, glm::vec3 x0, glm::vec3 x1);
 	Branch &		get_branch(Coor const & coor);
 	Branch &		get_branch(unsigned int i);
 	int			alloc(Branch & branch);

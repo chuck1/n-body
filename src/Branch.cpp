@@ -59,6 +59,8 @@ void			Branch::fiss(Branches & branches, Body * bodies)
 
 	_M_flag &= ~FLAG_IS_LEAF;
 
+	assert(!(_M_flag & FLAG_IS_LEAF));
+
 	branches.alloc(*this);
 /*	
 	printf("%i %i %i %i %i %i %i %i\n",
@@ -71,6 +73,9 @@ void			Branch::fiss(Branches & branches, Body * bodies)
 			_M_branches[6],
 			_M_branches[7]);
 */
+	glm::vec3 x0;
+	glm::vec3 x1;
+
 	for(int i = 0; i < 2; i++)
 	{
 		for(int j = 0; j < 2; j++)
@@ -81,34 +86,36 @@ void			Branch::fiss(Branches & branches, Body * bodies)
 				
 				if(i == 0)
 				{
-					b._M_x0_glm.x = _M_x0_glm.x;
-					b._M_x1_glm.x = (_M_x0_glm.x + _M_x1_glm.x) * 0.5f;
+					x0.x = _M_x0_glm.x;
+					x1.x = (_M_x0_glm.x + _M_x1_glm.x) * 0.5f;
 				}
 				else
 				{
-					b._M_x0_glm.x = (_M_x0_glm.x + _M_x1_glm.x) * 0.5f;
-					b._M_x1_glm.x = _M_x1_glm.x;
+					x0.x = (_M_x0_glm.x + _M_x1_glm.x) * 0.5f;
+					x1.x = _M_x1_glm.x;
 				}
 				if(j == 0)
 				{
-					b._M_x0_glm.y = _M_x0_glm.y;
-					b._M_x1_glm.y = (_M_x0_glm.y + _M_x1_glm.y) * 0.5f;
+					x0.y = _M_x0_glm.y;
+					x1.y = (_M_x0_glm.y + _M_x1_glm.y) * 0.5f;
 				}
 				else
 				{
-					b._M_x0_glm.y = (_M_x0_glm.y + _M_x1_glm.y) * 0.5f;
-					b._M_x1_glm.y = _M_x1_glm.y;
+					x0.y = (_M_x0_glm.y + _M_x1_glm.y) * 0.5f;
+					x1.y = _M_x1_glm.y;
 				}
 				if(k == 0)
 				{
-					b._M_x0_glm.z = _M_x0_glm.z;
-					b._M_x1_glm.z = (_M_x0_glm.z + _M_x1_glm.z) * 0.5f;
+					x0.z = _M_x0_glm.z;
+					x1.z = (_M_x0_glm.z + _M_x1_glm.z) * 0.5f;
 				}
 				else
 				{
-					b._M_x0_glm.z = (_M_x0_glm.z + _M_x1_glm.z) * 0.5f;
-					b._M_x1_glm.z = _M_x1_glm.z;
+					x0.z = (_M_x0_glm.z + _M_x1_glm.z) * 0.5f;
+					x1.z = _M_x1_glm.z;
 				}
+				
+				b = Branch(x0,x1);	
 			}
 		}
 	}
@@ -221,5 +228,66 @@ unsigned int		Branch::get_child_branch_index(
 	assert(k<2);
 	return _M_branches[i * 4 + j * 2 + k];
 }
+void			Branch::mass_center(Branches * branches, Body * bodies, float * x, float * m)
+{
+	if(_M_flag & FLAG_IS_LEAF)
+	{
+		x[0] = 0.0;
+		x[1] = 0.0;
+		x[2] = 0.0;
+		*m = 0.0;
+		for(unsigned int i = 0; i < _M_num_elements; i++)
+		{
+			Body & b = bodies[_M_elements[i]];
+
+			x[0] += b.x[0] * b.mass;
+			x[1] += b.x[1] * b.mass;
+			x[2] += b.x[2] * b.mass;
+
+			*m += b.mass;
+		}
+
+		if(*m > 0.0)
+		{
+			x[0] /= *m;
+			x[1] /= *m;
+			x[2] /= *m;
+		}
+	}
+	else
+	{
+		x[0] = 0.0;
+		x[1] = 0.0;
+		x[2] = 0.0;
+		*m = 0.0;
+
+		for(unsigned int i = 0; i < 8; i++)
+		{
+			float x_temp[3];
+			float m_temp;
+			
+			Branch & b = branches->get_branch(_M_branches[i]);
+		
+			b.mass_center(branches, bodies, x_temp, &m_temp);
+			
+			x[0] += x_temp[0];
+			x[1] += x_temp[1];
+			x[2] += x_temp[2];
+
+			*m += m_temp;
+		}
+
+		if(*m > 0.0)
+		{
+			x[0] /= *m;
+			x[1] /= *m;
+			x[2] /= *m;
+		}
+
+	}
+}
+
+
+
 
 
