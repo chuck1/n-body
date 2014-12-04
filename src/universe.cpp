@@ -121,9 +121,12 @@ int		Universe::solve()
 	
 	unsigned int number_escaped = 0;
 
-	Branches branches;
-	branches.init(f);
-	branches.print();
+	if(0)
+	{
+		Branches branches;
+		branches.init(f);
+		branches.print();
+	}
 
 	for(int t = 1; t < num_steps_; t++)
 	{
@@ -132,7 +135,7 @@ int		Universe::solve()
 
 
 		time_sim += dt;
-	
+
 		if(((t % (num_steps_ / 1)) == 0) || (t == 1))
 		{
 			printf("%12s%16s%16s%16s%16s%16s%16s%12s%16s\n",
@@ -149,7 +152,7 @@ int		Universe::solve()
 		if((t % (num_steps_ / 10)) == 0)
 		{
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - program_time_start);
-			
+
 			duration_real = (float)duration.count() / 1000.0;
 
 			float eta =
@@ -191,7 +194,7 @@ int		Universe::solve()
 
 		/* Execute "step_bodies" kernel */
 		f.mass_center(mass_center, 0, &mass);
-		
+
 		std::fill_n(velocity_ratio, 3, 0);
 
 		number_escaped = 0;

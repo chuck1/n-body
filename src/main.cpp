@@ -13,7 +13,7 @@
 
 float timestep = 1.0;
 float mass = 1e6;
-unsigned int num_steps = 2000;
+unsigned int num_steps = 10000;
 unsigned int num_bodies = 1024;
 float width = 1000.0;
 
