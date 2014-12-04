@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "Tree.h"
 #include "body.h"
 
@@ -32,22 +34,34 @@ Branch::Branch(glm::vec3 x0, glm::vec3 x1): _M_branches{0,0,0,0,0,0,0,0}, _M_num
 {
 	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
 }
-void			Branches::print()
+void			Branch::print(Branches & b, std::string pre)
 {
-	if(_M_
+	if(_M_flag & FLAG_IS_LEAF)
+	{
+		std::cout << pre << "leaf: " << _M_num_elements << std::endl;
+	}
+	else
+	{
+		std::cout << pre << "{" << std::endl;
+		for(int i = 0; i < 8; i++)
+		{
+			b.get_branch(_M_branches[i]).print(b, pre + "    ");
+		}
+		std::cout << pre << "}" << std::endl;
+	}
 }
 /**
  * form child branches and divide elements between them
  */
-void			Branch::fiss(Branches & branches)
+void			Branch::fiss(Branches & branches, Body * bodies)
 {
 	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
 
 	_M_flag &= ~FLAG_IS_LEAF;
 
 	branches.alloc(*this);
-	
-	//printf("%i %i %i %i %i %i %i %i\n",
+/*	
+	printf("%i %i %i %i %i %i %i %i\n",
 			_M_branches[0],
 			_M_branches[1],
 			_M_branches[2],
@@ -56,7 +70,7 @@ void			Branch::fiss(Branches & branches)
 			_M_branches[5],
 			_M_branches[6],
 			_M_branches[7]);
-
+*/
 	for(int i = 0; i < 2; i++)
 	{
 		for(int j = 0; j < 2; j++)
@@ -98,6 +112,13 @@ void			Branch::fiss(Branches & branches)
 			}
 		}
 	}
+
+	// distribute elements among children
+	for(unsigned int i = 0; i < _M_num_elements; i++)
+	{
+		add_to_children(branches, bodies, i);
+	}
+	_M_num_elements = 0;
 }
 /**
  * move child branch elements to my elements and destroy branches
@@ -145,13 +166,12 @@ int			Branch::add(Branches & branches, Body * bodies, unsigned int body_idx)
 		if(_M_num_elements == BTREE_LEAF_SIZE)
 		{
 			// this leaf is full, need to fiss
-			fiss(branches);
+			fiss(branches, bodies);
 
 			return add_to_children(branches, bodies, body_idx);
 		}
 		else
 		{
-		
 			_M_elements[_M_num_elements] = body_idx;
 
 			_M_num_elements++;

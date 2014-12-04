@@ -123,6 +123,7 @@ int		Universe::solve()
 
 	Branches branches;
 	branches.init(f);
+	branches.print();
 
 	for(int t = 1; t < num_steps_; t++)
 	{

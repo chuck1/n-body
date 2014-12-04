@@ -8,7 +8,7 @@ Branches::Branches(): _M_num_branches(0)
 }
 void			Branches::print()
 {
-	_M_branches[0].print();
+	_M_branches[0].print(*this);
 }
 void			Branches::init(Frame & f)
 {

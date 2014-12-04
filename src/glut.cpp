@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "universe.h"
+#include "Tree.h"
 
 std::vector<Universe*> u;
 unsigned int universe_index = 0;
@@ -146,14 +147,12 @@ void RenderObjects(void)
 
 void RenderObjects2(int t)
 {
-	//glBegin(GL_POINTS);
-	
 	Frame & f = u[universe_index]->get_frame(t);
-	
+
 	for(unsigned int i = 0; i < f.size(); i++)
 	{
 		if(f.b(i)->alive == 0) continue;
-		
+
 		glPushMatrix();
 		glTranslatef(
 				f.b(i)->x[0],
@@ -167,9 +166,26 @@ void RenderObjects2(int t)
 		glPopMatrix();
 	}
 
-	//glEnd();
-}
+	if(0)
+	{	
+		Branches branches;
+		branches.init(f);
 
+		for(unsigned int i = 0; i < branches._M_num_branches; i++)
+		{
+			Branch & b = branches.get_branch(i);
+
+			glm::vec3 c = (b._M_x0_glm + b._M_x1_glm) * 0.5f;
+			glm::vec3 w = b._M_x1_glm - b._M_x0_glm;
+
+			glPushMatrix();
+			glTranslatef(c.x, c.y, c.z);
+			glScalef(w.x, w.y, w.z);
+			glutWireCube(1.0);
+			glPopMatrix();
+		}
+	}
+}
 void display(void)
 {
 	// Clear frame buffer and depth buffer
@@ -177,10 +193,10 @@ void display(void)
 
 	// Set up viewing transformation, looking down -Z axis
 	glLoadIdentity();
-	
+
 	//glm::vec3 c = body_center;
 	glm::vec3 c = u[universe_index]->mass_center_[ct];
-	
+
 	gluLookAt(
 			c.x, c.y, c.z - g_fViewDistance,
 			c.x, c.y, c.z,
@@ -194,7 +210,7 @@ void display(void)
 		glRotatef(g_yaw / M_PI * 180.0, 0, 1, 0);
 
 		glRotatef(-g_pitch / M_PI * 180.0, cos(-g_yaw), 0, -sin(-g_yaw));
-		
+
 		//glRotatef(g_pitch, 1, 0, 0);
 
 		// Render the scene
@@ -202,8 +218,8 @@ void display(void)
 		ct += g_t_skip;
 		while(ct >= u[universe_index]->num_steps_)
 		{
-			
-			
+
+
 			ct -= u[universe_index]->num_steps_;
 			universe_index++;
 			if(universe_index == u.size()) universe_index = 0;
@@ -294,29 +310,29 @@ void MouseButton(int button, int state, int x, int y)
 	// If button1 pressed, mark this state so we know in motion function.
 
 	//printf("mouse button = %i, state = %i, x = %i, y = %i\n", button, state, x, y);
-	
+
 	switch(button)
 	{
-	case GLUT_LEFT_BUTTON:
-		g_bButton1Down = (state == GLUT_DOWN) ? TRUE : FALSE;
-		
-		//g_yClick = y - 3 * g_fViewDistance;
+		case GLUT_LEFT_BUTTON:
+			g_bButton1Down = (state == GLUT_DOWN) ? TRUE : FALSE;
 
-		g_xClick = x - g_yawScale * g_yaw;
-		g_yClick = y - g_pitchScale * g_pitch;
-		break;
-	case 3: // wheel up
-		g_fViewDistance *= 0.9;
-		printf("g_fViewDistance = %f\n", g_fViewDistance);
-		reset_proj();
-		break;
-	case 4: // wheel down
-		g_fViewDistance *= 1.1;
-		printf("g_fViewDistance = %f\n", g_fViewDistance);
-		reset_proj();
-		break;
+			//g_yClick = y - 3 * g_fViewDistance;
+
+			g_xClick = x - g_yawScale * g_yaw;
+			g_yClick = y - g_pitchScale * g_pitch;
+			break;
+		case 3: // wheel up
+			g_fViewDistance *= 0.9;
+			printf("g_fViewDistance = %f\n", g_fViewDistance);
+			reset_proj();
+			break;
+		case 4: // wheel down
+			g_fViewDistance *= 1.1;
+			printf("g_fViewDistance = %f\n", g_fViewDistance);
+			reset_proj();
+			break;
 	}
-	
+
 }
 
 void MouseMotion(int x, int y)
@@ -474,13 +490,13 @@ int main(int argc, char** argv)
 		c--;
 	}
 	printf("ext = %s\n",c);
-	
+
 	char line_buffer[128];
-	
+
 	if(strcmp(c, ".dat") == 0)
 	{
 		FILE* pf = fopen(argv[1], "r");
-		
+
 		while(fgets(line_buffer, 128, pf))
 		{
 			int l = strlen(line_buffer);
@@ -489,11 +505,11 @@ int main(int argc, char** argv)
 		}
 	}
 	/*
-	else if(strcmp(c, ".dat") == 0)
-	{
-		fileNames.emplace_back(argv[1]);
-	}
-	*/
+	   else if(strcmp(c, ".dat") == 0)
+	   {
+	   fileNames.emplace_back(argv[1]);
+	   }
+	   */
 
 	int ret;
 

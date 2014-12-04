@@ -1,5 +1,6 @@
 #include <glm/glm.hpp>
 #include <vector>
+#include <string>
 
 #include "decl.hpp"
 
@@ -7,7 +8,7 @@
 #define SPLIT 8
 #define COOR_BYTE_LEN 2
 #define BTREE_LEAF_SIZE 64
-#define BTREE_MAX_BRANCHES 64
+#define BTREE_MAX_BRANCHES 2048
 
 
 /**
@@ -46,11 +47,11 @@ struct Branch
 	Branch(Branch&&);
 	Branch(glm::vec3 x0, glm::vec3 x1);
 	Branch &	operator=(Branch const & b);
-	void			print();
+	void			print(Branches & b, std::string pre = std::string());
 	/**
 	 * form child branches and divide elements between them
 	 */
-	void			fiss(Branches & branches);
+	void			fiss(Branches & branches, Body * bodies);
 	/**
 	 * move child branch elements to my elements and destroy branches
 	 */
