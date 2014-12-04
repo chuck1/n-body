@@ -77,36 +77,49 @@ unsigned int	Universe::count_dead(int t)
 	assert(frames_.frames_.size() > (unsigned int)t);
 	return frames_.frames_[t].count_dead();
 }
+void		print_header()
+{
+	printf("%12s%16s%16s%16s%16s%16s%16s%12s%16s\n",
+			"dur real",
+			"sim time",
+			"step",
+			"step inner",
+			"alive",
+			"dead",
+			"temp_dead",
+			"eta",
+			"num escaped");
+}
 int		Universe::solve()
 {
 	// temp bodies
-	
+
 	//Body* bodies = new Body[num_bodies_];
 	//memcpy(bodies, b(0), num_bodies_ * sizeof(Body));
-	
+
 	Frame f = get_frame(0);
 	unsigned int number_removed = f.reduce();
 	printf("number_removed = %i\n", number_removed);
 
 	Pairs pairs;
 	pairs.init(f);
-	
+
 	unsigned int flag_multi_coll = 0;
 	float dt = 10.0;
 
 	float time_sim = 0;
-	
+
 	unsigned int alive = count_alive(0);
 	unsigned int dead = size(0) - alive;
-	
+
 	unsigned int one_tenth = size(0) / 10;
 	unsigned int temp_dead = 0;
-	
+
 	unsigned int nc = 0;
 
 	unsigned int step = first_step_;
-	
-	
+
+
 	float velocity_ratio_min = 0.1;
 	float velocity_ratio[3];
 
@@ -118,7 +131,7 @@ int		Universe::solve()
 
 	float mass_center[3];
 	float mass;
-	
+
 	unsigned int number_escaped = 0;
 
 	if(0)
@@ -136,19 +149,8 @@ int		Universe::solve()
 
 		time_sim += dt;
 
-		if(((t % (num_steps_ / 1)) == 0) || (t == 1))
-		{
-			printf("%12s%16s%16s%16s%16s%16s%16s%12s%16s\n",
-					"dur real",
-					"sim time",
-					"step",
-					"step inner",
-					"alive",
-					"dead",
-					"temp_dead",
-					"eta",
-					"num escaped");
-		}
+		if(((t % (num_steps_ / 1)) == 0) || (t == 1)) print_header();
+
 		if((t % (num_steps_ / 10)) == 0)
 		{
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - program_time_start);
