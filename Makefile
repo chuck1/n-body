@@ -2,7 +2,7 @@
 LIBS = -lOpenCL -lGL -lglut -lGLU
 #LIBS = -l/usr/lib/x86_64-linux-gnu/libOpenCL.so
 
-SRC = src/other.cpp src/step_pairs.cpp src/step_bodies.cpp src/kernel.cpp src/universe.cpp src/Frame.cpp
+SRC = src/other.cpp src/step_pairs.cpp src/step_bodies.cpp src/kernel.cpp src/universe.cpp src/Frame.cpp src/Branch.cpp src/Branches.cpp
 
 O_FILES = $(patsubst src/%.cpp, build/%.o, $(SRC))
 
@@ -18,7 +18,7 @@ solv.out: $(O_FILES) build/main.o
 	@echo link $@
 	@g++ -g -o $@ build/main.o $(O_FILES) $(LIBS) -I. -pthread $(C_FLAGS)
 
-$(O_FILES) build/main.o build/glut.o: build/%.o: src/%.cpp body.h
+$(O_FILES) build/main.o build/glut.o: build/%.o: src/%.cpp body.h Tree.h
 	@echo build $@
 	@mkdir -p $(dir $@)
 	@g++ -g -c -o $@ $< -I. $(C_FLAGS)

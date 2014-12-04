@@ -3,6 +3,7 @@
 #define DECL_HPP
 
 struct Frame;
+struct Body;
 
 #endif
 

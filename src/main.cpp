@@ -9,6 +9,7 @@
 
 #include "universe.h"
 #include "other.hpp"
+#include "Tree.h"
 
 float timestep = 1.0;
 float mass = 1e6;

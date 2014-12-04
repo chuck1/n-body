@@ -12,9 +12,15 @@
 #define LOCAL_SIZE (8)
 #define NUM_GROUPS (GLOBAL_SIZE / LOCAL_SIZE)
 
+#define CPU 1
+
+#ifdef CPU
+#include <glm/glm.hpp>
+#endif
 
 struct Body
 {
+#ifdef CPU
 	Body(): x{0,0,0}, v{0,0,0}, mass(0), radius(0), alive(1), num_collisions(0)
 	{
 		//printf("%s\n", __PRETTY_FUNCTION__);
@@ -26,7 +32,7 @@ struct Body
 	}
 	Body &		operator=(Body const & b)
 	{
-		
+
 		memcpy(x, b.x, 12);
 		memcpy(v, b.v, 12);
 		mass = b.mass;
@@ -35,18 +41,24 @@ struct Body
 		num_collisions = b.num_collisions;
 		return *this;
 	}
+#endif
+	union
+	{
+		float		x[3];		// 12  12
+		glm::vec3	x_glm;
+	};
+	union
+	{
+		float		v[3];		// 12  24
+		glm::vec3	v_glm;
+	};
 
-	float	x[3]; // 4 * 3 = 12
-	float	v[3]; // 4 * 3 = 12
-	float	mass; // 4
-	float	radius; // 4
-	// 12 + 12 + 4 + 4 = 32
-	
-	unsigned char	alive; // 4
-	unsigned char	num_collisions; // 4
-	
-	// 40
-	
+	float		mass;		//  4  28
+	float		radius;		//  4  32
+
+	unsigned char	alive;		//  1  33
+	unsigned char	num_collisions;	//  1  34
+
 };
 
 struct Map
@@ -76,18 +88,18 @@ struct Pair
 
 	unsigned int	b0; // 4
 	unsigned int	b1; // 4
-	
+
 	float		u[3]; // 12
 	float		d; // 4
 	float		f; // 4
-	
+
 	// 28
 
 	unsigned char	_M_alive; // 4
 	unsigned char	_M_collision; // 4
 
 	// 36
-	
+
 };
 
 #endif

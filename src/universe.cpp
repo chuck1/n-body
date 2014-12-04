@@ -8,6 +8,7 @@
 #include "body.h"
 #include "kernel.h"
 #include "universe.h"
+#include "Tree.h"
 
 void		print(float * a)
 {
@@ -119,6 +120,9 @@ int		Universe::solve()
 	float mass;
 	
 	unsigned int number_escaped = 0;
+
+	Branches branches;
+	branches.init(f);
 
 	for(int t = 1; t < num_steps_; t++)
 	{

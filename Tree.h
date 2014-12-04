@@ -1,7 +1,14 @@
+#include <glm/glm.hpp>
+#include <vector>
 
-#define BIM 3
+#include "decl.hpp"
+
+#define DIM 3
+#define SPLIT 8
 #define COOR_BYTE_LEN 2
-#define BTREE_BRANCH_SIZE 128
+#define BTREE_LEAF_SIZE 64
+#define BTREE_MAX_BRANCHES 64
+
 
 /**
  * coordinate in binary-tree
@@ -17,9 +24,11 @@ struct Coor
 		// test bit
 		return (b & (1 << (lvl % 8))) ? 1 : 0;
 	}
-	
+
 	unsigned char	_M_coor[DIM][COOR_BYTE_LEN];
 };
+
+struct Branches;
 
 /**
  * branch in binary-tree
@@ -33,30 +42,48 @@ struct Branch
 		FLAG_IS_LEAF = 1 << 0,
 	};
 	
+	Branch();
+	Branch(Branch&&);
+	Branch(glm::vec3 x0, glm::vec3 x1);
+	Branch &	operator=(Branch const & b);
+	void			print();
 	/**
 	 * form child branches and divide elements between them
 	 */
-	void			fiss();
+	void			fiss(Branches & branches);
 	/**
 	 * move child branch elements to my elements and destroy branches
 	 */
 	void			fuse();
-	void			add(unsigned int body_idx);
+	int			add(Branches & branches, Body * bodies, unsigned int body_idx);
+	int			add_to_children(Branches & branches, Body * bodies, unsigned int body_idx);
 	void			remove(unsigned int i);
-
+	unsigned int		get_child_branch_index(
+			unsigned int i,
+			unsigned int j,
+			unsigned int k);
 	// parent branch idx in Branches
 	unsigned int		_M_parent_idx;
 	// branch indicies
-	unsigned int		_M_branches[2][2];
-	// body indicies
+	unsigned int		_M_branches[SPLIT];
+	// body indicies (indicies in body array, frame.b(i))
 	// tree must be rebuilt when frame is reduced!
-	// elements array must be sorted every time element is removed!
-	unsigned int		_M_elements[BTREE_BRANCH_SIZE];
+	// elements array must be sorted every time an element is removed!
+	unsigned int		_M_elements[BTREE_LEAF_SIZE];
 	// number of elements
 	unsigned int		_M_num_elements;
 	// extents
-	float			_M_x0[3];
-	float			_M_x1[3];
+	union
+	{
+		float			_M_x0[3];
+		glm::vec3		_M_x0_glm;
+	};
+	union
+	{
+		float			_M_x1[3];
+		glm::vec3		_M_x1_glm;
+	};
+
 	/**
 	 * is this a leaf (end of the line)
 	 */
@@ -71,11 +98,15 @@ struct Branch
  */
 struct Branches
 {
+	Branches();
 	void			init(Frame & f);
 	Branch &		get_branch(Coor const & coor);
-	Branch &		get_branch(int i);
-	
-	std::vector<Branch>	_M_branches;
+	Branch &		get_branch(unsigned int i);
+	int			alloc(Branch & branch);
+	void			print();
+
+	Branch			_M_branches[BTREE_MAX_BRANCHES];
+	unsigned int		_M_num_branches;
 };
 
 
