@@ -7,6 +7,11 @@
 #include "kernel.h"
 #include <free.hpp>
 
+bool	feq(float const & f0, float const & f1)
+{
+	return (abs(f0 - f1) < 0.0001);
+}
+
 void step_bodies(
 		struct Body * bodies,
 		struct Pair * pairs,
@@ -123,6 +128,17 @@ void step_bodies(
 		}
 		//print(pb->f);
 
+		if(
+				(!feq(pb->f[0], f[0])) ||
+				(!feq(pb->f[1], f[1])) ||
+				(!feq(pb->f[2], f[2]))
+		  )
+		{
+			print(f);
+			print(pb->f);
+			abort();
+		}
+
 		assert(std::isfinite(pb->mass));
 		assert(std::isfinite(dt));
 		assert(std::isfinite(pb->f[0]));
@@ -131,8 +147,8 @@ void step_bodies(
 
 		// reset accumulating force
 		pb->f[0] = 0;
-		pb->f[0] = 0;
-		pb->f[0] = 0;
+		pb->f[1] = 0;
+		pb->f[2] = 0;
 
 
 		float e = 0.01;
