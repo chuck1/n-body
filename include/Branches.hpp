@@ -9,6 +9,7 @@
 #include <BranchPair.hpp>
 #include <Branch.hpp>
 #include <Map.hpp>
+#include <Octree.hpp>
 
 /**
  *
@@ -26,6 +27,8 @@ struct Branches
 	Branch &		get_branch(unsigned int i);
 	int			alloc(Branch & branch);
 	void			print();
+	void			update();
+	void			level_insert(unsigned int idx, unsigned int level);
 
 	Branch			_M_branches[BTREE_MAX_BRANCHES];
 	unsigned int		_M_num_branches;
@@ -33,7 +36,10 @@ struct Branches
 	BranchPair		_M_branch_pairs[BTREE_MAX_BRANCH_PAIRS];
 	unsigned int		_M_num_branch_pairs;
 
-	unsigned int		_M_levels[OCTREE_MAX_LEVELS][BTREE_MAX_BRANCHES];
+	/*
+	unsigned int		_M_levels[OCTREE_LEVELS][BTREE_MAX_BRANCHES];
+	unsigned int		_M_num_at_level[OCTREE_LEVELS];
+	*/
 
 	Map			_M_map;
 };

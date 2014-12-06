@@ -8,14 +8,7 @@
 #include "decl.hpp"
 #include <BranchPair.hpp>
 #include <Map.hpp>
-
-#define DIM 3
-#define SPLIT 8
-#define COOR_BYTE_LEN 2
-#define BTREE_LEAF_SIZE 16
-#define BTREE_MAX_BRANCHES 1024
-#define BTREE_MAX_BRANCH_PAIRS (BTREE_MAX_BRANCHES * (BTREE_MAX_BRANCHES - 1) / 2)
-#define OCTREE_MAX_LEVELS (16)
+#include <Octree.hpp>
 
 /**
  * coordinate in binary-tree
@@ -51,7 +44,7 @@ struct Branch
 	
 	Branch();
 	Branch(Branch&&);
-	Branch(glm::vec3 x0, glm::vec3 x1);
+	Branch(unsigned int idx, unsigned int parent_idx, unsigned int level, glm::vec3 x0, glm::vec3 x1);
 	Branch &	operator=(Branch const & b);
 	void			print(Branches & b, std::string pre = std::string());
 	/**
@@ -70,10 +63,11 @@ struct Branch
 			unsigned int j,
 			unsigned int k);
 	void			mass_center(Branches * branches, Body * bodies, float * x, float * m) const;
-
+	/***/
 	unsigned int		_M_idx;
 	// parent branch idx in Branches
 	unsigned int		_M_parent_idx;
+	unsigned int		_M_level;
 	// branch indicies
 	unsigned int		_M_branches[SPLIT];
 	// body indicies (indicies in body array, frame.b(i))
@@ -93,41 +87,18 @@ struct Branch
 		float			_M_x1[3];
 		glm::vec3		_M_x1_glm;
 	};
+	union
+	{
+		float			_M_mc[3];
+		glm::vec3		_M_mc_glm;
+	};
+	float			_M_mass;
 
 	/**
 	 * is this a leaf (end of the line)
 	 */
 	unsigned char		_M_flag;
 };
-
-/**
- *
- * @warning must be kernel-safe
- *
- * in order to be kernel-safe, branches must be stored in a continuous array
- */
-struct Branches
-{
-	Branches();
-	void			init(Frame const & f);
-	void			init(Frame const & f, glm::vec3 x0, glm::vec3 x1);
-	void			init_pairs();
-	Branch &		get_branch(Coor const & coor);
-	Branch &		get_branch(unsigned int i);
-	int			alloc(Branch & branch);
-	void			print();
-
-	Branch			_M_branches[BTREE_MAX_BRANCHES];
-	unsigned int		_M_num_branches;
-
-	BranchPair		_M_branch_pairs[BTREE_MAX_BRANCH_PAIRS];
-	unsigned int		_M_num_branch_pairs;
-
-	unsigned int		_M_levels[OCTREE_MAX_LEVELS][BTREE_MAX_BRANCHES];
-
-	Map			_M_map;
-};
-
 
 
 

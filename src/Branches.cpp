@@ -1,10 +1,11 @@
 #include <cassert>
 
-#include "Tree.h"
+#include "Branch.hpp"
 #include "universe.h"
 
 Branches::Branches():_M_num_branches(0)
 {
+	//memset(_M_num_at_level, 0, OCTREE_LEVELS * sizeof(unsigned int));
 }
 void			Branches::print()
 {
@@ -37,13 +38,22 @@ void			Branches::init(Frame const & f)
 
 	init(f, x0, x1);
 }
+/*
+void			Branches::level_insert(unsigned int idx, unsigned int level)
+{
+	assert(_M_num_at_level[level] < BTREE_MAX_BRANCHES);
+	
+	_M_levels[level][_M_num_at_level[level]] = idx;
+	
+	_M_num_at_level[level]++;
+}
+*/
 void			Branches::init(Frame const & f, glm::vec3 x0, glm::vec3 x1)
 {
 	_M_num_branches = 1;
 	
-	_M_branches[0] = Branch(x0, x1);
-	_M_branches[0]._M_idx = 0;
-	
+	_M_branches[0] = Branch(0, 0, 0, x0, x1);
+
 	int ret;
 
 	for(unsigned int i = 0; i < f.size(); i++)
@@ -76,12 +86,65 @@ int			Branches::alloc(Branch & b)
 	
 	for(unsigned int i = 0; i < 8; i++)
 	{
-		unsigned int idx = _M_num_branches + i;
-		b._M_branches[i] = idx;
-		_M_branches[idx]._M_parent_idx = b._M_idx;
+		b._M_branches[i] = _M_num_branches;
+		_M_num_branches++;
 	}
 
-	_M_num_branches += 8;
+
+	glm::vec3 x0;
+	glm::vec3 x1;
+
+	for(int i = 0; i < 2; i++)
+	{
+		for(int j = 0; j < 2; j++)
+		{
+			for(int k = 0; k < 2; k++)
+			{
+				unsigned int idx = b.get_child_branch_index(i,j,k);
+
+				Branch & b = get_branch(idx);
+
+				if(i == 0)
+				{
+					x0.x = b._M_x0_glm.x;
+					x1.x = (b._M_x0_glm.x + b._M_x1_glm.x) * 0.5f;
+				}
+				else
+				{
+					x0.x = (b._M_x0_glm.x + b._M_x1_glm.x) * 0.5f;
+					x1.x = b._M_x1_glm.x;
+				}
+				if(j == 0)
+				{
+					x0.y = b._M_x0_glm.y;
+					x1.y = (b._M_x0_glm.y + b._M_x1_glm.y) * 0.5f;
+				}
+				else
+				{
+					x0.y = (b._M_x0_glm.y + b._M_x1_glm.y) * 0.5f;
+					x1.y = b._M_x1_glm.y;
+				}
+				if(k == 0)
+				{
+					x0.z = b._M_x0_glm.z;
+					x1.z = (b._M_x0_glm.z + b._M_x1_glm.z) * 0.5f;
+				}
+				else
+				{
+					x0.z = (b._M_x0_glm.z + b._M_x1_glm.z) * 0.5f;
+					x1.z = b._M_x1_glm.z;
+				}
+
+				b = Branch(
+						idx,
+						b._M_idx,
+						b._M_level + 1,
+						x0,
+						x1);
+			}
+		}
+	}
+
 
 	return 0;
 }
@@ -93,9 +156,9 @@ void			Branches::init_pairs()
 	unsigned int nb = _M_num_branches;
 
 	_M_map.alloc(nb);
-	
+
 	_M_num_branch_pairs = nb * (nb - 1) / 2;
-	
+
 	for(unsigned int i = 0; i < nb; i++)
 	{
 		for(unsigned int j = i + 1; j < nb; j++)

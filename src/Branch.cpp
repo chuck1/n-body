@@ -1,6 +1,7 @@
 #include <iostream>
 
-#include "Tree.h"
+#include "Branch.hpp"
+#include "Branches.hpp"
 #include "Body.hpp"
 
 Branch::Branch(): _M_branches{0,0,0,0,0,0,0,0}, _M_num_elements(0), _M_flag(FLAG_IS_LEAF)
@@ -17,7 +18,11 @@ Branch::Branch(Branch && b):
 	memcpy(_M_branches, b._M_branches, SPLIT * sizeof(unsigned int));
 	memcpy(_M_elements, b._M_elements, BTREE_LEAF_SIZE * sizeof(unsigned int));
 }
-Branch::Branch(glm::vec3 x0, glm::vec3 x1): _M_branches{0,0,0,0,0,0,0,0}, _M_num_elements(0), _M_x0_glm(x0), _M_x1_glm(x1), _M_flag(FLAG_IS_LEAF)
+Branch::Branch(unsigned int idx, unsigned int parent_idx, unsigned int level, glm::vec3 x0, glm::vec3 x1):
+	_M_idx(idx),
+	_M_parent_idx(parent_idx),
+	_M_level(level),
+	_M_branches{0,0,0,0,0,0,0,0}, _M_num_elements(0), _M_x0_glm(x0), _M_x1_glm(x1), _M_flag(FLAG_IS_LEAF)
 {
 	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
 }
@@ -63,54 +68,6 @@ void			Branch::fiss(Branches & branches, Body const * bodies)
 
 	branches.alloc(*this);
 	
-	glm::vec3 x0;
-	glm::vec3 x1;
-
-	for(int i = 0; i < 2; i++)
-	{
-		for(int j = 0; j < 2; j++)
-		{
-			for(int k = 0; k < 2; k++)
-			{
-				Branch & b = branches.get_branch(get_child_branch_index(i,j,k));
-				
-				if(i == 0)
-				{
-					x0.x = _M_x0_glm.x;
-					x1.x = (_M_x0_glm.x + _M_x1_glm.x) * 0.5f;
-				}
-				else
-				{
-					x0.x = (_M_x0_glm.x + _M_x1_glm.x) * 0.5f;
-					x1.x = _M_x1_glm.x;
-				}
-				if(j == 0)
-				{
-					x0.y = _M_x0_glm.y;
-					x1.y = (_M_x0_glm.y + _M_x1_glm.y) * 0.5f;
-				}
-				else
-				{
-					x0.y = (_M_x0_glm.y + _M_x1_glm.y) * 0.5f;
-					x1.y = _M_x1_glm.y;
-				}
-				if(k == 0)
-				{
-					x0.z = _M_x0_glm.z;
-					x1.z = (_M_x0_glm.z + _M_x1_glm.z) * 0.5f;
-				}
-				else
-				{
-					x0.z = (_M_x0_glm.z + _M_x1_glm.z) * 0.5f;
-					x1.z = _M_x1_glm.z;
-				}
-				
-				b = Branch(x0, x1);
-				
-				b._M_parent_idx = _M_idx;
-			}
-		}
-	}
 
 	// distribute elements among children
 	for(unsigned int i = 0; i < _M_num_elements; i++)
