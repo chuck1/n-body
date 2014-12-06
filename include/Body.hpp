@@ -21,7 +21,7 @@
 struct Body
 {
 #ifdef CPU
-	Body(): x{0,0,0}, v{0,0,0}, mass(0), radius(0), alive(1), num_collisions(0)
+	Body(): x{0,0,0}, v{0,0,0}, f{0,0,0}, mass(0), radius(0), alive(1), num_collisions(0)
 	{
 		//printf("%s\n", __PRETTY_FUNCTION__);
 	}
@@ -29,12 +29,14 @@ struct Body
 	{
 		memcpy(x, b.x, 12);
 		memcpy(v, b.v, 12);
+		memcpy(f, b.f, 12);
 	}
 	Body &		operator=(Body const & b)
 	{
 
 		memcpy(x, b.x, 12);
 		memcpy(v, b.v, 12);
+		memcpy(f, b.f, 12);
 		mass = b.mass;
 		radius = b.radius;
 		alive = b.alive;
@@ -51,6 +53,11 @@ struct Body
 	{
 		float		v[3];		// 12  24
 		glm::vec3	v_glm;
+	};
+	union
+	{
+		float		f[3];		// 12  24
+		glm::vec3	f_glm;
 	};
 
 	float		mass;		//  4  28

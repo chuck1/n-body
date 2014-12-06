@@ -5,6 +5,7 @@
 #include "Pair.hpp"
 #include "Body.hpp"
 #include "kernel.h"
+#include <free.hpp>
 
 void step_bodies(
 		struct Body * bodies,
@@ -107,9 +108,32 @@ void step_bodies(
 		}
 
 		float dv[3];
-		dv[0] = dt * f[0] / pb->mass;
-		dv[1] = dt * f[1] / pb->mass;
-		dv[2] = dt * f[2] / pb->mass;
+
+		if(0)
+		{
+			dv[0] = dt * f[0] / pb->mass;
+			dv[1] = dt * f[1] / pb->mass;
+			dv[2] = dt * f[2] / pb->mass;
+		}
+		else
+		{
+			dv[0] = dt * pb->f[0] / pb->mass;
+			dv[1] = dt * pb->f[1] / pb->mass;
+			dv[2] = dt * pb->f[2] / pb->mass;
+		}
+		//print(pb->f);
+
+		assert(std::isfinite(pb->mass));
+		assert(std::isfinite(dt));
+		assert(std::isfinite(pb->f[0]));
+		assert(std::isfinite(pb->f[1]));
+		assert(std::isfinite(pb->f[2]));
+
+		// reset accumulating force
+		pb->f[0] = 0;
+		pb->f[0] = 0;
+		pb->f[0] = 0;
+
 
 		float e = 0.01;
 
@@ -151,13 +175,13 @@ void step_bodies(
 		r[0] = pb->x[0] - mass_center[0];
 		r[1] = pb->x[1] - mass_center[1];
 		r[2] = pb->x[2] - mass_center[2];
-		
+
 		float d = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
-		
+
 		float escape_speed2 = 2.0 * 6.67e-11 * mass / d;
-		
+
 		float s2 = pb->v[0]*pb->v[0] + pb->v[1]*pb->v[1] + pb->v[2]*pb->v[2];
-		
+
 		// dot product of velocity and displacement vector
 		float dot = pb->v[0] * r[0] + pb->v[1] * r[1] + pb->v[2] * r[2];
 

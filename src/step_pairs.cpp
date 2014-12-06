@@ -93,7 +93,9 @@ void step_pairs(
 			// atomic
 			b1->num_collisions++;
 		}
-
+		
+		
+		
 		if(d2 == 0.0)
 		{
 			//printf("d2 is zero. d = %f\n", pp->d);
@@ -104,7 +106,31 @@ void step_pairs(
 			pp->u[1] = r[1] / d;
 			pp->u[2] = r[2] / d;
 
-			pp->f = 6.67384E-11 * b0->mass * b1->mass / d2;
+			float f = 6.67384E-11 * b0->mass * b1->mass / d2;
+	
+			pp->f = f;
+
+			assert(std::isfinite(r[0]));
+			assert(std::isfinite(r[1]));
+			assert(std::isfinite(r[2]));
+			assert(std::isfinite(f));
+			assert(std::isfinite(d));
+
+			assert(std::isfinite(b0->f[0]));
+			assert(std::isfinite(b0->f[1]));
+			assert(std::isfinite(b0->f[2]));
+
+			assert(std::isfinite(b1->f[0]));
+			assert(std::isfinite(b1->f[1]));
+			assert(std::isfinite(b1->f[2]));
+
+			b0->f[0] -= f * r[0] / d;
+			b0->f[1] -= f * r[1] / d;
+			b0->f[2] -= f * r[2] / d;
+
+			b1->f[0] += f * r[0] / d;
+			b1->f[1] += f * r[1] / d;
+			b1->f[2] += f * r[2] / d;
 		}
 	}
 
