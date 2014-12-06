@@ -58,12 +58,8 @@ void step_bodies(
 	//event_t e1 = async_work_group_copy((__local char *)local_bodymaps, (char *)(bodymaps + i_group0), (i_group1 - i_group0) * sizeof(struct BodyMap), 0);
 	//wait_group_events(1, &e1);
 
-	/* */
-	float f[3];
-
 	//__local struct BodyMap * pbm = 0;
 	//struct BodyMap * pbm = 0;
-
 
 	Body * pb = 0;
 
@@ -80,76 +76,17 @@ void step_bodies(
 			continue;
 		}
 
-		f[0] = 0;
-		f[1] = 0;
-		f[2] = 0;
-
-		for(unsigned int i = 0; i < num_bodies; i++)
-		{
-			if(b == i) continue;
-
-			//__local struct Pair * pp = &local_pairs[pbm->pair[p]];
-			Pair * pp = pairs + map[b * num_bodies + i];
-
-			if(pp->_M_alive == 0) continue;
-
-
-			if(pp->b0 == b)
-			{
-				f[0] -= pp->u[0] * pp->f;
-				f[1] -= pp->u[1] * pp->f;
-				f[2] -= pp->u[2] * pp->f;
-			}
-			else if(pp->b1 == b)
-			{
-				f[0] += pp->u[0] * pp->f;
-				f[1] += pp->u[1] * pp->f;
-				f[2] += pp->u[2] * pp->f;
-			}
-			else
-			{
-				assert(0);
-			}
-		}
-
 		float dv[3];
 
-		if(0)
-		{
-			dv[0] = dt * f[0] / pb->mass;
-			dv[1] = dt * f[1] / pb->mass;
-			dv[2] = dt * f[2] / pb->mass;
-		}
-		else
-		{
-			dv[0] = dt * pb->f[0] / pb->mass;
-			dv[1] = dt * pb->f[1] / pb->mass;
-			dv[2] = dt * pb->f[2] / pb->mass;
-		}
-		//print(pb->f);
+		dv[0] = dt * pb->f[0] / pb->mass;
+		dv[1] = dt * pb->f[1] / pb->mass;
+		dv[2] = dt * pb->f[2] / pb->mass;
 
-		if(
-				(!feq(pb->f[0], f[0])) ||
-				(!feq(pb->f[1], f[1])) ||
-				(!feq(pb->f[2], f[2]))
-		  )
-		{
-			print(f);
-			print(pb->f);
-			abort();
-		}
-
-		assert(std::isfinite(pb->mass));
-		assert(std::isfinite(dt));
-		assert(std::isfinite(pb->f[0]));
-		assert(std::isfinite(pb->f[1]));
-		assert(std::isfinite(pb->f[2]));
 
 		// reset accumulating force
 		pb->f[0] = 0;
 		pb->f[1] = 0;
 		pb->f[2] = 0;
-
 
 		float e = 0.01;
 

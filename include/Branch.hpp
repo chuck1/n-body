@@ -12,9 +12,10 @@
 #define DIM 3
 #define SPLIT 8
 #define COOR_BYTE_LEN 2
-#define BTREE_LEAF_SIZE 32
+#define BTREE_LEAF_SIZE 16
 #define BTREE_MAX_BRANCHES 1024
 #define BTREE_MAX_BRANCH_PAIRS (BTREE_MAX_BRANCHES * (BTREE_MAX_BRANCHES - 1) / 2)
+#define OCTREE_MAX_LEVELS (16)
 
 /**
  * coordinate in binary-tree
@@ -69,6 +70,8 @@ struct Branch
 			unsigned int j,
 			unsigned int k);
 	void			mass_center(Branches * branches, Body * bodies, float * x, float * m) const;
+
+	unsigned int		_M_idx;
 	// parent branch idx in Branches
 	unsigned int		_M_parent_idx;
 	// branch indicies
@@ -119,6 +122,8 @@ struct Branches
 
 	BranchPair		_M_branch_pairs[BTREE_MAX_BRANCH_PAIRS];
 	unsigned int		_M_num_branch_pairs;
+
+	unsigned int		_M_levels[OCTREE_MAX_LEVELS][BTREE_MAX_BRANCHES];
 
 	Map			_M_map;
 };

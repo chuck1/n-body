@@ -102,27 +102,7 @@ void step_pairs(
 		}
 		else
 		{
-			pp->u[0] = r[0] / d;
-			pp->u[1] = r[1] / d;
-			pp->u[2] = r[2] / d;
-
 			float f = 6.67384E-11 * b0->mass * b1->mass / d2;
-	
-			pp->f = f;
-
-			assert(std::isfinite(r[0]));
-			assert(std::isfinite(r[1]));
-			assert(std::isfinite(r[2]));
-			assert(std::isfinite(f));
-			assert(std::isfinite(d));
-
-			assert(std::isfinite(b0->f[0]));
-			assert(std::isfinite(b0->f[1]));
-			assert(std::isfinite(b0->f[2]));
-
-			assert(std::isfinite(b1->f[0]));
-			assert(std::isfinite(b1->f[1]));
-			assert(std::isfinite(b1->f[2]));
 
 			b0->f[0] -= f * r[0] / d;
 			b0->f[1] -= f * r[1] / d;

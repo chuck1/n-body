@@ -3,7 +3,7 @@
 #include "Tree.h"
 #include "universe.h"
 
-Branches::Branches(): _M_num_branches(0)
+Branches::Branches():_M_num_branches(0)
 {
 }
 void			Branches::print()
@@ -42,8 +42,8 @@ void			Branches::init(Frame const & f, glm::vec3 x0, glm::vec3 x1)
 	_M_num_branches = 1;
 	
 	_M_branches[0] = Branch(x0, x1);
-
-
+	_M_branches[0]._M_idx = 0;
+	
 	int ret;
 
 	for(unsigned int i = 0; i < f.size(); i++)
@@ -73,12 +73,12 @@ Branch &		Branches::get_branch(unsigned int i)
 int			Branches::alloc(Branch & b)
 {
 	assert((_M_num_branches + 8) <= BTREE_MAX_BRANCHES);
-
 	
 	for(unsigned int i = 0; i < 8; i++)
 	{
-		//printf("%i\n", _M_num_branches + i);
-		b._M_branches[i] = _M_num_branches + i;
+		unsigned int idx = _M_num_branches + i;
+		b._M_branches[i] = idx;
+		_M_branches[idx]._M_parent_idx = b._M_idx;
 	}
 
 	_M_num_branches += 8;

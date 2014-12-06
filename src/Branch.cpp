@@ -17,6 +17,10 @@ Branch::Branch(Branch && b):
 	memcpy(_M_branches, b._M_branches, SPLIT * sizeof(unsigned int));
 	memcpy(_M_elements, b._M_elements, BTREE_LEAF_SIZE * sizeof(unsigned int));
 }
+Branch::Branch(glm::vec3 x0, glm::vec3 x1): _M_branches{0,0,0,0,0,0,0,0}, _M_num_elements(0), _M_x0_glm(x0), _M_x1_glm(x1), _M_flag(FLAG_IS_LEAF)
+{
+	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
+}
 Branch &	Branch::operator=(Branch const & b)
 {
 	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
@@ -29,10 +33,6 @@ Branch &	Branch::operator=(Branch const & b)
 	memcpy(_M_elements, b._M_elements, BTREE_LEAF_SIZE * sizeof(unsigned int));
 
 	return *this;
-}
-Branch::Branch(glm::vec3 x0, glm::vec3 x1): _M_branches{0,0,0,0,0,0,0,0}, _M_num_elements(0), _M_x0_glm(x0), _M_x1_glm(x1), _M_flag(FLAG_IS_LEAF)
-{
-	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
 }
 void			Branch::print(Branches & b, std::string pre)
 {
@@ -62,17 +62,7 @@ void			Branch::fiss(Branches & branches, Body const * bodies)
 	assert(!(_M_flag & FLAG_IS_LEAF));
 
 	branches.alloc(*this);
-/*	
-	printf("%i %i %i %i %i %i %i %i\n",
-			_M_branches[0],
-			_M_branches[1],
-			_M_branches[2],
-			_M_branches[3],
-			_M_branches[4],
-			_M_branches[5],
-			_M_branches[6],
-			_M_branches[7]);
-*/
+	
 	glm::vec3 x0;
 	glm::vec3 x1;
 
@@ -115,7 +105,9 @@ void			Branch::fiss(Branches & branches, Body const * bodies)
 					x1.z = _M_x1_glm.z;
 				}
 				
-				b = Branch(x0,x1);	
+				b = Branch(x0, x1);
+				
+				b._M_parent_idx = _M_idx;
 			}
 		}
 	}
