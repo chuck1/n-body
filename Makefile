@@ -2,26 +2,46 @@
 LIBS = -lOpenCL -lGL -lglut -lGLU
 #LIBS = -l/usr/lib/x86_64-linux-gnu/libOpenCL.so
 
-SRC = src/other.cpp src/step_pairs.cpp src/step_bodies.cpp src/kernel.cpp src/universe.cpp src/Frame.cpp src/Branch.cpp src/Branches.cpp
+SRC = $(shell find src -name '*.cpp')
 
 O_FILES = $(patsubst src/%.cpp, build/%.o, $(SRC))
+D_FILES = $(patsubst src/%.cpp, build/%.d, $(SRC))
 
-C_FLAGS = -std=c++0x -g -Wall -Werror
+C_FLAGS = -std=c++0x -g -Wall -Werror -pthread -MMD
+
+INCLUDE_DIRS = -I. -I./include/
+
+
+#all: play.out solv.out $(D_FILES)
 
 all: play.out solv.out
 
-play.out: $(O_FILES) build/glut.o
-	@echo link $@
-	@g++ -g -o $@ build/glut.o $(O_FILES) $(LIBS) -I. $(C_FLAGS)
+help:
+	@echo $(SRC)
+	@echo $(O_FILES)
 
-solv.out: $(O_FILES) build/main.o
-	@echo link $@
-	@g++ -g -o $@ build/main.o $(O_FILES) $(LIBS) -I. -pthread $(C_FLAGS)
+#$(D_FILES) build/main.d build/glut.d: build/%.d: src/%.cpp
+#	@echo $< $@
+#	@#g++ $(C_FLAGS) $(INCLUDE_DIRS) -MM -MT '$(patsubst src/%.cpp,build/%.o,$<)' $< -MF $@
+#	@g++ $(C_FLAGS) $(INCLUDE_DIRS) -MM $< -MF $@
 
-$(O_FILES) build/main.o build/glut.o: build/%.o: src/%.cpp body.h Tree.h
+play.out: $(O_FILES) build/play.o
+	@echo link $@
+	@g++ -g -o $@ build/play.o $(O_FILES) $(LIBS) $(INCLUDE_DIRS) $(C_FLAGS)
+
+solv.out: $(O_FILES) build/solv.o
+	@echo link $@
+	@g++ -g -o $@ build/solv.o $(O_FILES) $(LIBS) $(INCLUDE_DIRS) $(C_FLAGS)
+
+$(O_FILES): build/%.o: src/%.cpp
 	@echo build $@
 	@mkdir -p $(dir $@)
-	@g++ -g -c -o $@ $< -I. $(C_FLAGS)
+	@g++ -g -c -o $@ $< -I. $(C_FLAGS) $(INCLUDE_DIRS)
+
+build/play.o build/solv.o: build/%.o: %.cpp
+	@echo build $@
+	@mkdir -p $(dir $@)
+	@g++ -g -c -o $@ $< -I. $(C_FLAGS) $(INCLUDE_DIRS)
 
 clean:
 	rm -rf build/
@@ -29,4 +49,7 @@ clean:
 cleandata:
 	rm -f data/*
 	rm -f files_*
+
+-include $(D_FILES)
+
 

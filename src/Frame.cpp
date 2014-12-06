@@ -21,6 +21,11 @@ Body*			Frame::b(unsigned int i)
 	assert(bodies_.size() > i);
 	return &bodies_[i];
 }
+Body const *		Frame::b(unsigned int i) const
+{
+	assert(bodies_.size() > i);
+	return &bodies_[i];
+}
 unsigned int		Frame::size() const
 {
 	return bodies_.size();
@@ -266,13 +271,13 @@ glm::vec3	Frame::body_min()
 
 	return e;
 }
-int		Frame::mass_center(float * x, float * s, float * m)
+int		Frame::mass_center(float * x, float * s, float * m) const
 {
 	float temp[3] = {0,0,0};
 	
 	*m = 0;
 	
-	for(Body & b : bodies_)
+	for(Body const & b : bodies_)
 	{
 		if(b.alive)
 		{
@@ -303,7 +308,7 @@ int		Frame::mass_center(float * x, float * s, float * m)
 		temp[1] = 0;
 		temp[2] = 0;
 
-		for(Body & b : bodies_)
+		for(Body const & b : bodies_)
 		{
 			if(b.alive)
 			{
@@ -319,5 +324,39 @@ int		Frame::mass_center(float * x, float * s, float * m)
 	}
 
 	return 0;
+}
+unsigned int	Frame::count_dead()
+{
+	unsigned int n = 0;
+	for(unsigned int i = 0; i < bodies_.size(); i++)
+	{
+		if(bodies_[i].alive == 0) n++;
+	}
+	return n;
+}
+unsigned int	Frame::count_alive()
+{
+	unsigned int n = 0;
+	for(unsigned int i = 0; i < bodies_.size(); i++)
+	{
+		if(bodies_[i].alive == 1) n++;
+	}
+	return n;
+}
+void		Frame::write(FILE* pf)
+{
+	unsigned int n = bodies_.size();
+	fwrite(&n, sizeof(unsigned int), 1, pf);
+	fwrite(&bodies_[0], sizeof(Body), n, pf);
+
+}
+void		Frame::read(FILE* pf)
+{
+	unsigned int n;
+	fread(&n, sizeof(unsigned int), 1, pf);
+	bodies_.resize(n);
+	fread(&bodies_[0], sizeof(Body), n, pf);
+
+	//print();
 }
 

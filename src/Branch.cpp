@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "Tree.h"
-#include "body.h"
+#include "Body.hpp"
 
 Branch::Branch(): _M_branches{0,0,0,0,0,0,0,0}, _M_num_elements(0), _M_flag(FLAG_IS_LEAF)
 {
@@ -53,7 +53,7 @@ void			Branch::print(Branches & b, std::string pre)
 /**
  * form child branches and divide elements between them
  */
-void			Branch::fiss(Branches & branches, Body * bodies)
+void			Branch::fiss(Branches & branches, Body const * bodies)
 {
 	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
 
@@ -133,10 +133,10 @@ void			Branch::fiss(Branches & branches, Body * bodies)
 void			Branch::fuse()
 {
 }
-int			Branch::add(Branches & branches, Body * bodies, unsigned int body_idx)
+int			Branch::add(Branches & branches, Body const * bodies, unsigned int body_idx)
 {
 
-	Body * b = bodies + body_idx;
+	Body const * b = bodies + body_idx;
 
 	if(_M_flag & FLAG_IS_LEAF)
 	{
@@ -195,7 +195,7 @@ int			Branch::add(Branches & branches, Body * bodies, unsigned int body_idx)
 
 	return 0;
 }
-int			Branch::add_to_children(Branches & branches, Body * bodies, unsigned int body_idx)
+int			Branch::add_to_children(Branches & branches, Body const * bodies, unsigned int body_idx)
 {
 	//printf("add_to_children\n");
 
@@ -228,7 +228,7 @@ unsigned int		Branch::get_child_branch_index(
 	assert(k<2);
 	return _M_branches[i * 4 + j * 2 + k];
 }
-void			Branch::mass_center(Branches * branches, Body * bodies, float * x, float * m)
+void			Branch::mass_center(Branches * branches, Body * bodies, float * x, float * m) const
 {
 	if(_M_flag & FLAG_IS_LEAF)
 	{

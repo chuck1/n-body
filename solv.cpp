@@ -87,11 +87,11 @@ int		main(int ac, char ** av)
 	signal(SIGINT, signal_callback);
 	
 	
-	Universe* u = new Universe;
+	Universe* uni = new Universe;
 
 	if(ac == 2)
 	{
-		u->read(av[1], num_steps);
+		uni->read(av[1], num_steps);
 	}
 	else if(ac == 1)
 	{
@@ -101,15 +101,15 @@ int		main(int ac, char ** av)
 		time(&rawtime);
 		timeinfo = localtime(&rawtime);
 		
-		strftime(u->name_, 32, "%Y_%m_%d_%H_%M_%S", timeinfo);
+		strftime(uni->name_, 32, "%Y_%m_%d_%H_%M_%S", timeinfo);
 		
-		printf("name = %s\n", u->name_);
+		printf("name = %s\n", uni->name_);
 
-		u->alloc(num_bodies, num_steps);
+		uni->alloc(num_bodies, num_steps);
 	
-		//u->random(mass);
-		u->get_frame(0).spin(mass, width);
-		//u->get_frame(0).rings(mass, width);
+		//uni->random(mass);
+		uni->get_frame(0).spin(mass, width);
+		//uni->get_frame(0).rings(mass, width);
 	}
 	else
 	{
@@ -127,32 +127,32 @@ int		main(int ac, char ** av)
 		// files.dat filename
 		char filename[128];
 		strcpy(filename, "files_");
-		strcat(filename, u->name_);
+		strcat(filename, uni->name_);
 		strcat(filename, ".dat");
 
 		// CPU
 		for(int i = 0; i < 100; i++)
 		{
-			u->solve();
+			uni->solve();
 
-			u->write();
+			uni->write();
 
 			// append filename
 			//filenames.push_back(u->getFilename());
 			std::ofstream ofs;
 			ofs.open(filename, std::ofstream::out | std::ofstream::app);
-			ofs << u->getFilename() << std::endl;
+			ofs << uni->getFilename() << std::endl;
 			ofs.close();
 
 			// copy last to first
 			//memcpy(u->b(0), u->b(u->num_steps_ - 1), u->num_bodies_ * sizeof(Body));
 
-			u->get_frame(0) = u->get_frame(u->num_steps_ - 1);
+			uni->get_frame(0) = uni->get_frame(uni->num_steps_ - 1);
 
 			// reset
-			u->frames_.frames_.resize(1);
+			uni->frames_.frames_.resize(1);
 
-			u->first_step_ += u->num_steps_;
+			uni->first_step_ += uni->num_steps_;
 
 
 			// check abort signal	
@@ -184,13 +184,13 @@ int		main(int ac, char ** av)
 
 	// solver variables
 	Pairs pairs;
-	pairs.init(u->get_frame(0));
+	pairs.init(uni->get_frame(0));
 
 	/* Create Memory Buffer */
 	puts("create buffer");
-	memobj_bodies   = clCreateBuffer(context, CL_MEM_READ_WRITE, u->size(0) * sizeof(Body), NULL, &ret);
+	memobj_bodies   = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * sizeof(Body), NULL, &ret);
 	memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, pairs.size() * sizeof(Pair), NULL, &ret);
-	memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, u->size(0) * u->size(0) * sizeof(unsigned int), NULL, &ret);
+	memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * uni->size(0) * sizeof(unsigned int), NULL, &ret);
 	memobj_flag_multi_coll = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &ret);
 	check(__LINE__, ret);
 
@@ -199,7 +199,7 @@ int		main(int ac, char ** av)
 
 	/* Write to buffers */
 	puts("write buffers");
-	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, u->size(0) * sizeof(Body),	 u->b(0), 0, NULL, NULL); check(__LINE__, ret);
+	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, uni->size(0) * sizeof(Body),	 uni->b(0), 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, pairs.size() * sizeof(Pair),	 &pairs.pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &pairs.map_, 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
@@ -319,7 +319,7 @@ int		main(int ac, char ** av)
 
 
 		/* Store data for timestep */
-		ret = clEnqueueReadBuffer(command_queue, memobj_bodies, CL_TRUE, 0, u->size(0) * sizeof(Body), u->b(t), 0, NULL, NULL);
+		ret = clEnqueueReadBuffer(command_queue, memobj_bodies, CL_TRUE, 0, uni->size(0) * sizeof(Body), uni->b(t), 0, NULL, NULL);
 		check(__LINE__, ret);
 		if(ret) break;
 
@@ -362,7 +362,7 @@ int		main(int ac, char ** av)
 	}
 
 	puts("Write");
-	u->write();
+	uni->write();
 
 	return 0;
 }

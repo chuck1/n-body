@@ -1,7 +1,9 @@
-#include "body.h"
-#include "kernel.h"
 #include <math.h>
 #include <cstdio>
+
+#include "Pair.hpp"
+#include "Body.hpp"
+#include "kernel.h"
 
 void step_pairs(
 		    struct Body * bodies,

@@ -5,7 +5,8 @@
 #include <cassert>
 #include <algorithm>
 
-#include "body.h"
+#include <Body.hpp>
+#include <Pair.hpp>
 #include "kernel.h"
 #include "universe.h"
 #include "Tree.h"
@@ -90,6 +91,11 @@ void		print_header()
 			"eta",
 			"num escaped");
 }
+void		Universe::refresh_pairs(Frame const & f)
+{
+	_M_pairs.init(f);
+	_M_branches.init(f);
+}
 int		Universe::solve()
 {
 	// temp bodies
@@ -101,8 +107,8 @@ int		Universe::solve()
 	unsigned int number_removed = f.reduce();
 	printf("number_removed = %i\n", number_removed);
 
-	Pairs pairs;
-	pairs.init(f);
+	refresh_pairs(f);
+
 
 	unsigned int flag_multi_coll = 0;
 	float dt = 10.0;
@@ -134,11 +140,9 @@ int		Universe::solve()
 
 	unsigned int number_escaped = 0;
 
-	if(0)
+	if(1)
 	{
-		Branches branches;
-		branches.init(f);
-		branches.print();
+		_M_branches.print();
 	}
 
 	for(int t = 1; t < num_steps_; t++)
@@ -185,12 +189,13 @@ int		Universe::solve()
 			if(1)
 			{
 				number_removed += f.reduce();
-				pairs.init(f);
+			
+				refresh_pairs(f);
 			}
 		}
 
 		/* Execute "step_pairs" kernel */
-		step_pairs(f.b(0), &pairs.pairs_[0], pairs.size());
+		step_pairs(f.b(0), &_M_pairs.pairs_[0], _M_pairs.size());
 
 
 
@@ -201,7 +206,7 @@ int		Universe::solve()
 
 		number_escaped = 0;
 
-		step_bodies(f.b(0), &pairs.pairs_[0], pairs.map_.ptr(), dt, f.size(), velocity_ratio, mass_center, mass, &number_escaped);
+		step_bodies(f.b(0), &_M_pairs.pairs_[0], _M_pairs.map_.ptr(), dt, f.size(), velocity_ratio, mass_center, mass, &number_escaped);
 
 		if(0)
 		{
@@ -222,7 +227,7 @@ int		Universe::solve()
 		}
 
 		/* Execute "step_collisions" kernel */
-		step_collisions(f.b(0), &pairs.pairs_[0], &flag_multi_coll, &nc, pairs.size());
+		step_collisions(f.b(0), &_M_pairs.pairs_[0], &flag_multi_coll, &nc, _M_pairs.size());
 
 		/* Execute "clear_bodies_num_collisions" kernel */
 		clear_bodies_num_collisions(f.b(0), f.size());
@@ -232,7 +237,12 @@ int		Universe::solve()
 			puts("resolve multi_coll");
 
 			/* Execute "step_collisions" kernel on a single thread to resolve bodies with multiple collisions */
-			step_collisions(f.b(0), &pairs.pairs_[0], &flag_multi_coll, &nc, pairs.size());
+			step_collisions(
+					f.b(0),
+					&_M_pairs.pairs_[0],
+					&flag_multi_coll,
+					&nc,
+					_M_pairs.size());
 		}
 
 		alive -= nc;
@@ -288,29 +298,6 @@ void	Universe::add_frame(unsigned int n)
 	frames_.frames_.emplace_back();
 	frames_.frames_.back().alloc(n);
 }
-void	Universe::rw_header()
-{
-	//operator&(num_bodies_);
-	operator&(num_steps_);
-	operator&(first_step_);
-}
-void	Universe::operator&(int i)
-{
-	assert(pfile_);
-	if(filemode_ == FILEMODE_WRITE)
-	{
-		fwrite(&i, sizeof(int), 1, pfile_);
-	}
-	else if(filemode_ == FILEMODE_READ)
-	{
-		fread(&i, sizeof(int), 1, pfile_);
-	}
-	else
-	{
-		assert(0);
-	}
-
-}
 std::string	Universe::getFilename()
 {
 	char buffer[8];
@@ -329,38 +316,36 @@ void		Universe::write()
 {
 	auto filename = getFilename();
 
-	pfile_ = fopen(filename.c_str(), "w");
-	if(pfile_ == 0)
+	FILE * pfile = fopen(filename.c_str(), "w");
+	if(pfile == 0)
 	{
 		perror("fopen");
 		exit(1);
 	}
-	filemode_ = FILEMODE_WRITE;
 
-	fwrite(&num_steps_, sizeof(int), 1, pfile_);
-	fwrite(&first_step_, sizeof(int), 1, pfile_);
+	fwrite(&num_steps_, sizeof(int), 1, pfile);
+	fwrite(&first_step_, sizeof(int), 1, pfile);
 
-	fwrite(&name_, 1, NAME_SIZE, pfile_);
+	fwrite(&name_, 1, NAME_SIZE, pfile);
 
 	printf("name = %s\n", name_);
 
-	frames_.write(pfile_);
+	frames_.write(pfile);
 	//fwrite(b(0), sizeof(Body), num_steps_ * num_bodies_, pfile_);
 
-	fclose(pfile_);
-	pfile_ = 0;
+	fclose(pfile);
 }
 int		Universe::read(std::string fileName, int num_steps)
 {
-	pfile_ = fopen(fileName.c_str(), "r");
-	if(!pfile_) return 1;
+	FILE * pfile = fopen(fileName.c_str(), "r");
+	if(!pfile) return 1;
 
 	int num_steps_old;
 
-	fread(&num_steps_old, sizeof(int), 1, pfile_);
-	fread(&first_step_, sizeof(int), 1, pfile_);
+	fread(&num_steps_old, sizeof(int), 1, pfile);
+	fread(&first_step_, sizeof(int), 1, pfile);
 
-	fread(&name_, 1, NAME_SIZE, pfile_);
+	fread(&name_, 1, NAME_SIZE, pfile);
 
 	printf("name = %s\n", name_);
 
@@ -375,7 +360,7 @@ int		Universe::read(std::string fileName, int num_steps)
 		// temporary frames
 		//Body * bodies = new Body[num_bodies_ * num_steps_old * sizeof(Body)];
 		Frames frames;
-		frames.read(pfile_);
+		frames.read(pfile);
 
 		// copy last to first
 		//memcpy(b(0), bodies + (num_steps_old - 1) * num_bodies_, num_bodies_ * sizeof(Body));
@@ -389,13 +374,12 @@ int		Universe::read(std::string fileName, int num_steps)
 	{
 		num_steps_ = num_steps_old;
 
-		frames_.read(pfile_);
+		frames_.read(pfile);
 
 		alloc(size(0), num_steps_);
 	}
 
-	fclose(pfile_);
-	pfile_ = 0;
+	fclose(pfile);
 	return 0;
 }
 int		Universe::mass_center(int t, float * x, float * s, float * m)

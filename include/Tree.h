@@ -1,15 +1,20 @@
+#ifndef TREE_HPP
+#define TREE_HPP
+
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
 
 #include "decl.hpp"
+#include <BranchPair.hpp>
+#include <Map.hpp>
 
 #define DIM 3
 #define SPLIT 8
 #define COOR_BYTE_LEN 2
 #define BTREE_LEAF_SIZE 32
-#define BTREE_MAX_BRANCHES 4096
-
+#define BTREE_MAX_BRANCHES 1024
+#define BTREE_MAX_BRANCH_PAIRS (BTREE_MAX_BRANCHES * (BTREE_MAX_BRANCHES - 1) / 2)
 
 /**
  * coordinate in binary-tree
@@ -51,19 +56,19 @@ struct Branch
 	/**
 	 * form child branches and divide elements between them
 	 */
-	void			fiss(Branches & branches, Body * bodies);
+	void			fiss(Branches & branches, Body const * bodies);
 	/**
 	 * move child branch elements to my elements and destroy branches
 	 */
 	void			fuse();
-	int			add(Branches & branches, Body * bodies, unsigned int body_idx);
-	int			add_to_children(Branches & branches, Body * bodies, unsigned int body_idx);
+	int			add(Branches & branches, Body const * bodies, unsigned int body_idx);
+	int			add_to_children(Branches & branches, Body const * bodies, unsigned int body_idx);
 	void			remove(unsigned int i);
 	unsigned int		get_child_branch_index(
 			unsigned int i,
 			unsigned int j,
 			unsigned int k);
-	void			mass_center(Branches * branches, Body * bodies, float * x, float * m);
+	void			mass_center(Branches * branches, Body * bodies, float * x, float * m) const;
 	// parent branch idx in Branches
 	unsigned int		_M_parent_idx;
 	// branch indicies
@@ -101,8 +106,9 @@ struct Branch
 struct Branches
 {
 	Branches();
-	void			init(Frame & f);
-	void			init(Frame & f, glm::vec3 x0, glm::vec3 x1);
+	void			init(Frame const & f);
+	void			init(Frame const & f, glm::vec3 x0, glm::vec3 x1);
+	void			init_pairs();
 	Branch &		get_branch(Coor const & coor);
 	Branch &		get_branch(unsigned int i);
 	int			alloc(Branch & branch);
@@ -110,11 +116,16 @@ struct Branches
 
 	Branch			_M_branches[BTREE_MAX_BRANCHES];
 	unsigned int		_M_num_branches;
+
+	BranchPair		_M_branch_pairs[BTREE_MAX_BRANCH_PAIRS];
+	unsigned int		_M_num_branch_pairs;
+
+	Map			_M_map;
 };
 
 
 
 
 
-
+#endif
 

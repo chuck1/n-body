@@ -1,8 +1,10 @@
 #include <cmath>
 #include <cstdio>
-#include "body.h"
-#include "kernel.h"
 #include <cassert>
+
+#include "Pair.hpp"
+#include "Body.hpp"
+#include "kernel.h"
 
 void step_bodies(
 		struct Body * bodies,

@@ -4,6 +4,7 @@
 
 struct Frame;
 struct Body;
+class Branches;
 
 #endif
 

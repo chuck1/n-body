@@ -1,7 +1,9 @@
-#include "body.h"
 #include <math.h>
 #include <cassert>
 #include <cstdio>
+
+#include "Pair.hpp"
+#include "Body.hpp"
 
 int	get_num_groups(int)
 {

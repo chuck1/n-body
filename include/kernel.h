@@ -22,6 +22,11 @@ void step_pairs(
 		struct Pair * pairs,
 		unsigned int num_pairs
 	       );
+void step_branch_pairs(
+		struct Body * bodies,
+		struct Pair * pairs,
+		unsigned int num_pairs
+	       );
 void step_collisions(
 		struct Body* bodies, /* readonly */
 		struct Pair* pairs,

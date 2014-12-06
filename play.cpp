@@ -6,21 +6,18 @@
 #include "universe.h"
 #include "Tree.h"
 
-std::vector<Universe*> u;
-unsigned int universe_index = 0;
+static std::vector<Universe*> u;
+static unsigned int universe_index = 0;
 
-glm::vec3 body_center;
-glm::vec3 body_extent;
-glm::vec3 body_std;
+static glm::vec3 body_center;
+static glm::vec3 body_extent;
+static glm::vec3 body_std;
 
-std::vector<std::string> fileNames;
+static std::vector<std::string> fileNames;
 
-void print(glm::vec3 v)
-{
-	printf("%f %f %f\n", v.x, v.y, v.z);
-}
 
-int ct = 0;
+
+static int ct = 0;
 
 
 // glut_example.c
@@ -82,7 +79,7 @@ static struct timeval last_idle_time;
 static float g_yawScale = 100.0;
 static float g_pitchScale = 100.0;
 
-void DrawCubeFace(float fSize)
+inline void DrawCubeFace(float fSize)
 {
 	fSize /= 2.0;
 	glBegin(GL_QUADS);
@@ -93,7 +90,7 @@ void DrawCubeFace(float fSize)
 	glEnd();
 }
 
-void DrawCubeWithTextureCoords (float fSize)
+inline void DrawCubeWithTextureCoords (float fSize)
 {
 	glPushMatrix();
 	DrawCubeFace (fSize);
@@ -110,7 +107,7 @@ void DrawCubeWithTextureCoords (float fSize)
 	glPopMatrix();
 }
 
-void RenderObjects(void)
+inline void RenderObjects(void)
 {
 	float colorBronzeDiff[4] = { 0.8, 0.6, 0.0, 1.0 };
 	float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
@@ -149,7 +146,7 @@ Branches branches;
 static glm::vec3 tree_x0(-10000.0f);
 static glm::vec3 tree_x1(10000.0f);
 
-void RenderObjects2(int t)
+inline void RenderObjects2(int t)
 {
 	Frame & f = u[universe_index]->get_frame(t);
 
@@ -199,7 +196,7 @@ void RenderObjects2(int t)
 		}
 	}
 }
-void display(void)
+inline void display()
 {
 	// Clear frame buffer and depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -268,7 +265,7 @@ void display(void)
 	// Make sure changes appear onscreen
 	glutSwapBuffers();
 }
-void		reset_proj()
+inline void		reset_proj()
 {
 	g_farPlane = 2.0 * g_fViewDistance;
 
@@ -278,14 +275,14 @@ void		reset_proj()
 	gluPerspective(65.0, (float)g_Width / g_Height, g_nearPlane, g_farPlane);
 	glMatrixMode(GL_MODELVIEW);
 }
-void reshape(GLint width, GLint height)
+inline void reshape(GLint width, GLint height)
 {
 	g_Width = width;
 	g_Height = height;
 
 	reset_proj();
 }
-void InitGraphics(void)
+inline void InitGraphics(void)
 {
 	//int width, height;
 	//int nComponents;
@@ -317,7 +314,7 @@ void InitGraphics(void)
 	   */
 }
 
-void MouseButton(int button, int state, int x, int y)
+inline void MouseButton(int button, int state, int x, int y)
 {
 	// Respond to mouse button presses.
 	// If button1 pressed, mark this state so we know in motion function.
@@ -348,7 +345,7 @@ void MouseButton(int button, int state, int x, int y)
 
 }
 
-void MouseMotion(int x, int y)
+inline void MouseMotion(int x, int y)
 {
 	// If button1 pressed, zoom in/out if mouse is moved up/down.
 
@@ -369,7 +366,7 @@ void MouseMotion(int x, int y)
 	}
 }
 
-void AnimateScene(void)
+inline void AnimateScene(void)
 {
 	float dt;
 
@@ -396,7 +393,7 @@ void AnimateScene(void)
 	glutPostRedisplay();
 }
 
-void SelectFromMenu(int idCommand)
+inline void SelectFromMenu(int idCommand)
 {
 	switch (idCommand)
 	{
@@ -432,8 +429,7 @@ void SelectFromMenu(int idCommand)
 	// Almost any menu selection requires a redraw
 	glutPostRedisplay();
 }
-
-void Keyboard(unsigned char key, int x, int y)
+inline void Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
@@ -473,8 +469,7 @@ void Keyboard(unsigned char key, int x, int y)
 			break;
 	}
 }
-
-int BuildPopupMenu (void)
+inline int BuildPopupMenu (void)
 {
 	int menu;
 

@@ -61,45 +61,6 @@ struct Body
 
 };
 
-struct Map
-{
-	void			alloc(unsigned int n)
-	{
-		pair_ = new unsigned int[n*n];
-	}
-	unsigned int *		ptr()
-	{
-		return pair_;
-	}
-	unsigned int *		pair_; //[NUM_BODIES * NUM_BODIES];
-};
-
-struct Pair
-{
-	Pair(): b0(0), b1(0), u{0,0,0}, d(0), f(0), _M_alive(1), _M_collision(0) {}
-	Pair(Pair const & p)
-	{
-		assert(0);
-	}
-	Pair &		operator=(Pair const & p)
-	{
-		assert(0);
-	}
-
-	unsigned int	b0; // 4
-	unsigned int	b1; // 4
-
-	float		u[3]; // 12
-	float		d; // 4
-	float		f; // 4
-
-	// 28
-
-	unsigned char	_M_alive; // 4
-	unsigned char	_M_collision; // 4
-
-	// 36
-
-};
 
 #endif
+
