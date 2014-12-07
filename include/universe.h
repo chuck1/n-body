@@ -7,6 +7,8 @@
 #include <cassert>
 #include <string>
 #include <vector>
+#include <memory>
+
 #include <glm/glm.hpp>
 
 #include "Body.hpp"
@@ -33,22 +35,22 @@ struct Universe
 {
 	public:
 		Universe();
-		Body*			b(int t);
-		Body*			b(int t, int i);
-		int			solve();
-		void			alloc(int num_bodies, int num_steps);
-		int			mass_center(int t, float * x, float * s, float * m);
-		void			write();
-		int			read(std::string fileName = std::string("data.dat"), int num_steps = 0);
-		void			stats();
-		unsigned int		count_alive(int t);
-		unsigned int		count_dead(int t);
-		void			add_frame(unsigned int n);
-		Frame &			get_frame(int t);
-		unsigned int		size(unsigned int t);
-		std::string		getFilename();
-		void			refresh_pairs(Frame const & f);
-
+		Body*				b(int t);
+		Body*				b(int t, int i);
+		int				solve();
+		void				alloc(int num_bodies, int num_steps);
+		int				mass_center(int t, float * x, float * s, float * m);
+		void				write();
+		int				read(std::string fileName = std::string("data.dat"), int num_steps = 0);
+		void				stats();
+		unsigned int			count_alive(int t);
+		unsigned int			count_dead(int t);
+		void				add_frame(unsigned int n);
+		Frame &				get_frame(int t);
+		unsigned int			size(unsigned int t);
+		std::string			getFilename();
+		void				refresh_pairs(Frame & f);
+		std::shared_ptr<Branches>	branches();
 	public:
 		Frames				frames_;
 
@@ -64,7 +66,7 @@ struct Universe
 		std::vector<glm::vec3>		mass_center_;
 		
 		Pairs				_M_pairs;
-		Branches			_M_branches;
+		std::shared_ptr<Branches>	_M_branches;
 };
 
 

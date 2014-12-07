@@ -14,7 +14,7 @@
 float timestep = 1.0;
 float mass = 1e6;
 unsigned int num_steps = 100;
-unsigned int num_bodies = 128;
+unsigned int num_bodies = 256;
 float width = 1000.0;
 
 // 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384
@@ -46,6 +46,9 @@ int		info_problem()
 	printf("%32s = %i\n", "num bodies", num_bodies);
 	printf("%32s = %i\n", "bodies per group", num_bodies / NUM_GROUPS);
 	printf("%32s = %i\n", "bodies per work item", num_bodies / NUM_GROUPS / LOCAL_SIZE);
+	printf("%32s = %i\n", "sizeof(Universe)", (int)sizeof(Universe));
+	printf("%32s = %i\n", "sizeof(Branch)", (int)sizeof(Branch));
+	printf("%32s = %i\n", "sizeof(Branches)", (int)sizeof(Branches));
 	printf("%32s = %i\n", "sizeof(Body)", (int)sizeof(Body));
 	printf("%32s = %i\n", "sizeof(Pair)", (int)sizeof(Pair));
 	printf("%32s = %i\n", "sizeof(Map)", (int)sizeof(Map));
@@ -84,11 +87,12 @@ int		main(int ac, char ** av)
 {
 	puts("Create Universe");
 
-	signal(SIGINT, signal_callback);
-	
+	//signal(SIGINT, signal_callback);
+
+	info_problem();
 	
 	Universe* uni = new Universe;
-
+	
 	if(ac == 2)
 	{
 		uni->read(av[1], num_steps);

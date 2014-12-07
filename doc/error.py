@@ -11,10 +11,10 @@ def w(d, a):
 
 d = 1.0
 
-a = np.linspace(0.01, 0.2, 100)
+a = np.linspace(0.01, 0.15, 100)
 
 pl.plot(a, e(d, w(d, a)))
-pl.show()
 
+pl.show()
 
 

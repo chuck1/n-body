@@ -1,10 +1,13 @@
 
+#include <decl.hpp>
+
 int	get_num_groups(int);
 int	get_group_id(int);
 int	get_local_id(int);
 int	get_local_size(int);
 int	get_global_size(int);
 float	rsqrt(float);
+
 void step_bodies(
 		struct Body * bodies,
 		struct Pair * pairs,
@@ -34,8 +37,19 @@ void step_collisions(
 		unsigned int * nc,
 		unsigned int num_bodies
 		);
-void clear_bodies_num_collisions(
+void			clear_bodies_num_collisions(
 		struct Body * bodies,
 		unsigned int num_bodies
 		);
+void			update_branches(
+		Branches * branches,
+		Body * bodies
+		);
+void			step_branchpairs(
+		Branches * branches,
+		Body * bodies
+		);
+
+
+
 

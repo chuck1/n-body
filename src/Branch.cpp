@@ -3,18 +3,25 @@
 #include "Branch.hpp"
 #include "Branches.hpp"
 #include "Body.hpp"
+#include <free.hpp>
+#include <debug.hpp>
+
 
 Branch::Branch(): _M_branches{0,0,0,0,0,0,0,0}, _M_num_elements(0), _M_flag(FLAG_IS_LEAF)
 {
-	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
+	if(DEBUG_BRANCH) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 }
 Branch::Branch(Branch && b):
+	_M_idx(b._M_idx),
+	_M_parent_idx(b._M_parent_idx),
+	_M_level(b._M_level),
 	_M_num_elements(b._M_num_elements),
 	_M_x0_glm(b._M_x0_glm),
 	_M_x1_glm(b._M_x1_glm),
 	_M_flag(b._M_flag)
 {
-	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
+	if(DEBUG_BRANCH) printf("%s %p\n", __PRETTY_FUNCTION__, this);
+
 	memcpy(_M_branches, b._M_branches, SPLIT * sizeof(unsigned int));
 	memcpy(_M_elements, b._M_elements, BTREE_LEAF_SIZE * sizeof(unsigned int));
 }
@@ -22,19 +29,27 @@ Branch::Branch(unsigned int idx, unsigned int parent_idx, unsigned int level, gl
 	_M_idx(idx),
 	_M_parent_idx(parent_idx),
 	_M_level(level),
-	_M_branches{0,0,0,0,0,0,0,0}, _M_num_elements(0), _M_x0_glm(x0), _M_x1_glm(x1), _M_flag(FLAG_IS_LEAF)
+	_M_branches{0,0,0,0,0,0,0,0},
+	_M_num_elements(0),
+	_M_x0_glm(x0),
+	_M_x1_glm(x1),
+	_M_flag(FLAG_IS_LEAF)
 {
-	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
+	if(DEBUG_BRANCH) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 }
 Branch &	Branch::operator=(Branch const & b)
 {
-	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
+	if(DEBUG_BRANCH) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 
+	_M_idx = b._M_idx;
+	_M_parent_idx = b._M_parent_idx;
+	_M_level = b._M_level;
 	_M_num_elements = b._M_num_elements;
 	_M_x0_glm = b._M_x0_glm;
 	_M_x1_glm = b._M_x1_glm;
 	_M_flag = b._M_flag;
-	memcpy(_M_branches, b._M_branches, SPLIT * sizeof(unsigned int));
+
+	memcpy(_M_branches, b._M_branches, 8 * sizeof(unsigned int));
 	memcpy(_M_elements, b._M_elements, BTREE_LEAF_SIZE * sizeof(unsigned int));
 
 	return *this;
@@ -60,19 +75,30 @@ void			Branch::print(Branches & b, std::string pre)
  */
 void			Branch::fiss(Branches & branches, Body const * bodies)
 {
-	//printf("%s %p\n", __PRETTY_FUNCTION__, this);
+	if(DEBUG_BRANCH || 0) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 
 	_M_flag &= ~FLAG_IS_LEAF;
 
 	assert(!(_M_flag & FLAG_IS_LEAF));
 
 	branches.alloc(*this);
-	
 
 	// distribute elements among children
 	for(unsigned int i = 0; i < _M_num_elements; i++)
 	{
-		add_to_children(branches, bodies, i);
+		int ret = add_to_children(branches, bodies, _M_elements[i]);
+
+		if(ret)
+		{
+			printf("not addded\n");
+
+			::print(_M_x0);
+			::print(_M_x1);
+
+			::print(bodies[_M_elements[i]].x);
+
+			abort();
+		}
 	}
 	_M_num_elements = 0;
 }
@@ -84,38 +110,37 @@ void			Branch::fuse()
 }
 int			Branch::add(Branches & branches, Body const * bodies, unsigned int body_idx)
 {
-
 	Body const * b = bodies + body_idx;
 
 	if(_M_flag & FLAG_IS_LEAF)
 	{
-		//printf("add to this\n");
+		if(DEBUG_BRANCH) printf("add to this\n");
 
-		if(!glm::all(glm::greaterThan(b->x_glm, _M_x0_glm)))
+		if(!glm::all(glm::greaterThanEqual(b->x_glm, _M_x0_glm)))
 		{
-		/*
-			printf("(%12.1f%12.1f%12.1f) < (%12.1f%12.1f%12.1f)\n",
-					b->x_glm.x,
-					b->x_glm.y,
-					b->x_glm.z,
-					_M_x0_glm.x,
-					_M_x0_glm.y,
-					_M_x0_glm.z);
-			*/		
+			/*
+			   printf("(%12.1f%12.1f%12.1f) < (%12.1f%12.1f%12.1f)\n",
+			   b->x_glm.x,
+			   b->x_glm.y,
+			   b->x_glm.z,
+			   _M_x0_glm.x,
+			   _M_x0_glm.y,
+			   _M_x0_glm.z);
+			   */		
 			return 1;
 		}
 
 		if(!glm::all(glm::lessThan(b->x_glm, _M_x1_glm)))
 		{
 			/*
-			printf("(%12.1f%12.1f%12.1f) > (%12.1f%12.1f%12.1f)\n",
-					b->x_glm.x,
-					b->x_glm.y,
-					b->x_glm.z,
-					_M_x1_glm.x,
-					_M_x1_glm.y,
-					_M_x1_glm.z);
-			*/		
+			   printf("(%12.1f%12.1f%12.1f) > (%12.1f%12.1f%12.1f)\n",
+			   b->x_glm.x,
+			   b->x_glm.y,
+			   b->x_glm.z,
+			   _M_x1_glm.x,
+			   _M_x1_glm.y,
+			   _M_x1_glm.z);
+			   */		
 			return 1;
 		}
 
@@ -146,14 +171,16 @@ int			Branch::add(Branches & branches, Body const * bodies, unsigned int body_id
 }
 int			Branch::add_to_children(Branches & branches, Body const * bodies, unsigned int body_idx)
 {
-	//printf("add_to_children\n");
+	if(DEBUG_BRANCH) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 
 	int ret;
 
-	for(unsigned int i = 0; i < SPLIT; i++)
+	for(unsigned int i = 0; i < 8; i++)
 	{
+		assert(_M_branches[i] != _M_idx);
+
 		Branch & b = branches.get_branch(_M_branches[i]);
-		
+
 		assert(&b != this);
 
 		ret = b.add(branches, bodies, body_idx);
@@ -176,6 +203,10 @@ unsigned int		Branch::get_child_branch_index(
 	assert(j<2);
 	assert(k<2);
 	return _M_branches[i * 4 + j * 2 + k];
+}
+void			Branch::refresh_mass(Branches * branches, Body * bodies)
+{
+	mass_center(branches, bodies, _M_mc, &_M_mass);
 }
 void			Branch::mass_center(Branches * branches, Body * bodies, float * x, float * m) const
 {
@@ -214,11 +245,11 @@ void			Branch::mass_center(Branches * branches, Body * bodies, float * x, float 
 		{
 			float x_temp[3];
 			float m_temp;
-			
+
 			Branch & b = branches->get_branch(_M_branches[i]);
-		
+
 			b.mass_center(branches, bodies, x_temp, &m_temp);
-			
+
 			x[0] += x_temp[0];
 			x[1] += x_temp[1];
 			x[2] += x_temp[2];
@@ -235,6 +266,42 @@ void			Branch::mass_center(Branches * branches, Body * bodies, float * x, float 
 
 	}
 }
+void			Branch::send_to_parent(Branches * branches, Body * bodies, unsigned int i)
+{
+	unsigned int body_idx = _M_elements[i];
+
+	if(_M_flag & FLAG_HAS_PARENT)
+	{
+		Branch & parent = branches->_M_branches[_M_parent_idx];
+
+		assert(parent._M_num_elements < BTREE_LEAF_SIZE);
+	
+		// add to parent
+		parent._M_elements[parent._M_num_elements] = body_idx;
+		parent._M_num_elements++;
+	}
+	else // body is outside octree, kill it
+	{
+		bodies[body_idx].alive = 0;
+	}
+
+	erase(branches, i);
+}
+void			Branch::erase(Branches * branches, unsigned int i)
+{
+	assert(_M_num_elements > i);
+
+	// remove from this
+	_M_elements[i] = _M_elements[_M_num_elements - 1];
+	_M_num_elements--;
+}
+unsigned int		Branch::count_bodies() const
+{
+	return _M_num_elements;
+}
+
+
+
 
 
 

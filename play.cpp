@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "universe.h"
+#include <free.hpp>
 #include "Branches.hpp"
 
 static std::vector<Universe*> u;
@@ -143,8 +144,8 @@ inline void RenderObjects(void)
 }
 
 Branches branches;
-static glm::vec3 tree_x0(-10000.0f);
-static glm::vec3 tree_x1(10000.0f);
+static glm::vec3 tree_x0(-5000.0f);
+static glm::vec3 tree_x1( 5000.0f);
 
 inline void RenderObjects2(int t)
 {
@@ -171,7 +172,10 @@ inline void RenderObjects2(int t)
 
 	if(1)
 	{	
-		if(t == 0) branches.init(f, tree_x0, tree_x1);
+		//if(t == 0)
+		{
+			branches.init(f, tree_x0, tree_x1);
+		}
 
 		glColor3f(1.0,1.0,1.0);
 
@@ -185,6 +189,12 @@ inline void RenderObjects2(int t)
 				{
 					glm::vec3 c = (b._M_x0_glm + b._M_x1_glm) * 0.5f;
 					glm::vec3 w = b._M_x1_glm - b._M_x0_glm;
+
+					if(0)
+					{
+						print(c);
+						print(w);
+					}
 
 					glPushMatrix();
 					glTranslatef(c.x, c.y, c.z);

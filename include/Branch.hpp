@@ -39,7 +39,8 @@ struct Branch
 {
 	enum
 	{
-		FLAG_IS_LEAF = 1 << 0,
+		FLAG_IS_LEAF    = 1 << 0,
+		FLAG_HAS_PARENT = 1 << 1,
 	};
 	
 	Branch();
@@ -58,11 +59,17 @@ struct Branch
 	int			add(Branches & branches, Body const * bodies, unsigned int body_idx);
 	int			add_to_children(Branches & branches, Body const * bodies, unsigned int body_idx);
 	void			remove(unsigned int i);
+	// move body from this to parent
+	void			erase(Branches * branches, unsigned int i);
+	void			send_to_parent(Branches * branches, Body * bodies, unsigned int i);
+
 	unsigned int		get_child_branch_index(
 			unsigned int i,
 			unsigned int j,
 			unsigned int k);
 	void			mass_center(Branches * branches, Body * bodies, float * x, float * m) const;
+	void			refresh_mass(Branches * branches, Body * bodies);
+	unsigned int		count_bodies() const;
 	/***/
 	unsigned int		_M_idx;
 	// parent branch idx in Branches

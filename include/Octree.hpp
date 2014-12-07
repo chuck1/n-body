@@ -4,10 +4,12 @@
 #define DIM 3
 #define SPLIT 8
 #define COOR_BYTE_LEN 2
+
 #define BTREE_LEAF_SIZE 16
+
 #define BTREE_MAX_BRANCHES 1024
 #define BTREE_MAX_BRANCH_PAIRS (BTREE_MAX_BRANCHES * (BTREE_MAX_BRANCHES - 1) / 2)
-#define OCTREE_LEVELS (16)
+//#define OCTREE_LEVELS (16)
 
 
 #endif

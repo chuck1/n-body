@@ -32,18 +32,10 @@ Body*		Universe::b(int t, int i)
 }
 void		Universe::alloc(int num_bodies, int num_steps)
 {
-	//num_bodies_ = num_bodies;
 	num_steps_ = num_steps;
-	//num_pairs_ = (num_bodies * (num_bodies - 1)) / 2;
 
 	/* Allocate bodies */
 	add_frame(num_bodies);
-
-	//bodies_.resize(num_bodies_ * num_steps_);
-
-	/* Allocate and initialize map and pairs */
-	//init_map_and_pairs(num_bodies, map_, pairs_);
-
 }
 unsigned int	count_alive(Body * b, int n)
 {
@@ -80,7 +72,7 @@ unsigned int	Universe::count_dead(int t)
 }
 void		print_header()
 {
-	printf("%12s%16s%16s%16s%16s%16s%16s%12s%16s\n",
+	printf("%12s%16s%16s%16s%16s%16s%16s%12s%12s%12s\n",
 			"dur real",
 			"sim time",
 			"step",
@@ -89,12 +81,17 @@ void		print_header()
 			"dead",
 			"temp_dead",
 			"eta",
-			"num escaped");
+			"num escaped",
+			"branches");
 }
-void		Universe::refresh_pairs(Frame const & f)
+void		Universe::refresh_pairs(Frame & f)
 {
+	float w = 10000;
 	_M_pairs.init(f);
-	_M_branches.init(f);
+
+	assert(_M_branches);
+
+	_M_branches->init(f, glm::vec3(-w * 0.5), glm::vec3(w * 0.5));
 }
 int		Universe::solve()
 {
@@ -102,6 +99,8 @@ int		Universe::solve()
 
 	//Body* bodies = new Body[num_bodies_];
 	//memcpy(bodies, b(0), num_bodies_ * sizeof(Body));
+
+	_M_branches.reset(new Branches);
 
 	Frame f = get_frame(0);
 	unsigned int number_removed = f.reduce();
@@ -140,16 +139,14 @@ int		Universe::solve()
 
 	unsigned int number_escaped = 0;
 
-	if(1)
+	if(0)
 	{
-		_M_branches.print();
+		branches()->print();
 	}
 
 	for(int t = 1; t < num_steps_; t++)
 	{
-
 		step++;
-
 
 		time_sim += dt;
 
@@ -166,7 +163,7 @@ int		Universe::solve()
 				0.0 :
 				(duration_real / (float)(t-1) * (float)(num_steps_ - t));
 
-			printf("%12.1f%16f%16i%16i%16i%16i%16i%12.1f%16i\n",
+			printf("%12.1f%16f%16i%16i%16i%16i%16i%12.1f%12i%12i\n",
 					duration_real,
 					time_sim,
 					step,
@@ -175,29 +172,47 @@ int		Universe::solve()
 					dead,
 					temp_dead,
 					eta,
-					number_escaped
+					number_escaped,
+					branches()->_M_num_branches
 			      );
 		}
 
 		if(temp_dead >= one_tenth)
 		{
-			//printf("one tenth\n");
-
 			one_tenth = alive / 10;
 			temp_dead = 0;
 
-			if(1)
-			{
-				number_removed += f.reduce();
-			
-				refresh_pairs(f);
-			}
+			number_removed += f.reduce();
+
+			refresh_pairs(f);
 		}
 
+		/*
+		 * Update Branches
+		 */
+		update_branches(branches().get(), f.b(0));
+
+		if(0) branches()->print();
+	
+		if(not(branches()->count_bodies() == f.count_alive()))
+		{
+			printf("_M_branches.count_bodies() = %i f.count_alive() = %i\n", branches()->count_bodies(), f.count_alive());
+			abort();
+		}
+
+		branches()->init_pairs();
+
+		branches()->refresh_mass(branches().get(), f.b(0));
+
 		/* Execute "step_pairs" kernel */
-		step_pairs(f.b(0), &_M_pairs.pairs_[0], _M_pairs.size());
-
-
+		if(0)
+		{
+			step_pairs(f.b(0), &_M_pairs.pairs_[0], _M_pairs.size());
+		}
+		else
+		{
+			step_branchpairs(branches().get(), f.b(0)); 
+		}
 
 		/* Execute "step_bodies" kernel */
 		f.mass_center(mass_center, 0, &mass);
@@ -253,10 +268,12 @@ int		Universe::solve()
 		/* Reset flag_multi_coll */
 		flag_multi_coll = 0;
 
-		if((number_removed + f.count_dead()) != dead)
-		{
-			printf("1: %i %i %i\n", number_removed, f.count_dead(), dead);
-			exit(1);
+		if(0) {
+			if((number_removed + f.count_dead()) != dead)
+			{
+				printf("1: %i %i %i\n", number_removed, f.count_dead(), dead);
+				exit(1);
+			}
 		}
 
 		/* Store data for timestep */
@@ -273,22 +290,19 @@ int		Universe::solve()
 
 		assert(frames_.frames_[t].bodies_.size() == f.bodies_.size());
 
-		if(count_dead(t) != f.count_dead())
-		{
-			printf("2: %i %i\n", count_dead(t), f.count_dead());
-			exit(1);
+		if(0) {
+			if(count_dead(t) != f.count_dead())
+			{
+				printf("2: %i %i\n", count_dead(t), f.count_dead());
+				exit(1);
+			}
+
+			if((number_removed + count_dead(t)) != dead)
+			{
+				printf("3: %i %i\n", (number_removed + count_dead(t)), dead);
+				exit(1);
+			}
 		}
-
-
-		if((number_removed + count_dead(t)) != dead)
-		{
-			printf("3: %i %i\n", (number_removed + count_dead(t)), dead);
-			exit(1);
-		}
-
-		//f.print();
-
-
 	}
 
 	return 0;
@@ -331,7 +345,6 @@ void		Universe::write()
 	printf("name = %s\n", name_);
 
 	frames_.write(pfile);
-	//fwrite(b(0), sizeof(Body), num_steps_ * num_bodies_, pfile_);
 
 	fclose(pfile);
 }
@@ -352,23 +365,16 @@ int		Universe::read(std::string fileName, int num_steps)
 	if(num_steps > 0)
 	{
 		// Read in order to continue simulation
-
 		num_steps_ = num_steps;
 
 		first_step_ += num_steps_;
 
 		// temporary frames
-		//Body * bodies = new Body[num_bodies_ * num_steps_old * sizeof(Body)];
 		Frames frames;
 		frames.read(pfile);
 
 		// copy last to first
-		//memcpy(b(0), bodies + (num_steps_old - 1) * num_bodies_, num_bodies_ * sizeof(Body));
-
-		//get_frame(0) = frames.frames_[num_steps_old - 1];
 		frames_.frames_.push_back(frames.frames_[num_steps_old - 1]);
-
-		//alloc(size(0), num_steps_);
 	}
 	else
 	{
@@ -398,16 +404,18 @@ void		Universe::stats()
 	for(int t = 0; t < num_steps_; t++)
 	{
 		mass_center(t, &mass_center_[t].x, s, &m);
-
-		//print(s);
 	}
 }
-unsigned int	Universe::size(unsigned int t)
+unsigned int			Universe::size(unsigned int t)
 {
 	assert(t < frames_.frames_.size());
 	return frames_.frames_[t].bodies_.size();
 }
-
+std::shared_ptr<Branches>	Universe::branches()
+{
+	assert(_M_branches);
+	return _M_branches;
+}
 
 
 

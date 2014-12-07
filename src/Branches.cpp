@@ -2,8 +2,10 @@
 
 #include "Branch.hpp"
 #include "universe.h"
+#include <free.hpp>
+#include <debug.hpp>
 
-Branches::Branches():_M_num_branches(0)
+Branches::Branches(): _M_num_branches(0), _M_lowest_level(0)
 {
 	//memset(_M_num_at_level, 0, OCTREE_LEVELS * sizeof(unsigned int));
 }
@@ -11,7 +13,7 @@ void			Branches::print()
 {
 	_M_branches[0].print(*this);
 }
-void			Branches::init(Frame const & f)
+void			Branches::init(Frame & f)
 {
 	//printf("Branches::init f.size() = %i\n", f.size());
 
@@ -48,7 +50,7 @@ void			Branches::level_insert(unsigned int idx, unsigned int level)
 	_M_num_at_level[level]++;
 }
 */
-void			Branches::init(Frame const & f, glm::vec3 x0, glm::vec3 x1)
+void			Branches::init(Frame & f, glm::vec3 x0, glm::vec3 x1)
 {
 	_M_num_branches = 1;
 	
@@ -58,14 +60,27 @@ void			Branches::init(Frame const & f, glm::vec3 x0, glm::vec3 x1)
 
 	for(unsigned int i = 0; i < f.size(); i++)
 	{
-		//printf("add body index %i\n", i);
+		if(DEBUG_BRANCHES) printf("add body index %i\n", i);
 
 		ret = _M_branches[0].add(*this, f.b(0), i);
 
 		if(ret)
 		{
-			//printf("not added\n");
-			//abort();
+			printf("not added\n");
+
+			if(0)
+			{
+				print();
+
+				::print(_M_branches[0]._M_x0);
+				::print(_M_branches[0]._M_x1);
+
+				::print(f.b(i)->x);
+
+				abort();
+			}
+
+			f.b(i)->alive = 0;
 		}
 	}
 
@@ -82,14 +97,15 @@ Branch &		Branches::get_branch(unsigned int i)
 }
 int			Branches::alloc(Branch & b)
 {
+	if(DEBUG_BRANCHES) printf("%s %p\n", __PRETTY_FUNCTION__, this);
+
 	assert((_M_num_branches + 8) <= BTREE_MAX_BRANCHES);
-	
+
 	for(unsigned int i = 0; i < 8; i++)
 	{
 		b._M_branches[i] = _M_num_branches;
 		_M_num_branches++;
 	}
-
 
 	glm::vec3 x0;
 	glm::vec3 x1;
@@ -102,7 +118,9 @@ int			Branches::alloc(Branch & b)
 			{
 				unsigned int idx = b.get_child_branch_index(i,j,k);
 
-				Branch & b = get_branch(idx);
+				assert(idx != b._M_idx);
+
+				Branch & c = get_branch(idx);
 
 				if(i == 0)
 				{
@@ -135,21 +153,26 @@ int			Branches::alloc(Branch & b)
 					x1.z = b._M_x1_glm.z;
 				}
 
-				b = Branch(
-						idx,
-						b._M_idx,
-						b._M_level + 1,
-						x0,
-						x1);
+				if(DEBUG_BRANCHES)
+				{
+					::print(x0);
+					::print(x1);
+				}
+
+				c = Branch(idx, b._M_idx, b._M_level + 1, x0, x1);
+				c._M_flag |= Branch::FLAG_HAS_PARENT;
+
+
+				if((b._M_level + 1) > _M_lowest_level) _M_lowest_level = b._M_level + 1;
 			}
 		}
 	}
-
 
 	return 0;
 }
 void			Branches::init_pairs()
 {
+	if(DEBUG_BRANCHES) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 
 	int k = 0;
 
@@ -163,7 +186,6 @@ void			Branches::init_pairs()
 	{
 		for(unsigned int j = i + 1; j < nb; j++)
 		{
-
 			_M_branch_pairs[k].b0 = i;
 			_M_branch_pairs[k].b1 = j;
 
@@ -173,11 +195,25 @@ void			Branches::init_pairs()
 			k++;
 		}
 	}
-
 }
+unsigned int		Branches::count_bodies() const
+{
+	unsigned int c = 0;
 
+	for(unsigned int i = 0; i < _M_num_branches; i++)
+	{
+		c += _M_branches[i].count_bodies();
+	}
 
-
+	return c;
+}
+void			Branches::refresh_mass(Branches * branches, Body * bodies)
+{
+	for(unsigned int i = 0; i < _M_num_branches; i++)
+	{
+		_M_branches[i].refresh_mass(branches, bodies);
+	}
+}
 
 
 
