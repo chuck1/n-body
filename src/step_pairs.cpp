@@ -11,6 +11,8 @@ void step_pairs(
 		    unsigned int num_pairs
 		    )
 {
+	unsigned int count = 0;
+
 	/* work group */
 	int local_block = num_pairs / get_num_groups(0);
 	
@@ -104,6 +106,8 @@ void step_pairs(
 		{
 			float f = 6.67384E-11 * b0->mass * b1->mass / d2;
 
+			count++;
+
 			b0->f[0] -= f * r[0] / d;
 			b0->f[1] -= f * r[1] / d;
 			b0->f[2] -= f * r[2] / d;
@@ -114,4 +118,5 @@ void step_pairs(
 		}
 	}
 
+	printf("count = %i\n", count);
 }

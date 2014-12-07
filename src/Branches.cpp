@@ -7,6 +7,7 @@
 
 Branches::Branches(): _M_num_branches(0), _M_lowest_level(0)
 {
+	if(DEBUG_BRANCHES || 1) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 	//memset(_M_num_at_level, 0, OCTREE_LEVELS * sizeof(unsigned int));
 }
 void			Branches::print()
@@ -161,6 +162,7 @@ int			Branches::alloc(Branch & b)
 
 				c = Branch(idx, b._M_idx, b._M_level + 1, x0, x1);
 				c._M_flag |= Branch::FLAG_HAS_PARENT;
+				c._M_width = glm::length(c._M_x1_glm - c._M_x0_glm);
 
 
 				if((b._M_level + 1) > _M_lowest_level) _M_lowest_level = b._M_level + 1;

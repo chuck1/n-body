@@ -7,9 +7,10 @@ struct Frames
 {
 	Frames();
 	Frames(Frames const & f);
-	Frames &	operator=(Frames const & f);
-	void		write(FILE* pf);
-	void		read(FILE* pf);
+	Frames &		operator=(Frames const & f);
+	void			write(FILE* pf);
+	void			read(FILE* pf);
+	unsigned int		bytes() const;
 
 	std::vector<Frame>	frames_;
 };

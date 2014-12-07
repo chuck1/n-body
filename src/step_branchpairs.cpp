@@ -2,6 +2,7 @@
 #include <kernel.h>
 #include <Branches.hpp>
 #include <Body.hpp>
+#include <Pair.hpp>
 
 #define GRAV (6.67384E-11)
 
@@ -100,9 +101,16 @@ void			update_branches(
 
 void			step_branchpairs(
 		Branches * branches,
-		Body * bodies
+		Body * bodies,
+		Pair * pairs,
+		unsigned int * map,
+		unsigned int num_bodies
 		)
 {
+	unsigned int count = 0;
+	unsigned int count_body_body = 0;
+	unsigned int count_body_branch = 0;
+	
 	/* work group */
 	int local_block = branches->_M_num_branch_pairs / get_num_groups(0);
 
@@ -156,75 +164,123 @@ void			step_branchpairs(
 		r[1] = x0[1] - x1[1];
 		r[2] = x0[2] - x1[2];
 
-		float d2 = r[0]*r[0] + r[1]*r[1] + r[2]*r[2];
-
-
-		//float dr = rsqrt(d2);
-		float d = sqrt(d2);
-
-		pp->d = sqrt(d2);
+		float d = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
+		
+		count++;
 
 		// rough size of the box
+		/*
 		glm::vec3 W0 = b0->_M_x1_glm - b0->_M_x0_glm;
 		glm::vec3 W1 = b1->_M_x1_glm - b1->_M_x0_glm;
 
 		float w0 = glm::length(W0); 
 		float w1 = glm::length(W1); 
-
-		float ratio = 0.25;
+		*/
+		float ratio = 0.3;
 
 		if(
-				(d > w0) &&
-				(d > w1) &&
-				((w1 / (d - w0)) < ratio) &&
-				((w0 / (d - w1)) < ratio)
+				(d > b0->_M_width) &&
+				(d > b1->_M_width) &&
+				((b1->_M_width / (d - b0->_M_width)) < ratio) &&
+				((b0->_M_width / (d - b1->_M_width)) < ratio)
 		  )
 		{
-			if(DEBUG) printf("w0 = %f\nw1 = %f\nd  = %f\n", w0, w1, d);
+			if(DEBUG) printf("w0 = %f\nw1 = %f\nd  = %f\n", b0->_M_width, b1->_M_width, d);
+
+			count_body_branch++;
 
 			//use branch 1 mass for bodies in branch 0
-			for(unsigned int i = 0; i < b0->_M_num_elements; i++) // for each body in branch 0
+
+			if(0) // per body displacement vector
 			{
-				Body * pb = bodies + b0->_M_elements[i];
+				for(unsigned int i = 0; i < b0->_M_num_elements; i++) // for each body in branch 0
+				{
+					Body * pb = bodies + b0->_M_elements[i];
 
-				glm::vec3 D = b1->_M_mc_glm - pb->x_glm;
-				float len_D = glm::length(D);
+					glm::vec3 D = b1->_M_mc_glm - pb->x_glm;
+					float len_D = glm::length(D);
 
-				float f = GRAV * pb->mass * b1->_M_mass / len_D / len_D;
+					float f = GRAV * pb->mass * b1->_M_mass / len_D / len_D / len_D;
 
-				assert(b1->_M_mass > 0);
+					assert(b1->_M_mass > 0);
 
-				if(DEBUG) printf("inter-branch body branch1 f = %f\n", f);
+					if(DEBUG) printf("inter-branch body branch1 f = %f\n", f);
 
-				pb->f[0] += f * D[0] / len_D;
-				pb->f[1] += f * D[1] / len_D;
-				pb->f[2] += f * D[2] / len_D;
+					pb->f[0] += f * D[0];
+					pb->f[1] += f * D[1];
+					pb->f[2] += f * D[2];
+
+					count++;
+				}
+
+				for(unsigned int i = 0; i < b1->_M_num_elements; i++) // for each body in branch 0
+				{
+					Body * pb = bodies + b1->_M_elements[i];
+
+					glm::vec3 D = b0->_M_mc_glm - pb->x_glm;
+					float len_D = glm::length(D);
+
+					float f = GRAV * pb->mass * b0->_M_mass / len_D / len_D / len_D;
+
+					assert(b0->_M_mass > 0);
+
+					if(DEBUG) printf("inter-branch body branch0 f = %f\n", f);
+
+					pb->f[0] += f * D[0];
+					pb->f[1] += f * D[1];
+					pb->f[2] += f * D[2];
+
+					count++;
+				}
 			}
-
-			// use branch 0 mass for bodies in b1
-			for(unsigned int i = 0; i < b1->_M_num_elements; i++) // for each body in branch 0
+			else // use same displacement vector for all
 			{
-				Body * pb = bodies + b1->_M_elements[i];
+				float f = GRAV / d / d / d;
 
-				glm::vec3 D = b0->_M_mc_glm - pb->x_glm;
-				float len_D = glm::length(D);
+				for(unsigned int i = 0; i < b0->_M_num_elements; i++) // for each body in branch 0
+				{
+					Body * pb = bodies + b0->_M_elements[i];
 
-				float f = GRAV * pb->mass * b0->_M_mass / len_D / len_D;
-				if(DEBUG) printf("inter-branch body branch0 f = %f\n", f);
+					float f0 = f * pb->mass * b1->_M_mass;
 
-				pb->f[0] += f * D[0] / len_D;
-				pb->f[1] += f * D[1] / len_D;
-				pb->f[2] += f * D[2] / len_D;
+					assert(b1->_M_mass > 0);
+
+					if(DEBUG) printf("inter-branch body branch1 f = %f\n", f);
+
+					pb->f[0] += f0 * r[0];
+					pb->f[1] += f0 * r[1];
+					pb->f[2] += f0 * r[2];
+				}
+
+				for(unsigned int i = 0; i < b1->_M_num_elements; i++) // for each body in branch 0
+				{
+					Body * pb = bodies + b1->_M_elements[i];
+
+					float f1 = f * pb->mass * b0->_M_mass;
+
+					assert(b0->_M_mass > 0);
+
+					if(DEBUG) printf("inter-branch body branch0 f = %f\n", f);
+
+					pb->f[0] += f1 * r[0];
+					pb->f[1] += f1 * r[1];
+					pb->f[2] += f1 * r[2];
+				}
 			}
 		}
 		else
 		{
+			count_body_body++;
+
 			for(unsigned int i = 0; i < b0->_M_num_elements; i++) // for each body in branch 0
 			{
 				for(unsigned int j = 0; j < b1->_M_num_elements; j++) // for each body in branch 0
 				{
-					Body * pb0 = bodies + b0->_M_elements[i];
-					Body * pb1 = bodies + b1->_M_elements[j];
+					unsigned int body_idx_0 = b0->_M_elements[i];
+					unsigned int body_idx_1 = b1->_M_elements[j];
+
+					Body * pb0 = bodies + body_idx_0;
+					Body * pb1 = bodies + body_idx_1;
 
 					assert(pb0 != pb1);
 
@@ -232,17 +288,30 @@ void			step_branchpairs(
 
 					float len_D = glm::length(D);
 
-					float f = GRAV * pb0->mass * pb1->mass / len_D / len_D;
+					float f = GRAV * pb0->mass * pb1->mass / len_D / len_D / len_D;
 
 					if(DEBUG) printf("inter-branch body-body f = %f\n", f);
 
-					pb0->f[0] -= f * D[0] / len_D;
-					pb0->f[1] -= f * D[1] / len_D;
-					pb0->f[2] -= f * D[2] / len_D;
+					pb0->f[0] -= f * D[0];
+					pb0->f[1] -= f * D[1];
+					pb0->f[2] -= f * D[2];
 
-					pb1->f[0] += f * D[0] / len_D;
-					pb1->f[1] += f * D[1] / len_D;
-					pb1->f[2] += f * D[2] / len_D;
+					pb1->f[0] += f * D[0];
+					pb1->f[1] += f * D[1];
+					pb1->f[2] += f * D[2];
+
+					if(len_D < (pb0->radius + pb1->radius))
+					{
+						//printf("collision\n");
+						Pair & pair = pairs[map[body_idx_0 * num_bodies + body_idx_1]];
+						pair._M_collision = 1;
+						// atomic
+						pb0->num_collisions++;
+						// atomic
+						pb1->num_collisions++;
+					}
+
+					count++;
 				}
 			}
 		}
@@ -258,8 +327,11 @@ void			step_branchpairs(
 		{
 			for(unsigned int k = j + 1; k < branch._M_num_elements; k++)
 			{
-				Body * pb0 = bodies + branch._M_elements[j];
-				Body * pb1 = bodies + branch._M_elements[k];
+				unsigned int body_idx_0 = branch._M_elements[j];
+				unsigned int body_idx_1 = branch._M_elements[k];
+
+				Body * pb0 = bodies + body_idx_0;
+				Body * pb1 = bodies + body_idx_1;
 
 				assert(pb0 != pb1);
 
@@ -267,19 +339,36 @@ void			step_branchpairs(
 
 				float len_D = glm::length(D);
 
-				float f = GRAV * pb0->mass * pb1->mass / len_D / len_D;
+				float f = GRAV * pb0->mass * pb1->mass / len_D / len_D / len_D;
 				if(DEBUG) printf("intra-branch f = %f\n", f);
 
-				pb0->f[0] -= f * D[0] / len_D;
-				pb0->f[1] -= f * D[1] / len_D;
-				pb0->f[2] -= f * D[2] / len_D;
+				pb0->f[0] -= f * D[0];
+				pb0->f[1] -= f * D[1];
+				pb0->f[2] -= f * D[2];
 
-				pb1->f[0] += f * D[0] / len_D;
-				pb1->f[1] += f * D[1] / len_D;
-				pb1->f[2] += f * D[2] / len_D;
+				pb1->f[0] += f * D[0];
+				pb1->f[1] += f * D[1];
+				pb1->f[2] += f * D[2];
+
+
+
+				if(len_D < (pb0->radius + pb1->radius))
+				{
+					//printf("collision\n");
+					Pair & pair = pairs[map[body_idx_0 * num_bodies + body_idx_1]];
+					pair._M_collision = 1;
+					// atomic
+					pb0->num_collisions++;
+					// atomic
+					pb1->num_collisions++;
+				}
+
+				count++;
 			}
 		}
 	}
+
+	printf("count = %i count_body_body = %i count_body_branch = %i\n", count, count_body_body, count_body_branch);
 }
 
 

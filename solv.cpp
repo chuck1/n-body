@@ -14,8 +14,8 @@
 float timestep = 1.0;
 float mass = 1e6;
 unsigned int num_steps = 100;
-unsigned int num_bodies = 256;
-float width = 1000.0;
+unsigned int num_bodies = 16384;
+float width = 3000.0;
 
 // 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384
 
@@ -43,15 +43,18 @@ cl_int ret;
 int		info_problem()
 {
 	printf("problem:\n");
-	printf("%32s = %i\n", "num bodies", num_bodies);
-	printf("%32s = %i\n", "bodies per group", num_bodies / NUM_GROUPS);
-	printf("%32s = %i\n", "bodies per work item", num_bodies / NUM_GROUPS / LOCAL_SIZE);
-	printf("%32s = %i\n", "sizeof(Universe)", (int)sizeof(Universe));
-	printf("%32s = %i\n", "sizeof(Branch)", (int)sizeof(Branch));
-	printf("%32s = %i\n", "sizeof(Branches)", (int)sizeof(Branches));
-	printf("%32s = %i\n", "sizeof(Body)", (int)sizeof(Body));
-	printf("%32s = %i\n", "sizeof(Pair)", (int)sizeof(Pair));
-	printf("%32s = %i\n", "sizeof(Map)", (int)sizeof(Map));
+	printf("%39s = %16i\n", "num bodies", num_bodies);
+	printf("%39s = %16i\n", "bodies per group", num_bodies / NUM_GROUPS);
+	printf("%39s = %16i\n", "bodies per work item", num_bodies / NUM_GROUPS / LOCAL_SIZE);
+	printf("%39s = %16i\n", "sizeof(Universe)", (int)sizeof(Universe));
+	printf("%39s = %16i\n", "sizeof(Branches)", (int)sizeof(Branches));
+	printf("%39s = %16i\n", "sizeof(Branch)", (int)sizeof(Branch));
+	printf("%39s = %16i\n", "sizeof(BranchPair)", (int)sizeof(BranchPair));
+	printf("%39s = %16i\n", "size of Branches::_M_branches", (int)(sizeof(Branch) * BTREE_MAX_BRANCHES));
+	printf("%39s = %16i\n", "size of Branches::_M_branch_pairs", (int)(sizeof(BranchPair) * BTREE_MAX_BRANCH_PAIRS));
+	printf("%39s = %16i\n", "sizeof(Body)", (int)sizeof(Body));
+	printf("%39s = %16i\n", "sizeof(Pair)", (int)sizeof(Pair));
+	printf("%39s = %16i\n", "sizeof(Map)", (int)sizeof(Map));
 	return 0;
 }
 int		cleanup()

@@ -5,6 +5,7 @@
 struct Frame;
 struct Body;
 class Branches;
+class Map;
 
 #endif
 

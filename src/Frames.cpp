@@ -4,12 +4,12 @@ Frames::Frames() {}
 Frames::Frames(Frames const & f): frames_(f.frames_)
 {
 }
-Frames &	Frames::operator=(Frames const & f)
+Frames &		Frames::operator=(Frames const & f)
 {
 	frames_ = f.frames_;
 	return *this;
 }
-void		Frames::write(FILE* pf)
+void			Frames::write(FILE* pf)
 {
 	unsigned int n = frames_.size();
 	fwrite(&n, sizeof(unsigned int), 1, pf);
@@ -18,7 +18,7 @@ void		Frames::write(FILE* pf)
 		frames_[i].write(pf);
 	}
 }
-void		Frames::read(FILE* pf)
+void			Frames::read(FILE* pf)
 {
 	unsigned int n;
 	fread(&n, sizeof(unsigned int), 1, pf);
@@ -27,5 +27,14 @@ void		Frames::read(FILE* pf)
 	{
 		frames_[i].read(pf);
 	}
+}
+unsigned int		Frames::bytes() const
+{
+	unsigned int b = 0;
+	for(unsigned int i = 0; i < frames_.size(); i++)
+	{
+		b += frames_[i].bodies_.size() * sizeof(Body);
+	}
+	return b;
 }
 

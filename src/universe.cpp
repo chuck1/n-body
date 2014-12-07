@@ -11,6 +11,8 @@
 #include "universe.h"
 #include "Branch.hpp"
 
+#define DEBUG (1)
+
 void		print(float * a)
 {
 	printf("% 12f % 12f % 12f\n", a[0], a[1], a[2]);
@@ -86,7 +88,7 @@ void		print_header()
 }
 void		Universe::refresh_pairs(Frame & f)
 {
-	float w = 10000;
+	float w = 20000;
 	_M_pairs.init(f);
 
 	assert(_M_branches);
@@ -146,6 +148,8 @@ int		Universe::solve()
 
 	for(int t = 1; t < num_steps_; t++)
 	{
+		if(0) printf("universe::bytes() = %i\n", bytes());
+
 		step++;
 
 		time_sim += dt;
@@ -211,7 +215,13 @@ int		Universe::solve()
 		}
 		else
 		{
-			step_branchpairs(branches().get(), f.b(0)); 
+			step_branchpairs(
+					branches().get(),
+					f.b(0),
+					&_M_pairs.pairs_[0],
+					_M_pairs.map_.ptr(),
+					f.size()
+					); 
 		}
 
 		/* Execute "step_bodies" kernel */
@@ -221,7 +231,10 @@ int		Universe::solve()
 
 		number_escaped = 0;
 
-		step_bodies(f.b(0), &_M_pairs.pairs_[0], _M_pairs.map_.ptr(), dt, f.size(), velocity_ratio, mass_center, mass, &number_escaped);
+		step_bodies(
+				f.b(0),
+				&_M_pairs.pairs_[0],
+				_M_pairs.map_.ptr(), dt, f.size(), velocity_ratio, mass_center, mass, &number_escaped);
 
 		if(0)
 		{
@@ -416,6 +429,20 @@ std::shared_ptr<Branches>	Universe::branches()
 	assert(_M_branches);
 	return _M_branches;
 }
+unsigned int			Universe::bytes() const
+{
+	unsigned int b = 0;
+	
+	b += frames_.bytes();
+	
+	//b += sizeof(Branches);
+	
+	return b;
+}
+
+
+
+
 
 
 

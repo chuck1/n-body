@@ -51,6 +51,7 @@ struct Universe
 		std::string			getFilename();
 		void				refresh_pairs(Frame & f);
 		std::shared_ptr<Branches>	branches();
+		unsigned int			bytes() const;
 	public:
 		Frames				frames_;
 

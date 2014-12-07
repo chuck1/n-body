@@ -47,7 +47,10 @@ void			update_branches(
 		);
 void			step_branchpairs(
 		Branches * branches,
-		Body * bodies
+		Body * bodies,
+		Pair * pairs,
+		unsigned int * map,
+		unsigned int num_bodies
 		);
 
 

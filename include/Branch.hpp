@@ -99,6 +99,7 @@ struct Branch
 		float			_M_mc[3];
 		glm::vec3		_M_mc_glm;
 	};
+	float			_M_width;
 	float			_M_mass;
 
 	/**
