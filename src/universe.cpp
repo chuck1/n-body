@@ -10,6 +10,7 @@
 #include "kernel.h"
 #include "universe.h"
 #include "Branch.hpp"
+#include <CollisionBuffer.hpp>
 
 #define DEBUG (1)
 
@@ -89,7 +90,7 @@ void		print_header()
 void		Universe::refresh_pairs(Frame & f)
 {
 	float w = 20000;
-	_M_pairs.init(f);
+	//_M_pairs.init(f);
 
 	assert(_M_branches);
 
@@ -112,7 +113,7 @@ int		Universe::solve()
 
 
 	unsigned int flag_multi_coll = 0;
-	float dt = 10.0;
+	float dt = 5.0;
 
 	float time_sim = 0;
 
@@ -140,6 +141,8 @@ int		Universe::solve()
 	float mass;
 
 	unsigned int number_escaped = 0;
+
+	CollisionBuffer cb;
 
 	if(0)
 	{
@@ -211,16 +214,22 @@ int		Universe::solve()
 		/* Execute "step_pairs" kernel */
 		if(0)
 		{
-			step_pairs(f.b(0), &_M_pairs.pairs_[0], _M_pairs.size());
+			/*
+			step_pairs(
+					f.b(0),
+					&_M_pairs.pairs_[0],
+					_M_pairs.size());
+					*/
 		}
 		else
 		{
-			step_branchpairs(
+			step_branch_pairs(
 					branches().get(),
-					f.b(0),
-					&_M_pairs.pairs_[0],
-					_M_pairs.map_.ptr(),
-					f.size()
+					&cb,
+					f.b(0)
+					/*&_M_pairs.pairs_[0]*/
+					/*_M_pairs.map_.ptr(),*/
+					/*f.size()*/
 					); 
 		}
 
@@ -233,8 +242,10 @@ int		Universe::solve()
 
 		step_bodies(
 				f.b(0),
-				&_M_pairs.pairs_[0],
-				_M_pairs.map_.ptr(), dt, f.size(), velocity_ratio, mass_center, mass, &number_escaped);
+				/*&_M_pairs.pairs_[0],*/
+				/*_M_pairs.map_.ptr(),*/
+				dt,
+				f.size(), velocity_ratio, mass_center, mass, &number_escaped);
 
 		if(0)
 		{
@@ -255,7 +266,13 @@ int		Universe::solve()
 		}
 
 		/* Execute "step_collisions" kernel */
-		step_collisions(f.b(0), &_M_pairs.pairs_[0], &flag_multi_coll, &nc, _M_pairs.size());
+		step_collisions(
+				f.b(0),
+				&cb, //&_M_pairs.pairs_[0],
+				&flag_multi_coll,
+				&nc
+				/*_M_pairs.size()*/
+				);
 
 		/* Execute "clear_bodies_num_collisions" kernel */
 		clear_bodies_num_collisions(f.b(0), f.size());
@@ -267,11 +284,14 @@ int		Universe::solve()
 			/* Execute "step_collisions" kernel on a single thread to resolve bodies with multiple collisions */
 			step_collisions(
 					f.b(0),
-					&_M_pairs.pairs_[0],
+					&cb, //&_M_pairs.pairs_[0],
 					&flag_multi_coll,
-					&nc,
-					_M_pairs.size());
+					&nc
+					/*_M_pairs.size()*/
+					);
 		}
+
+		cb._M_size = 0;
 
 		alive -= nc;
 		dead += nc;

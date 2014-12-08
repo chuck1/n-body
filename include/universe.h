@@ -19,8 +19,8 @@
 #include <Frames.hpp>
 
 
-float radius(float m);
-void	print(float * x);
+float	radius(float m);
+//void	print(float * x);
 
 
 
@@ -29,7 +29,7 @@ struct Pairs
 	void			init(Frame const & f);
 	unsigned int		size() const;
 	std::vector<Pair>	pairs_;
-	Map			map_;
+	//Map			map_;
 };
 struct Universe
 {
@@ -66,7 +66,7 @@ struct Universe
 		// extra timeseries data
 		std::vector<glm::vec3>		mass_center_;
 		
-		Pairs				_M_pairs;
+		//Pairs				_M_pairs;
 		std::shared_ptr<Branches>	_M_branches;
 };
 

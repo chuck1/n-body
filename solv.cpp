@@ -14,10 +14,10 @@
 float timestep = 1.0;
 float mass = 1e6;
 unsigned int num_steps = 100;
-unsigned int num_bodies = 16384;
-float width = 3000.0;
+unsigned int num_bodies = 1e5;
+float width = 4000.0;
 
-// 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384
+// 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
 
 cl_device_id device_id = NULL;
 cl_context context = NULL;
@@ -54,6 +54,7 @@ int		info_problem()
 	printf("%39s = %16i\n", "size of Branches::_M_branch_pairs", (int)(sizeof(BranchPair) * BTREE_MAX_BRANCH_PAIRS));
 	printf("%39s = %16i\n", "sizeof(Body)", (int)sizeof(Body));
 	printf("%39s = %16i\n", "sizeof(Pair)", (int)sizeof(Pair));
+	printf("%39s = %16lu\n", "size of pairs", ((num_bodies * (num_bodies-1)) / 2 * sizeof(Pair)));
 	printf("%39s = %16i\n", "sizeof(Map)", (int)sizeof(Map));
 	return 0;
 }
@@ -197,7 +198,7 @@ int		main(int ac, char ** av)
 	puts("create buffer");
 	memobj_bodies   = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * sizeof(Body), NULL, &ret);
 	memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, pairs.size() * sizeof(Pair), NULL, &ret);
-	memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * uni->size(0) * sizeof(unsigned int), NULL, &ret);
+	//memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * uni->size(0) * sizeof(unsigned int), NULL, &ret);
 	memobj_flag_multi_coll = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &ret);
 	check(__LINE__, ret);
 
@@ -208,7 +209,7 @@ int		main(int ac, char ** av)
 	puts("write buffers");
 	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, uni->size(0) * sizeof(Body),	 uni->b(0), 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, pairs.size() * sizeof(Pair),	 &pairs.pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &pairs.map_, 0, NULL, NULL); check(__LINE__, ret);
+	//ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &pairs.map_, 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);
 	check(__LINE__, ret);

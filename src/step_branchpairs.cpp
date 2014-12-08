@@ -1,12 +1,15 @@
 
+#include <CollisionBuffer.hpp>
 #include <kernel.h>
 #include <Branches.hpp>
 #include <Body.hpp>
 #include <Pair.hpp>
+#include <free.hpp>
 
 #define GRAV (6.67384E-11)
 
 #define DEBUG (0)
+
 
 
 void			update_branches(
@@ -99,12 +102,15 @@ void			update_branches(
 	}
 }
 
-void			step_branchpairs(
+void			step_branch_pairs(
 		Branches * branches,
-		Body * bodies,
+		CollisionBuffer * cb,
+		Body * bodies
+		/*
 		Pair * pairs,
 		unsigned int * map,
 		unsigned int num_bodies
+		*/
 		)
 {
 	unsigned int count = 0;
@@ -302,9 +308,16 @@ void			step_branchpairs(
 
 					if(len_D < (pb0->radius + pb1->radius))
 					{
+						assert(cb->_M_size < CollisionBuffer::LENGTH);
+					
 						//printf("collision\n");
-						Pair & pair = pairs[map[body_idx_0 * num_bodies + body_idx_1]];
-						pair._M_collision = 1;
+						//Pair & pair = pairs[map_func(body_idx_0, body_idx_1, num_bodies)];
+						cb->_M_pairs[cb->_M_size].i = body_idx_0;
+						cb->_M_pairs[cb->_M_size].j = body_idx_1;
+						cb->_M_pairs[cb->_M_size].flag |= CollisionBuffer::Pair::FLAG_UNRESOLVED;
+						cb->_M_size++;
+						
+						//pair._M_collision = 1;
 						// atomic
 						pb0->num_collisions++;
 						// atomic
@@ -355,8 +368,18 @@ void			step_branchpairs(
 				if(len_D < (pb0->radius + pb1->radius))
 				{
 					//printf("collision\n");
-					Pair & pair = pairs[map[body_idx_0 * num_bodies + body_idx_1]];
-					pair._M_collision = 1;
+					//Pair & pair = pairs[map_func(body_idx_0, body_idx_1, num_bodies)];
+
+					assert(cb->_M_size < CollisionBuffer::LENGTH);
+
+					cb->_M_pairs[cb->_M_size].i = body_idx_0;
+					cb->_M_pairs[cb->_M_size].j = body_idx_1;
+					cb->_M_pairs[cb->_M_size].flag |= CollisionBuffer::Pair::FLAG_UNRESOLVED;
+					cb->_M_size++;
+
+
+					//pair._M_collision = 1;
+					
 					// atomic
 					pb0->num_collisions++;
 					// atomic

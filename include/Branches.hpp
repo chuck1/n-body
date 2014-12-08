@@ -43,7 +43,8 @@ struct Branches
 	unsigned int		_M_num_at_level[OCTREE_LEVELS];
 	*/
 
-	Map			_M_map;
+	// use function instead
+	//Map			_M_map;
 	
 	unsigned int		_M_lowest_level;
 };

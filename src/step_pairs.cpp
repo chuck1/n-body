@@ -83,10 +83,10 @@ void step_pairs(
 		//float dr = rsqrt(d2);
 		float d = sqrt(d2);
 
-		pp->d = sqrt(d2);
+		//pp->d = sqrt(d2);
 	
 
-		if(pp->d < (b0->radius + b1->radius))
+		if(d < (b0->radius + b1->radius))
 		{
 			//printf("collision\n");
 			pp->_M_collision = 1;

@@ -51,5 +51,7 @@ cleandata:
 	rm -f files_*
 
 -include $(D_FILES)
+-include build/solv.d
+-include build/play.d
 
 

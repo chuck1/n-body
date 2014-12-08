@@ -6,6 +6,7 @@ struct Frame;
 struct Body;
 class Branches;
 class Map;
+class CollisionBuffer;
 
 #endif
 

@@ -10,7 +10,7 @@ void			Pairs::init(Frame const & f)
 
 
 
-	map_.alloc(nb);
+	//map_.alloc(nb);
 
 	pairs_.resize(nb * (nb - 1) / 2);
 
@@ -22,9 +22,10 @@ void			Pairs::init(Frame const & f)
 			pairs_[k].b0 = i;
 			pairs_[k].b1 = j;
 
+			/*
 			map_.pair_[i * nb + j] = k;
 			map_.pair_[j * nb + i] = k;
-
+		*	*/
 			k++;
 		}
 	}

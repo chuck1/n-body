@@ -180,7 +180,7 @@ void			Branches::init_pairs()
 
 	unsigned int nb = _M_num_branches;
 
-	_M_map.alloc(nb);
+	//_M_map.alloc(nb);
 
 	_M_num_branch_pairs = nb * (nb - 1) / 2;
 
@@ -191,8 +191,10 @@ void			Branches::init_pairs()
 			_M_branch_pairs[k].b0 = i;
 			_M_branch_pairs[k].b1 = j;
 
+			/*
 			_M_map.pair_[i * nb + j] = k;
 			_M_map.pair_[j * nb + i] = k;
+			*/
 
 			k++;
 		}

@@ -12,22 +12,16 @@
 
 struct Pair
 {
-	Pair(): b0(0), b1(0), u{0,0,0}, d(0), f(0), _M_alive(1), _M_collision(0) {}
-	Pair(Pair const & p)
-	{
-		assert(0);
-	}
-	Pair &		operator=(Pair const & p)
-	{
-		assert(0);
-	}
+	Pair();
+	Pair(Pair const & p);
+	Pair &		operator=(Pair const & p);
 
 	unsigned int	b0; // 4
 	unsigned int	b1; // 4
 
-	float		u[3]; // 12
-	float		d; // 4
-	float		f; // 4
+	//float		u[3]; // 12
+	//float		d; // 4
+	//float		f; // 4
 
 	// 28
 

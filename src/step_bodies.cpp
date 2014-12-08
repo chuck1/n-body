@@ -14,8 +14,8 @@ bool	feq(float const & f0, float const & f1)
 
 void step_bodies(
 		struct Body * bodies,
-		struct Pair * pairs,
-		unsigned int * map,
+		/*struct Pair * pairs,*/
+		/*unsigned int * map,*/
 		float dt,
 		unsigned int num_bodies, // in
 		float * velocity_ratio, // in/out

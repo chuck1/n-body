@@ -10,8 +10,8 @@ float	rsqrt(float);
 
 void step_bodies(
 		struct Body * bodies,
-		struct Pair * pairs,
-		unsigned int * map,
+		/*struct Pair * pairs,*/
+		/*unsigned int * map,*/
 		float dt,
 		unsigned int num_bodies,
 		float * velocity_ratio,
@@ -25,17 +25,14 @@ void step_pairs(
 		struct Pair * pairs,
 		unsigned int num_pairs
 	       );
-void step_branch_pairs(
-		struct Body * bodies,
-		struct Pair * pairs,
-		unsigned int num_pairs
-	       );
-void step_collisions(
+
+void			step_collisions(
 		struct Body* bodies, /* readonly */
-		struct Pair* pairs,
+		CollisionBuffer * cb,
+		/*struct Pair* pairs,*/
 		unsigned int * flag_multi_coll,
-		unsigned int * nc,
-		unsigned int num_bodies
+		unsigned int * nc
+		/*unsigned int num_bodies*/
 		);
 void			clear_bodies_num_collisions(
 		struct Body * bodies,
@@ -45,12 +42,10 @@ void			update_branches(
 		Branches * branches,
 		Body * bodies
 		);
-void			step_branchpairs(
+void			step_branch_pairs(
 		Branches * branches,
-		Body * bodies,
-		Pair * pairs,
-		unsigned int * map,
-		unsigned int num_bodies
+		CollisionBuffer * cb,
+		Body * bodies
 		);
 
 

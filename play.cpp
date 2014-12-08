@@ -77,6 +77,15 @@ static DWORD last_idle_time;
 static struct timeval last_idle_time;
 #endif
 
+static unsigned int	g_flags = 0;
+struct FLAG
+{
+	enum
+	{
+		RENDER_BRANCH = 1 << 0,
+	};
+};
+
 static float g_yawScale = 100.0;
 static float g_pitchScale = 100.0;
 
@@ -108,42 +117,13 @@ inline void DrawCubeWithTextureCoords (float fSize)
 	glPopMatrix();
 }
 
-inline void RenderObjects(void)
-{
-	float colorBronzeDiff[4] = { 0.8, 0.6, 0.0, 1.0 };
-	float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
-	float colorBlue[4]       = { 0.0, 0.2, 1.0, 1.0 };
-	float colorNone[4]       = { 0.0, 0.0, 0.0, 0.0 };
+float colorBronzeDiff[4] = { 0.8, 0.6, 0.0, 1.0 };
+float colorBronzeSpec[4] = { 1.0, 1.0, 0.4, 1.0 };
+float colorBlue[4]       = { 0.0, 0.2, 1.0, 1.0 };
+float colorNone[4]       = { 0.0, 0.0, 0.0, 0.0 };
 
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
 
-	// Main object (cube) ... transform to its coordinates, and render
-	glRotatef(15, 1, 0, 0);
-	glRotatef(45, 0, 1, 0);
-	glRotatef(g_fTeapotAngle, 0, 0, 1);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, colorBlue);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, colorNone);
-	glColor4fv(colorBlue);
-	glBindTexture(GL_TEXTURE_2D, TEXTURE_ID_CUBE);
-	DrawCubeWithTextureCoords(1.0);
-
-	// Child object (teapot) ... relative transform, and render
-	glPushMatrix();
-	glTranslatef(2, 0, 0);
-	glRotatef(g_fTeapotAngle2, 1, 1, 0);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, colorBronzeDiff);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, colorBronzeSpec);
-	glMaterialf(GL_FRONT, GL_SHININESS, 50.0);
-	glColor4fv(colorBronzeDiff);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glutSolidTeapot(0.3);
-	glPopMatrix(); 
-
-	glPopMatrix();
-}
-
-Branches branches;
+Branches* branches;
 static glm::vec3 tree_x0(-5000.0f);
 static glm::vec3 tree_x1( 5000.0f);
 
@@ -170,18 +150,18 @@ inline void RenderObjects2(int t)
 		glPopMatrix();
 	}
 
-	if(1)
+	if(g_flags & FLAG::RENDER_BRANCH)
 	{	
 		//if(t == 0)
 		{
-			branches.init(f, tree_x0, tree_x1);
+			branches->init(f, tree_x0, tree_x1);
 		}
 
 		glColor3f(1.0,1.0,1.0);
 
-		for(unsigned int i = 0; i < branches._M_num_branches; i++)
+		for(unsigned int i = 0; i < branches->_M_num_branches; i++)
 		{
-			Branch & b = branches.get_branch(i);
+			Branch & b = branches->get_branch(i);
 
 			if(b._M_flag & Branch::FLAG_IS_LEAF)
 			{
