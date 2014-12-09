@@ -13,8 +13,6 @@
 
 float timestep = 1.0;
 float mass = 1e6;
-unsigned int num_steps = 100;
-unsigned int num_bodies = 1e4;
 float width = 4000.0;
 
 // 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
@@ -40,12 +38,18 @@ cl_uint ret_num_devices;
 cl_uint ret_num_platforms;
 cl_int ret;
 
-int		info_problem()
+struct Problem
+{
+	unsigned int	_M_num_bodies;
+	unsigned int	_M_num_step;
+};
+
+int		info_problem(Problem const & p)
 {
 	printf("problem:\n");
-	printf("%39s = %16i\n", "num bodies", num_bodies);
-	printf("%39s = %16i\n", "bodies per group", num_bodies / NUM_GROUPS);
-	printf("%39s = %16i\n", "bodies per work item", num_bodies / NUM_GROUPS / LOCAL_SIZE);
+	printf("%39s = %16i\n", "num bodies", p._M_num_bodies);
+	printf("%39s = %16i\n", "bodies per group", p._M_num_bodies / NUM_GROUPS);
+	printf("%39s = %16i\n", "bodies per work item", p._M_num_bodies / NUM_GROUPS / LOCAL_SIZE);
 	printf("%39s = %16lu\n", "sizeof(Universe)", sizeof(Universe));
 	printf("%39s = %16lu\n", "sizeof(Branches)", sizeof(Branches));
 	printf("%39s = %16lu\n", "sizeof(Branch)", sizeof(Branch));
@@ -89,38 +93,62 @@ int		main(int ac, char ** av)
 {
 	puts("Create Universe");
 
+	Problem prob;
+	
+	prob._M_num_bodies = 1e3;
+	unsigned int num_steps = 1000;
+	
+	char ** a = av + 1;
+	if(ac >= 3)
+	{
+		while(a < av + ac)
+		{
+			if(strcmp(a[0], "-b") == 0)
+			{
+				prob._M_num_bodies = atoi(a[1]);
+			}
+			else if(strcmp(a[0], "-s") == 0)
+			{
+				prob._M_num_step = atoi(a[1]);
+			}
+			else
+			{
+				printf("unknown option %s\n", a[0]);
+				exit(1);
+			}
+
+			a += 2;
+		}
+	}
+
 	//signal(SIGINT, signal_callback);
 
-	info_problem();
-	
+	info_problem(prob);
+
 	Universe* uni = new Universe;
-	
+
 	if(ac == 2)
 	{
 		uni->read(av[1], num_steps);
 	}
-	else if(ac == 1)
+	else
 	{
 		time_t rawtime;
 		tm * timeinfo;
-		
+
 		time(&rawtime);
 		timeinfo = localtime(&rawtime);
-		
+
 		strftime(uni->name_, 32, "%Y_%m_%d_%H_%M_%S", timeinfo);
-		
+
 		printf("name = %s\n", uni->name_);
 
-		uni->alloc(num_bodies, num_steps);
-	
+		uni->alloc(prob._M_num_bodies, num_steps);
+
 		//uni->random(mass);
 		//uni->get_frame(0).spin(mass, width);
-		//uni->get_frame(0).spin(mass, width);
-		uni->get_frame(0).rings(mass, width);
-	}
-	else
-	{
-		exit(1);
+		uni->get_frame(0).sphere(mass, width, 0);
+		//uni->get_frame(0).rings(mass, width);
 	}
 
 	/* Get Platform and Device Info */
@@ -128,7 +156,7 @@ int		main(int ac, char ** av)
 	ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms); check(__LINE__, ret);
 
 	//std::vector<std::string>	filenames;
-	
+
 	if(ret)
 	{
 		// files.dat filename

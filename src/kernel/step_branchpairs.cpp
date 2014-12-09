@@ -5,10 +5,32 @@
 #include <Body.hpp>
 #include <free.hpp>
 #include <config.hpp>
+#include <condition_variable>
 
 #define GRAV (6.67384E-11)
 
 #define DEBUG (0)
+
+std::mutex			g_sync;
+std::condition_variable		g_sync_cv;
+//std::atomic_int			g_atom_count = 0;
+unsigned int				g_count = 0;
+void		sync()
+{
+	std::unique_lock<std::mutex> lock(g_sync);
+	g_count++;
+	if(g_count == thread_count)
+	{
+		//std::cout << "notifying" << std::endl;
+		g_sync_cv.notify_all();
+		g_count = 0;
+	}
+	else
+	{
+		//std::cout << "waiting..." << std::endl;
+		g_sync_cv.wait(lock);
+	}
+}
 
 void		divide(unsigned int n, unsigned int & i_local0, unsigned int & i_local1)
 {
@@ -41,6 +63,9 @@ void			update_branches(
 
 	for(int level = (int)branches->_M_lowest_level; level >= 0; level--) // for each level, starting at lowest level
 	{
+		// sync threads here
+		sync();
+
 		divide(branches->_M_num_branches, i_local0, i_local1);
 
 		for(unsigned int idx = i_local0; idx < i_local1; idx++) // for each branch at that level
@@ -48,15 +73,16 @@ void			update_branches(
 			//printf("level = %3i branch index %3i\n", level, idx);
 
 			Branch & branch = branches->_M_branches[idx];
-
-			if(
-					(branch._M_level == (unsigned int)level) &&
-					(branch._M_flag & Branch::FLAG_IS_LEAF)
-			  )
+			
+			if(branch._M_level != (unsigned int)level) continue;
+			
+			if(branch._M_flag & Branch::FLAG_IS_LEAF)
 			{
 				unsigned int i = 0;
 				while(i < branch._M_num_elements)
 				{
+					//printf("i = %i branch._M_num_elements = %i\n", i, branch._M_num_elements);
+
 					unsigned int body_idx = branch._M_elements[i];
 
 					Body & body = bodies[body_idx];

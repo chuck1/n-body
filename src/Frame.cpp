@@ -93,16 +93,18 @@ void			Frame::sphere(float m, float w, float v)
 	{
 		Body & b = bodies_[i];
 
+		float d;
 		while(1)
 		{
 			try_insert(b.x, w, w, w, func1, func1, func1, rad, i);
 
-			float d = glm::length(b.x_glm);
+			d = glm::length(b.x_glm);
 
-			if(d <= w) break;
+			if(d <= (w * 0.5)) break;
 		}
 
-		::print(b.x);
+		//::print(b.x);
+		//printf("w = %12f d = %12f\n", w, d);
 
 		if(v > 0.0)
 		{
