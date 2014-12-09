@@ -1,12 +1,30 @@
+#ifndef KERNEL_HPP
+#define KERNEL_HPP
+
+
+#include <thread>
+#include <map>
+#include <thread>
+#include <mutex>
 
 #include <decl.hpp>
 
-int	get_num_groups(int);
-int	get_group_id(int);
-int	get_local_id(int);
-int	get_local_size(int);
-int	get_global_size(int);
-float	rsqrt(float);
+
+int						get_num_groups(int);
+int						get_group_id(int);
+int						get_local_id(int);
+int						get_local_size(int);
+int						get_global_size(int);
+float						rsqrt(float);
+
+extern unsigned int				thread_count;
+extern unsigned int				thread_count_temp;
+extern std::map<std::thread::id, unsigned int>	thread_map;
+extern std::mutex				mutex_thread_map;
+
+void						register_thread();
+
+
 
 void step_bodies(
 		struct Body * bodies,
@@ -48,6 +66,5 @@ void			step_branch_pairs(
 		Body * bodies
 		);
 
-
-
+#endif
 

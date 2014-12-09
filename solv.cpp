@@ -14,7 +14,7 @@
 float timestep = 1.0;
 float mass = 1e6;
 unsigned int num_steps = 100;
-unsigned int num_bodies = 1e5;
+unsigned int num_bodies = 1e3;
 float width = 4000.0;
 
 // 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768

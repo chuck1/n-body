@@ -4,10 +4,12 @@
 #include <cstring>
 #include <cassert>
 #include <algorithm>
+#include <thread>
+#include <iostream>
 
 #include <Body.hpp>
 #include <Pair.hpp>
-#include "kernel.h"
+#include "kernel.hpp"
 #include "universe.h"
 #include "Branch.hpp"
 #include <CollisionBuffer.hpp>
@@ -96,6 +98,10 @@ void		Universe::refresh_pairs(Frame & f)
 
 	_M_branches->init(f, glm::vec3(-w * 0.5), glm::vec3(w * 0.5));
 }
+
+
+
+
 int		Universe::solve()
 {
 	// temp bodies
@@ -264,6 +270,12 @@ int		Universe::solve()
 				dt *= 0.5;
 			}
 		}
+		
+		auto id = std::this_thread::get_id();
+		std::cout << id << std::endl;
+
+		std::thread t1([](){auto id = std::this_thread::get_id(); std::cout << id << std::endl;});
+		t1.join();
 
 		/* Execute "step_collisions" kernel */
 		step_collisions(

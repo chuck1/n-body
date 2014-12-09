@@ -3,7 +3,7 @@
 
 #include "Pair.hpp"
 #include "Body.hpp"
-#include "kernel.h"
+#include "kernel.hpp"
 
 void step_pairs(
 		    struct Body * bodies,

@@ -3,8 +3,8 @@
 #include <cassert>
 
 #include "Pair.hpp"
-#include "Body.hpp"
-#include "kernel.h"
+#include <Body.hpp>
+#include <kernel.hpp>
 #include <free.hpp>
 
 bool	feq(float const & f0, float const & f1)

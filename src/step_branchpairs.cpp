@@ -1,6 +1,6 @@
 
 #include <CollisionBuffer.hpp>
-#include <kernel.h>
+#include <kernel.hpp>
 #include <Branches.hpp>
 #include <Body.hpp>
 #include <Pair.hpp>
@@ -391,7 +391,7 @@ void			step_branch_pairs(
 		}
 	}
 
-	printf("count = %i count_body_body = %i count_body_branch = %i\n", count, count_body_body, count_body_branch);
+	if(DEBUG) printf("count = %i count_body_body = %i count_body_branch = %i\n", count, count_body_body, count_body_branch);
 }
 
 
