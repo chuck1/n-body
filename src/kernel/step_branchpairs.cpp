@@ -5,12 +5,30 @@
 #include <Body.hpp>
 #include <Pair.hpp>
 #include <free.hpp>
+#include <config.hpp>
 
 #define GRAV (6.67384E-11)
 
 #define DEBUG (0)
 
+void		divide(unsigned int n, unsigned int & i_local0, unsigned int & i_local1)
+{
+	/* work group */
+	int local_block = n / get_num_groups(0);
 
+	int i_group0 = get_group_id(0) * local_block;
+	int i_group1 = i_group0 + local_block;
+
+	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = n;
+
+	/* work item */
+	int block = (i_group1 - i_group0) / get_local_size(0);
+
+	i_local0 = i_group0 + get_local_id(0) * block;
+	i_local1 = i_local0 + block;
+
+	if(get_local_id(0) == (get_local_size(0) - 1)) i_local1 = i_group1;
+}
 
 void			update_branches(
 		Branches * branches,
@@ -19,9 +37,14 @@ void			update_branches(
 {
 	//printf("%s\n", __PRETTY_FUNCTION__);
 
+	unsigned int i_local0;
+	unsigned int i_local1;
+
 	for(int level = (int)branches->_M_lowest_level; level >= 0; level--) // for each level, starting at lowest level
 	{
-		for(unsigned int idx = 0; idx < branches->_M_num_branches; idx++) // for each branch at that level
+		divide(branches->_M_num_branches, i_local0, i_local1);
+		
+		for(unsigned int idx = i_local0; idx < i_local1; idx++) // for each branch at that level
 		{
 			//printf("level = %3i branch index %3i\n", level, idx);
 
@@ -51,6 +74,10 @@ void			update_branches(
 							{
 								if(DEBUG) printf("send to parent %i\n", body_idx);
 
+								// atmoic
+#if(THREADED)
+								std::lock_guard<std::mutex> lock(g_mutex_branches);
+#endif
 								branch.send_to_parent(branches, bodies, i);
 							}
 							else
@@ -60,7 +87,7 @@ void			update_branches(
 						}
 						else
 						{
-							branch.erase(branches, i);
+							branch.erase(i);
 						}
 					}
 				}
@@ -84,14 +111,25 @@ void			update_branches(
 						{
 							if(DEBUG) printf("send to parent %i\n", body_idx);
 
+							// atmoic
+#if(THREADED)
+							std::lock_guard<std::mutex> lock(g_mutex_branches);
+#endif
 							branch.send_to_parent(branches, bodies, i);
 						}
 						else
 						{
 							if(DEBUG) printf("add to children %i\n", body_idx);
 
-							branch.add_to_children(*branches, bodies, body_idx);
-							branch.erase(branches, i);
+							{
+								// atmoic
+#if(THREADED)
+								std::lock_guard<std::mutex> lock(g_mutex_branches);
+#endif
+								branch.add_to_children(*branches, bodies, body_idx);
+							}
+
+							branch.erase(i);
 						}
 						i++;
 					}
@@ -102,40 +140,34 @@ void			update_branches(
 	}
 }
 
+
+
 void			step_branch_pairs(
 		Branches * branches,
 		CollisionBuffer * cb,
 		Body * bodies
 		/*
-		Pair * pairs,
-		unsigned int * map,
-		unsigned int num_bodies
-		*/
+		   Pair * pairs,
+		   unsigned int * map,
+		   unsigned int num_bodies
+		   */
 		)
 {
 	unsigned int count = 0;
 	unsigned int count_body_body = 0;
 	unsigned int count_body_branch = 0;
-	
-	/* work group */
-	int local_block = branches->_M_num_branch_pairs / get_num_groups(0);
 
-	int i_group0 = get_group_id(0) * local_block;
-	int i_group1 = i_group0 + local_block;
+	unsigned int i_local0;
+	unsigned int i_local1;
 
-	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = branches->_M_num_branch_pairs;
+	divide(branches->_M_num_branch_pairs, i_local0, i_local1);
 
-	/* work item */
-	int block = (i_group1 - i_group0) / get_local_size(0);
-
-	int i_local0 = i_group0 + get_local_id(0) * block;
-	int i_local1 = i_local0 + block;
-
-	if(get_local_id(0) == (get_local_size(0) - 1)) i_local1 = i_group1;
+	if(DEBUG) printf("branch pairs %6i to %6i\n", i_local0, i_local1);
 
 	/* compute */
-	for(int p = i_local0; p < i_local1; p++)
+	for(unsigned int p = i_local0; p < i_local1; p++)
 	{
+
 		struct BranchPair* pp = branches->_M_branch_pairs + p;
 
 		struct Branch* b0 = branches->_M_branches + pp->b0;
@@ -171,17 +203,17 @@ void			step_branch_pairs(
 		r[2] = x0[2] - x1[2];
 
 		float d = sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
-		
+
 		count++;
 
 		// rough size of the box
 		/*
-		glm::vec3 W0 = b0->_M_x1_glm - b0->_M_x0_glm;
-		glm::vec3 W1 = b1->_M_x1_glm - b1->_M_x0_glm;
+		   glm::vec3 W0 = b0->_M_x1_glm - b0->_M_x0_glm;
+		   glm::vec3 W1 = b1->_M_x1_glm - b1->_M_x0_glm;
 
-		float w0 = glm::length(W0); 
-		float w1 = glm::length(W1); 
-		*/
+		   float w0 = glm::length(W0); 
+		   float w1 = glm::length(W1); 
+		   */
 		float ratio = 0.3;
 
 		if(
@@ -308,21 +340,36 @@ void			step_branch_pairs(
 
 					if(len_D < (pb0->radius + pb1->radius))
 					{
-						assert(cb->_M_size < CollisionBuffer::LENGTH);
-					
-						//printf("collision\n");
-						//Pair & pair = pairs[map_func(body_idx_0, body_idx_1, num_bodies)];
-						cb->_M_pairs[cb->_M_size].i = body_idx_0;
-						cb->_M_pairs[cb->_M_size].j = body_idx_1;
-						cb->_M_pairs[cb->_M_size].flag |= CollisionBuffer::Pair::FLAG_UNRESOLVED;
-						cb->_M_size++;
-						
+						// atomic
+						{
+#if(THREADED)
+							std::lock_guard<std::mutex> lock(cb->_M_mutex);
+#endif
+							//printf("collision\n");
+							//Pair & pair = pairs[map_func(body_idx_0, body_idx_1, num_bodies)];
+
+							assert(cb->_M_size < CollisionBuffer::LENGTH);
+
+							cb->_M_pairs[cb->_M_size].i = body_idx_0;
+							cb->_M_pairs[cb->_M_size].j = body_idx_1;
+							cb->_M_pairs[cb->_M_size].flag |= CollisionBuffer::Pair::FLAG_UNRESOLVED;
+							cb->_M_size++;
+						}
+
 						//pair._M_collision = 1;
-						// atomic
-						pb0->num_collisions++;
-						// atomic
-						pb1->num_collisions++;
+
+						{
+#if(THREADED)
+							std::lock_guard<std::mutex> lock(g_mutex_bodies);
+#endif
+
+							// atomic
+							pb0->num_collisions++;
+							// atomic
+							pb1->num_collisions++;
+						}
 					}
+
 
 					count++;
 				}
@@ -330,9 +377,12 @@ void			step_branch_pairs(
 		}
 	}
 
+	divide(branches->_M_num_branches, i_local0, i_local1);
+
+	if(DEBUG) printf("branches %6i to %6i\n", i_local0, i_local1);
 
 	// also must calc forces between bodies in same branch!
-	for(unsigned int i = 0; i < branches->_M_num_branches; i++)
+	for(unsigned int i = i_local0; i < i_local1; i++)
 	{
 		Branch & branch = branches->_M_branches[i];
 
@@ -355,35 +405,51 @@ void			step_branch_pairs(
 				float f = GRAV * pb0->mass * pb1->mass / len_D / len_D / len_D;
 				if(DEBUG) printf("intra-branch f = %f\n", f);
 
-				pb0->f[0] -= f * D[0];
-				pb0->f[1] -= f * D[1];
-				pb0->f[2] -= f * D[2];
+				{
+#if THREADED
+					//std::lock_guard<std::mutex> lock(g_mutex_bodies);
+#endif
 
-				pb1->f[0] += f * D[0];
-				pb1->f[1] += f * D[1];
-				pb1->f[2] += f * D[2];
+					pb0->f[0] -= f * D[0];
+					pb0->f[1] -= f * D[1];
+					pb0->f[2] -= f * D[2];
 
+					pb1->f[0] += f * D[0];
+					pb1->f[1] += f * D[1];
+					pb1->f[2] += f * D[2];
+				}
 
 
 				if(len_D < (pb0->radius + pb1->radius))
 				{
-					//printf("collision\n");
-					//Pair & pair = pairs[map_func(body_idx_0, body_idx_1, num_bodies)];
+					// atomic
+					{
+#if THREADED
+						std::lock_guard<std::mutex> lock(cb->_M_mutex);
+#endif
+						//printf("collision\n");
+						//Pair & pair = pairs[map_func(body_idx_0, body_idx_1, num_bodies)];
 
-					assert(cb->_M_size < CollisionBuffer::LENGTH);
+						assert(cb->_M_size < CollisionBuffer::LENGTH);
 
-					cb->_M_pairs[cb->_M_size].i = body_idx_0;
-					cb->_M_pairs[cb->_M_size].j = body_idx_1;
-					cb->_M_pairs[cb->_M_size].flag |= CollisionBuffer::Pair::FLAG_UNRESOLVED;
-					cb->_M_size++;
-
+						cb->_M_pairs[cb->_M_size].i = body_idx_0;
+						cb->_M_pairs[cb->_M_size].j = body_idx_1;
+						cb->_M_pairs[cb->_M_size].flag |= CollisionBuffer::Pair::FLAG_UNRESOLVED;
+						cb->_M_size++;
+					}
 
 					//pair._M_collision = 1;
-					
-					// atomic
-					pb0->num_collisions++;
-					// atomic
-					pb1->num_collisions++;
+
+					{
+#if THREADED
+						std::lock_guard<std::mutex> lock(g_mutex_bodies);
+#endif
+
+						// atomic
+						pb0->num_collisions++;
+						// atomic
+						pb1->num_collisions++;
+					}
 				}
 
 				count++;

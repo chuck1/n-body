@@ -211,13 +211,5 @@ unsigned int		Branches::count_bodies() const
 
 	return c;
 }
-void			Branches::refresh_mass(Branches * branches, Body * bodies)
-{
-	for(unsigned int i = 0; i < _M_num_branches; i++)
-	{
-		_M_branches[i].refresh_mass(branches, bodies);
-	}
-}
-
 
 

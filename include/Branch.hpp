@@ -60,7 +60,7 @@ struct Branch
 	int			add_to_children(Branches & branches, Body const * bodies, unsigned int body_idx);
 	void			remove(unsigned int i);
 	// move body from this to parent
-	void			erase(Branches * branches, unsigned int i);
+	void			erase(unsigned int i);
 	void			send_to_parent(Branches * branches, Body * bodies, unsigned int i);
 
 	unsigned int		get_child_branch_index(

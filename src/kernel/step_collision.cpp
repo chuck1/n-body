@@ -6,6 +6,8 @@
 #include <CollisionBuffer.hpp>
 #include <kernel.hpp>
 
+#define DEBUG (0)
+
 /* dont use marcos here for global_size etc. */
 void step_collisions(
 		struct Body* bodies, /* readonly */
@@ -32,6 +34,9 @@ void step_collisions(
 	int i_local1 = i_local0 + block;
 
 	if(get_local_id(0) == (get_local_size(0) - 1)) i_local1 = i_group1;
+
+
+	if(DEBUG || 0) printf("collisions %6i to %6i of %6i\n", i_local0, i_local1, cb->_M_size);
 
 	/* */
 	for(int p = i_local0; p < i_local1; p++)

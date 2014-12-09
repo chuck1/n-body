@@ -1,11 +1,12 @@
 #ifndef KERNEL_HPP
 #define KERNEL_HPP
 
-
+#include <iostream>
 #include <thread>
 #include <map>
 #include <thread>
 #include <mutex>
+#include <vector>
 
 #include <decl.hpp>
 
@@ -17,16 +18,47 @@ int						get_local_size(int);
 int						get_global_size(int);
 float						rsqrt(float);
 
+void						divide(unsigned int n, unsigned int & i_local0, unsigned int & i_local1);
+
 extern unsigned int				thread_count;
 extern unsigned int				thread_count_temp;
 extern std::map<std::thread::id, unsigned int>	thread_map;
 extern std::mutex				mutex_thread_map;
 
+extern std::mutex				g_mutex_bodies;
+extern std::mutex				g_mutex_branches;
+
 void						register_thread();
 
+template<typename... Args> void		launch(unsigned int n, void(*f)(Args...), Args... args)
+{
+	std::vector<std::thread> v;
 
+	thread_count = n;
+	thread_count_temp = 0;
 
-void step_bodies(
+	auto l = [](void(*f)(Args...), Args... args)
+	{
+		register_thread();
+		//std::cout << "hello from thread " << get_local_id(0) << std::endl;
+		f(args...);
+	};
+
+	for(unsigned int i = 0; i < thread_count; i++)
+	{
+		v.push_back(std::thread(l, f, args...));
+	}
+
+	for(unsigned int i = 0; i < thread_count; i++)
+	{
+		v[i].join();
+	}
+
+	thread_count = 0;
+
+}
+
+void			step_bodies(
 		struct Body * bodies,
 		/*struct Pair * pairs,*/
 		/*unsigned int * map,*/
@@ -38,7 +70,7 @@ void step_bodies(
 		unsigned int * number_escaped
 		);
 
-void step_pairs(
+void			step_pairs(
 		struct Body * bodies,
 		struct Pair * pairs,
 		unsigned int num_pairs
@@ -65,6 +97,9 @@ void			step_branch_pairs(
 		CollisionBuffer * cb,
 		Body * bodies
 		);
+void			refresh_branch_mass(
+		Branches * branches,
+		Body * bodies);
 
 #endif
 

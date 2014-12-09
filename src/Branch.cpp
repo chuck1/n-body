@@ -285,9 +285,9 @@ void			Branch::send_to_parent(Branches * branches, Body * bodies, unsigned int i
 		bodies[body_idx].alive = 0;
 	}
 
-	erase(branches, i);
+	erase(i);
 }
-void			Branch::erase(Branches * branches, unsigned int i)
+void			Branch::erase(unsigned int i)
 {
 	assert(_M_num_elements > i);
 

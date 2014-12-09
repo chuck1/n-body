@@ -90,18 +90,18 @@ void step_bodies(
 
 		float e = 0.01;
 
-		float rat[3];
-		rat[0] = fabs(dv[0] / pb->v[0]);
-		rat[1] = fabs(dv[1] / pb->v[1]);
-		rat[2] = fabs(dv[2] / pb->v[2]);
-
-		// atomic
-		if(std::isfinite(rat[0])) if(rat[0] > velocity_ratio[0]) velocity_ratio[0] = rat[0];
-		if(std::isfinite(rat[1])) if(rat[1] > velocity_ratio[1]) velocity_ratio[1] = rat[1];
-		if(std::isfinite(rat[2])) if(rat[2] > velocity_ratio[2]) velocity_ratio[2] = rat[2];
-
 		if(0)
 		{
+			float rat[3];
+			rat[0] = fabs(dv[0] / pb->v[0]);
+			rat[1] = fabs(dv[1] / pb->v[1]);
+			rat[2] = fabs(dv[2] / pb->v[2]);
+
+			// atomic
+			if(std::isfinite(rat[0])) if(rat[0] > velocity_ratio[0]) velocity_ratio[0] = rat[0];
+			if(std::isfinite(rat[1])) if(rat[1] > velocity_ratio[1]) velocity_ratio[1] = rat[1];
+			if(std::isfinite(rat[2])) if(rat[2] > velocity_ratio[2]) velocity_ratio[2] = rat[2];
+
 			if(
 					((std::isfinite(rat[0])) && (rat[0] > e)) ||
 					((std::isfinite(rat[1])) && (rat[1] > e)) ||
@@ -143,7 +143,7 @@ void step_bodies(
 			if(dot > 0.0) // parallel componenet points away from mass_center
 			{
 				// atomic
-				(*number_escaped)++;
+				//(*number_escaped)++;
 				//printf("escape!\n");
 			}
 		}

@@ -13,6 +13,7 @@
 #include "universe.h"
 #include "Branch.hpp"
 #include <CollisionBuffer.hpp>
+#include <config.hpp>
 
 #define DEBUG (1)
 
@@ -117,9 +118,10 @@ int		Universe::solve()
 
 	refresh_pairs(f);
 
+	unsigned int threads = 4;
 
 	unsigned int flag_multi_coll = 0;
-	float dt = 5.0;
+	float dt = 10.0;
 
 	float time_sim = 0;
 
@@ -203,7 +205,19 @@ int		Universe::solve()
 		/*
 		 * Update Branches
 		 */
-		update_branches(branches().get(), f.b(0));
+		if(THREADED)
+		{
+			launch(
+					threads,
+					update_branches,
+					branches().get(),
+					f.b(0)
+					);
+		}
+		else
+		{
+			update_branches(branches().get(), f.b(0));
+		}
 
 		if(0) branches()->print();
 	
@@ -215,17 +229,37 @@ int		Universe::solve()
 
 		branches()->init_pairs();
 
+		if(THREADED)
+		{
+			launch(
+					threads,
+					refresh_branch_mass,
+					branches().get(),
+					f.b(0)
+			      );
+		}
+		else
+		{
 		branches()->refresh_mass(branches().get(), f.b(0));
+		}
 
 		/* Execute "step_pairs" kernel */
-		if(0)
+		if(THREADED)
 		{
 			/*
-			step_pairs(
-					f.b(0),
-					&_M_pairs.pairs_[0],
-					_M_pairs.size());
-					*/
+			   step_pairs(
+			   f.b(0),
+			   &_M_pairs.pairs_[0],
+			   _M_pairs.size());
+			   */
+
+			launch(
+					threads,
+					step_branch_pairs,
+					branches().get(),
+					&cb,
+					f.b(0)
+			      );
 		}
 		else
 		{
@@ -246,12 +280,29 @@ int		Universe::solve()
 
 		number_escaped = 0;
 
-		step_bodies(
-				f.b(0),
-				/*&_M_pairs.pairs_[0],*/
-				/*_M_pairs.map_.ptr(),*/
-				dt,
-				f.size(), velocity_ratio, mass_center, mass, &number_escaped);
+		if(THREADED)
+		{
+			launch(
+					threads,
+					step_bodies,
+					f.b(0),
+					dt,
+					f.size(),
+					velocity_ratio,
+					mass_center,
+					mass,
+					&number_escaped
+			      );
+		}
+		else
+		{
+			step_bodies(
+					f.b(0),
+					/*&_M_pairs.pairs_[0],*/
+					/*_M_pairs.map_.ptr(),*/
+					dt,
+					f.size(), velocity_ratio, mass_center, mass, &number_escaped);
+		}
 
 		if(0)
 		{
@@ -270,12 +321,14 @@ int		Universe::solve()
 				dt *= 0.5;
 			}
 		}
-		
+
+		/*
 		auto id = std::this_thread::get_id();
 		std::cout << id << std::endl;
 
 		std::thread t1([](){auto id = std::this_thread::get_id(); std::cout << id << std::endl;});
 		t1.join();
+		*/
 
 		/* Execute "step_collisions" kernel */
 		step_collisions(
@@ -284,7 +337,7 @@ int		Universe::solve()
 				&flag_multi_coll,
 				&nc
 				/*_M_pairs.size()*/
-				);
+			       );
 
 		/* Execute "clear_bodies_num_collisions" kernel */
 		clear_bodies_num_collisions(f.b(0), f.size());
@@ -300,7 +353,7 @@ int		Universe::solve()
 					&flag_multi_coll,
 					&nc
 					/*_M_pairs.size()*/
-					);
+				       );
 		}
 
 		cb._M_size = 0;
@@ -464,11 +517,11 @@ std::shared_ptr<Branches>	Universe::branches()
 unsigned int			Universe::bytes() const
 {
 	unsigned int b = 0;
-	
+
 	b += frames_.bytes();
-	
+
 	//b += sizeof(Branches);
-	
+
 	return b;
 }
 

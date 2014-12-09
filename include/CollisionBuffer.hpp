@@ -1,6 +1,8 @@
 #ifndef COLLISION_BUFFER_HPP
 #define COLLISION_BUFFER_HPP
 
+#include <mutex>
+
 class CollisionBuffer
 {
 	public:
@@ -24,6 +26,8 @@ class CollisionBuffer
 		
 		Pair		_M_pairs[LENGTH];
 		unsigned int	_M_size;
+
+		std::mutex	_M_mutex;
 };
 
 #endif
