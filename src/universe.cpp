@@ -8,7 +8,6 @@
 #include <iostream>
 
 #include <Body.hpp>
-#include <Pair.hpp>
 #include "kernel.hpp"
 #include "universe.h"
 #include "Branch.hpp"
@@ -219,8 +218,6 @@ int		Universe::solve()
 			update_branches(branches().get(), f.b(0));
 		}
 
-		if(0) branches()->print();
-	
 		if(not(branches()->count_bodies() == f.count_alive()))
 		{
 			printf("_M_branches.count_bodies() = %i f.count_alive() = %i\n", branches()->count_bodies(), f.count_alive());
@@ -240,19 +237,12 @@ int		Universe::solve()
 		}
 		else
 		{
-		branches()->refresh_mass(branches().get(), f.b(0));
+			branches()->refresh_mass(branches().get(), f.b(0));
 		}
 
 		/* Execute "step_pairs" kernel */
 		if(THREADED)
 		{
-			/*
-			   step_pairs(
-			   f.b(0),
-			   &_M_pairs.pairs_[0],
-			   _M_pairs.size());
-			   */
-
 			launch(
 					threads,
 					step_branch_pairs,
@@ -298,10 +288,13 @@ int		Universe::solve()
 		{
 			step_bodies(
 					f.b(0),
-					/*&_M_pairs.pairs_[0],*/
-					/*_M_pairs.map_.ptr(),*/
 					dt,
-					f.size(), velocity_ratio, mass_center, mass, &number_escaped);
+					f.size(),
+					velocity_ratio,
+					mass_center,
+					mass,
+					&number_escaped
+					);
 		}
 
 		if(0)
@@ -321,15 +314,8 @@ int		Universe::solve()
 				dt *= 0.5;
 			}
 		}
-
-		/*
-		auto id = std::this_thread::get_id();
-		std::cout << id << std::endl;
-
-		std::thread t1([](){auto id = std::this_thread::get_id(); std::cout << id << std::endl;});
-		t1.join();
-		*/
-
+		
+		
 		/* Execute "step_collisions" kernel */
 		step_collisions(
 				f.b(0),

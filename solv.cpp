@@ -13,8 +13,8 @@
 
 float timestep = 1.0;
 float mass = 1e6;
-unsigned int num_steps = 100;
-unsigned int num_bodies = 1e5;
+unsigned int num_steps = 5000;
+unsigned int num_bodies = 1e2;
 float width = 4000.0;
 
 // 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
@@ -46,12 +46,10 @@ int		info_problem()
 	printf("%39s = %16i\n", "num bodies", num_bodies);
 	printf("%39s = %16i\n", "bodies per group", num_bodies / NUM_GROUPS);
 	printf("%39s = %16i\n", "bodies per work item", num_bodies / NUM_GROUPS / LOCAL_SIZE);
-	printf("%39s = %16lu\n", "sizeof(Universe)", (int)sizeof(Universe));
-	printf("%39s = %16lu\n", "sizeof(Branches)", (int)sizeof(Branches));
-	printf("%39s = %16lu\n", "sizeof(Branch)", (int)sizeof(Branch));
-	printf("%39s = %16lu\n", "sizeof(BranchPair)", (int)sizeof(BranchPair));
+	printf("%39s = %16lu\n", "sizeof(Universe)", sizeof(Universe));
+	printf("%39s = %16lu\n", "sizeof(Branches)", sizeof(Branches));
+	printf("%39s = %16lu\n", "sizeof(Branch)", sizeof(Branch));
 	printf("%39s = %16lu\n", "size of Branches::_M_branches", sizeof(Branch) * BTREE_MAX_BRANCHES);
-	printf("%39s = %16lu\n", "size of Branches::_M_branch_pairs", (sizeof(BranchPair) * BTREE_MAX_BRANCH_PAIRS));
 	printf("%39s = %16lu\n", "sizeof(Body)", sizeof(Body));
 	//printf("%39s = %16lu\n", "sizeof(Pair)", sizeof(Pair));
 	//printf("%39s = %16lu\n", "size of pairs", ((num_bodies * (num_bodies-1)) / 2 * sizeof(Pair)));
@@ -190,14 +188,11 @@ int		main(int ac, char ** av)
 	command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
 	check(__LINE__, ret);
 
-	// solver variables
-	Pairs pairs;
-	pairs.init(uni->get_frame(0));
 
 	/* Create Memory Buffer */
 	puts("create buffer");
 	memobj_bodies   = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * sizeof(Body), NULL, &ret);
-	memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, pairs.size() * sizeof(Pair), NULL, &ret);
+	//memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, pairs.size() * sizeof(Pair), NULL, &ret);
 	//memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * uni->size(0) * sizeof(unsigned int), NULL, &ret);
 	memobj_flag_multi_coll = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &ret);
 	check(__LINE__, ret);
@@ -208,7 +203,7 @@ int		main(int ac, char ** av)
 	/* Write to buffers */
 	puts("write buffers");
 	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, uni->size(0) * sizeof(Body),	 uni->b(0), 0, NULL, NULL); check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, pairs.size() * sizeof(Pair),	 &pairs.pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
+	//ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, pairs.size() * sizeof(Pair),	 &pairs.pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &pairs.map_, 0, NULL, NULL); check(__LINE__, ret);
 	ret = clEnqueueWriteBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);

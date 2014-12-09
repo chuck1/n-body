@@ -6,7 +6,6 @@
 #include <string>
 
 #include "decl.hpp"
-#include <BranchPair.hpp>
 #include <Map.hpp>
 #include <Octree.hpp>
 

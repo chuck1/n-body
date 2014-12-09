@@ -12,7 +12,6 @@
 #include <glm/glm.hpp>
 
 #include "Body.hpp"
-#include "Pair.hpp"
 #include <Map.hpp>
 #include <Branch.hpp>
 #include <Branches.hpp>
@@ -24,13 +23,7 @@ float	radius(float m);
 
 
 
-struct Pairs
-{
-	void			init(Frame const & f);
-	unsigned int		size() const;
-	std::vector<Pair>	pairs_;
-	//Map			map_;
-};
+
 struct Universe
 {
 	public:

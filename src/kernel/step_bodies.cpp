@@ -2,7 +2,6 @@
 #include <cstdio>
 #include <cassert>
 
-#include "Pair.hpp"
 #include <Body.hpp>
 #include <kernel.hpp>
 #include <free.hpp>

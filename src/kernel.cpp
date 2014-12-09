@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <vector>
 
-#include "Pair.hpp"
 #include "Body.hpp"
 #include <CollisionBuffer.hpp>
 #include <kernel.hpp>

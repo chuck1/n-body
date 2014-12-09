@@ -274,8 +274,13 @@ void			Branch::send_to_parent(Branches * branches, Body * bodies, unsigned int i
 	{
 		Branch & parent = branches->_M_branches[_M_parent_idx];
 
-		assert(parent._M_num_elements < BTREE_LEAF_SIZE);
-	
+		if(parent._M_num_elements >= BTREE_LEAF_SIZE)
+		{
+			//abort();
+			printf("warning: parent full\n");
+			return;
+		}
+		
 		// add to parent
 		parent._M_elements[parent._M_num_elements] = body_idx;
 		parent._M_num_elements++;
