@@ -96,7 +96,7 @@ int		main(int ac, char ** av)
 	Problem prob;
 	
 	prob._M_num_bodies = 1e3;
-	unsigned int num_steps = 1000;
+	prob._M_num_step = 1000;
 	
 	char ** a = av + 1;
 	if(ac >= 3)
@@ -129,7 +129,7 @@ int		main(int ac, char ** av)
 
 	if(ac == 2)
 	{
-		uni->read(av[1], num_steps);
+		uni->read(av[1], prob._M_num_step);
 	}
 	else
 	{
@@ -143,7 +143,7 @@ int		main(int ac, char ** av)
 
 		printf("name = %s\n", uni->name_);
 
-		uni->alloc(prob._M_num_bodies, num_steps);
+		uni->alloc(prob._M_num_bodies, prob._M_num_step);
 
 		//uni->random(mass);
 		//uni->get_frame(0).spin(mass, width);
@@ -278,11 +278,11 @@ int		main(int ac, char ** av)
 
 	auto program_time_start = std::chrono::system_clock::now();
 
-	for(unsigned int t = 1; t < num_steps; t++)
+	for(unsigned int t = 1; t < prob._M_num_step; t++)
 	{
 		puts("loop");
 
-		if((t % (num_steps / 10)) == 0) printf("t = %5i\n", t);
+		if((t % (prob._M_num_step / 10)) == 0) printf("t = %5i\n", t);
 
 		/* Execute "step_pairs" kernel */
 
