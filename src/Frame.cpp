@@ -3,6 +3,15 @@
 #include "universe.h"
 #include <free.hpp>
 
+float	func1(float a)
+{
+	return (float)(rand() % (int)a) - a * 0.5;
+}
+float	func2(float a)
+{
+	return a;
+}
+
 Frame::Frame()
 {
 }
@@ -76,6 +85,36 @@ unsigned int		Frame::reduce()
 	}
 	return n;
 }
+void			Frame::sphere(float m, float w, float v)
+{
+	float rad = radius(m);
+
+	for(unsigned int i = 0; i < bodies_.size(); i++)
+	{
+		Body & b = bodies_[i];
+
+		while(1)
+		{
+			try_insert(b.x, w, w, w, func1, func1, func1, rad, i);
+
+			float d = glm::length(b.x_glm);
+
+			if(d <= w) break;
+		}
+
+		::print(b.x);
+
+		if(v > 0.0)
+		{
+			b.v[0] = (float)(rand() % (int)v) - v * 0.5;
+			b.v[1] = (float)(rand() % (int)v) - v * 0.5;
+			b.v[2] = (float)(rand() % (int)v) - v * 0.5;
+		}
+
+		b.mass = m;
+		b.radius = radius(b.mass);
+	}
+}
 void			Frame::random(float m, float w, float v)
 {
 	for(Body & b : bodies_)
@@ -135,14 +174,6 @@ float	distance(float * x0, float * x1)
 	return d;
 }
 
-float	func1(float a)
-{
-	return (float)(rand() % (int)a) - a * 0.5;
-}
-float	func2(float a)
-{
-	return a;
-}
 
 int			Frame::try_insert(
 		float * x,
@@ -203,11 +234,10 @@ void			Frame::rings(float m, float w)
 	int n = 0;
 
 
+	//for(Body & b : bodies_)
 	for(unsigned int i = 0; i < bodies_.size(); i++)
-		//for(Body & b : bodies_)
 	{
 		Body & b = bodies_[i];
-
 
 		if(try_insert(x, w, 0.0, w, func1, func2, func1, rad, i)) n++;
 
@@ -274,9 +304,9 @@ glm::vec3	Frame::body_min()
 int		Frame::mass_center(float * x, float * s, float * m) const
 {
 	float temp[3] = {0,0,0};
-	
+
 	*m = 0;
-	
+
 	for(Body const & b : bodies_)
 	{
 		if(b.alive)

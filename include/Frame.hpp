@@ -32,6 +32,7 @@ struct Frame
 		void			copy(Body* b, int n);
 		unsigned int		reduce();
 		void			random(float m, float w, float v);
+		void			sphere(float m, float w, float v);
 		void			spin(float m, float w);
 		void			rings(float m, float w);
 		unsigned int		count_dead();

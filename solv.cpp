@@ -13,8 +13,8 @@
 
 float timestep = 1.0;
 float mass = 1e6;
-unsigned int num_steps = 5000;
-unsigned int num_bodies = 1e2;
+unsigned int num_steps = 100;
+unsigned int num_bodies = 1e4;
 float width = 4000.0;
 
 // 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
@@ -114,8 +114,9 @@ int		main(int ac, char ** av)
 		uni->alloc(num_bodies, num_steps);
 	
 		//uni->random(mass);
-		uni->get_frame(0).spin(mass, width);
-		//uni->get_frame(0).rings(mass, width);
+		//uni->get_frame(0).spin(mass, width);
+		//uni->get_frame(0).spin(mass, width);
+		uni->get_frame(0).rings(mass, width);
 	}
 	else
 	{

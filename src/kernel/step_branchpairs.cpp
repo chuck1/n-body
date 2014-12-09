@@ -49,56 +49,20 @@ void			update_branches(
 
 			Branch & branch = branches->_M_branches[idx];
 
-			if(branch._M_level == (unsigned int)level)
+			if(
+					(branch._M_level == (unsigned int)level) &&
+					(branch._M_flag & Branch::FLAG_IS_LEAF)
+			  )
 			{
-				if(branch._M_flag & Branch::FLAG_IS_LEAF)
+				unsigned int i = 0;
+				while(i < branch._M_num_elements)
 				{
-					unsigned int i = 0;
-					while(i < branch._M_num_elements)
+					unsigned int body_idx = branch._M_elements[i];
+
+					Body & body = bodies[body_idx];
+
+					if(body.alive)
 					{
-						unsigned int body_idx = branch._M_elements[i];
-
-						Body & body = bodies[body_idx];
-
-						if(body.alive)
-						{
-							if(
-									(body.x[0] < branch._M_x0[0]) ||
-									(body.x[1] < branch._M_x0[1]) ||
-									(body.x[2] < branch._M_x0[2]) ||
-									(body.x[0] > branch._M_x1[0]) ||
-									(body.x[1] > branch._M_x1[1]) ||
-									(body.x[2] > branch._M_x1[2])
-							  )
-							{
-								if(DEBUG) printf("send to parent %i\n", body_idx);
-
-								// atmoic
-#if(THREADED)
-								std::lock_guard<std::mutex> lock(g_mutex_branches);
-#endif
-								branch.send_to_parent(branches, bodies, i);
-							}
-							else
-							{
-								i++;
-							}
-						}
-						else
-						{
-							branch.erase(i);
-						}
-					}
-				}
-				else
-				{
-					unsigned int i = 0;
-					while(i < branch._M_num_elements)
-					{
-						unsigned int body_idx = branch._M_elements[i];
-
-						Body & body = bodies[body_idx];
-
 						if(
 								(body.x[0] < branch._M_x0[0]) ||
 								(body.x[1] < branch._M_x0[1]) ||
@@ -118,21 +82,56 @@ void			update_branches(
 						}
 						else
 						{
-							if(DEBUG) printf("add to children %i\n", body_idx);
-
-							{
-								// atmoic
-#if(THREADED)
-								std::lock_guard<std::mutex> lock(g_mutex_branches);
-#endif
-								branch.add_to_children(*branches, bodies, body_idx);
-							}
-
-							branch.erase(i);
+							i++;
 						}
-						i++;
 					}
+					else
+					{
+						branch.erase(i);
+					}
+				}
+			}
+			else
+			{
+				unsigned int i = 0;
+				while(i < branch._M_num_elements)
+				{
+					unsigned int body_idx = branch._M_elements[i];
 
+					Body & body = bodies[body_idx];
+
+					if(
+							(body.x[0] < branch._M_x0[0]) ||
+							(body.x[1] < branch._M_x0[1]) ||
+							(body.x[2] < branch._M_x0[2]) ||
+							(body.x[0] > branch._M_x1[0]) ||
+							(body.x[1] > branch._M_x1[1]) ||
+							(body.x[2] > branch._M_x1[2])
+					  )
+					{
+						if(DEBUG) printf("send to parent %i\n", body_idx);
+
+						// atmoic
+#if(THREADED)
+						std::lock_guard<std::mutex> lock(g_mutex_branches);
+#endif
+						branch.send_to_parent(branches, bodies, i);
+					}
+					else
+					{
+						if(DEBUG) printf("add to children %i\n", body_idx);
+
+						{
+							// atmoic
+#if(THREADED)
+							std::lock_guard<std::mutex> lock(g_mutex_branches);
+#endif
+							branch.add_to_children(*branches, bodies, body_idx);
+						}
+
+						branch.erase(i);
+					}
+					i++;
 				}
 			}
 		}

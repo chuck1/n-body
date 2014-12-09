@@ -224,8 +224,9 @@ int		Universe::solve()
 			abort();
 		}
 
-		branches()->init_pairs();
-
+		/*
+		 * refresh branch masses
+		 */
 		if(THREADED)
 		{
 			launch(
@@ -240,7 +241,9 @@ int		Universe::solve()
 			branches()->refresh_mass(branches().get(), f.b(0));
 		}
 
-		/* Execute "step_pairs" kernel */
+		/* 
+		 * Execute "step_pairs" kernel
+		 */
 		if(THREADED)
 		{
 			launch(
@@ -263,12 +266,17 @@ int		Universe::solve()
 					); 
 		}
 
-		/* Execute "step_bodies" kernel */
-		f.mass_center(mass_center, 0, &mass);
+		/*
+		 * Execute "step_bodies" kernel
+		 */
+		if(0)
+		{
+			f.mass_center(mass_center, 0, &mass);
 
-		std::fill_n(velocity_ratio, 3, 0);
+			std::fill_n(velocity_ratio, 3, 0);
 
-		number_escaped = 0;
+			number_escaped = 0;
+		}
 
 		if(THREADED)
 		{
@@ -294,7 +302,7 @@ int		Universe::solve()
 					mass_center,
 					mass,
 					&number_escaped
-					);
+				   );
 		}
 
 		if(0)
@@ -314,8 +322,8 @@ int		Universe::solve()
 				dt *= 0.5;
 			}
 		}
-		
-		
+
+
 		/* Execute "step_collisions" kernel */
 		step_collisions(
 				f.b(0),
@@ -352,7 +360,8 @@ int		Universe::solve()
 		/* Reset flag_multi_coll */
 		flag_multi_coll = 0;
 
-		if(0) {
+		if(0)
+		{
 			if((number_removed + f.count_dead()) != dead)
 			{
 				printf("1: %i %i %i\n", number_removed, f.count_dead(), dead);

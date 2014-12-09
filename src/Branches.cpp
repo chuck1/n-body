@@ -84,8 +84,6 @@ void			Branches::init(Frame & f, glm::vec3 x0, glm::vec3 x1)
 			f.b(i)->alive = 0;
 		}
 	}
-
-	init_pairs();
 }
 Branch &		Branches::get_branch(unsigned int i)
 {
@@ -171,37 +169,6 @@ int			Branches::alloc(Branch & b)
 	}
 
 	return 0;
-}
-void			Branches::init_pairs()
-{
-	if(DEBUG_BRANCHES) printf("%s %p\n", __PRETTY_FUNCTION__, this);
-
-	/*
-	int k = 0;
-
-	unsigned int nb = _M_num_branches;
-	*/
-	//_M_map.alloc(nb);
-
-	/*
-	_M_num_branch_pairs = nb * (nb - 1) / 2;
-
-	for(unsigned int i = 0; i < nb; i++)
-	{
-		for(unsigned int j = i + 1; j < nb; j++)
-		{
-			_M_branch_pairs[k].b0 = i;
-			_M_branch_pairs[k].b1 = j;
-
-			
-			//_M_map.pair_[i * nb + j] = k;
-			//_M_map.pair_[j * nb + i] = k;
-			
-
-			k++;
-		}
-	}
-*/
 }
 unsigned int		Branches::count_bodies() const
 {

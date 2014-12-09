@@ -21,7 +21,6 @@ struct Branches
 	Branches();
 	void			init(Frame & f);
 	void			init(Frame & f, glm::vec3 x0, glm::vec3 x1);
-	void			init_pairs();
 	Branch &		get_branch(Coor const & coor);
 	Branch &		get_branch(unsigned int i);
 	int			alloc(Branch & branch);

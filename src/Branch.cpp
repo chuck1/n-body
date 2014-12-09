@@ -294,7 +294,11 @@ void			Branch::send_to_parent(Branches * branches, Body * bodies, unsigned int i
 }
 void			Branch::erase(unsigned int i)
 {
-	assert(_M_num_elements > i);
+	if(_M_num_elements <= i)
+	{
+		printf("i = %i _M_num_elements = %i\n", i, _M_num_elements);
+		abort();
+	}
 
 	// remove from this
 	_M_elements[i] = _M_elements[_M_num_elements - 1];
