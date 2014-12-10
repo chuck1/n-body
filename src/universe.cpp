@@ -120,7 +120,7 @@ int		Universe::solve()
 	unsigned int threads = 4;
 
 	unsigned int flag_multi_coll = 0;
-	float dt = 10.0;
+	float dt =  20.0;
 
 
 	unsigned int alive = count_alive(0);
@@ -218,10 +218,13 @@ int		Universe::solve()
 			update_branches(branches().get(), f.b(0));
 		}
 
+		if(1)
+		{
 		if(not(branches()->count_bodies() == f.count_alive()))
 		{
 			printf("_M_branches.count_bodies() = %i f.count_alive() = %i\n", branches()->count_bodies(), f.count_alive());
 			abort();
+		}
 		}
 
 		/*
