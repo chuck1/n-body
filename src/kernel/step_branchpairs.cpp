@@ -11,160 +11,71 @@
 
 #define DEBUG (0)
 
-std::mutex			g_sync;
-std::condition_variable		g_sync_cv;
-//std::atomic_int			g_atom_count = 0;
-unsigned int				g_count = 0;
-void		sync()
+
+void			mark_collision(CollisionBuffer * cb,
+		unsigned int body_idx_0,
+		unsigned int body_idx_1,
+		Body * pb0,
+		Body * pb1)
 {
-	std::unique_lock<std::mutex> lock(g_sync);
-	g_count++;
-	if(g_count == thread_count)
+	if(0)
 	{
-		//std::cout << "notifying" << std::endl;
-		g_sync_cv.notify_all();
-		g_count = 0;
-	}
-	else
-	{
-		//std::cout << "waiting..." << std::endl;
-		g_sync_cv.wait(lock);
-	}
-}
 
-void		divide(unsigned int n, unsigned int & i_local0, unsigned int & i_local1)
-{
-	/* work group */
-	int local_block = n / get_num_groups(0);
-
-	int i_group0 = get_group_id(0) * local_block;
-	int i_group1 = i_group0 + local_block;
-
-	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = n;
-
-	/* work item */
-	int block = (i_group1 - i_group0) / get_local_size(0);
-
-	i_local0 = i_group0 + get_local_id(0) * block;
-	i_local1 = i_local0 + block;
-
-	if(get_local_id(0) == (get_local_size(0) - 1)) i_local1 = i_group1;
-}
-
-void			update_branches(
-		Branches * branches,
-		Body * bodies
-		)
-{
-	//printf("%s\n", __PRETTY_FUNCTION__);
-
-	unsigned int i_local0;
-	unsigned int i_local1;
-
-	for(int level = (int)branches->_M_lowest_level; level >= 0; level--) // for each level, starting at lowest level
-	{
-		// sync threads here
-		sync();
-
-		divide(branches->_M_num_branches, i_local0, i_local1);
-
-		for(unsigned int idx = i_local0; idx < i_local1; idx++) // for each branch at that level
+		// atomic
 		{
-			//printf("level = %3i branch index %3i\n", level, idx);
-
-			Branch & branch = branches->_M_branches[idx];
-			
-			if(branch._M_level != (unsigned int)level) continue;
-			
-			if(branch._M_flag & Branch::FLAG_IS_LEAF)
-			{
-				unsigned int i = 0;
-				while(i < branch._M_num_elements)
-				{
-					//printf("i = %i branch._M_num_elements = %i\n", i, branch._M_num_elements);
-
-					unsigned int body_idx = branch._M_elements[i];
-
-					Body & body = bodies[body_idx];
-
-					if(body.alive)
-					{
-						if(
-								(body.x[0] < branch._M_x0[0]) ||
-								(body.x[1] < branch._M_x0[1]) ||
-								(body.x[2] < branch._M_x0[2]) ||
-								(body.x[0] > branch._M_x1[0]) ||
-								(body.x[1] > branch._M_x1[1]) ||
-								(body.x[2] > branch._M_x1[2])
-						  )
-						{
-							if(DEBUG) printf("send to parent %i\n", body_idx);
-
-							// atmoic
-#if(THREADED)
-							std::lock_guard<std::mutex> lock(g_mutex_branches);
+#if THREADED
+			std::lock_guard<std::mutex> lock(cb->_M_mutex);
 #endif
-							branch.send_to_parent(branches, bodies, i);
-						}
-						else
-						{
-							i++;
-						}
-					}
-					else
-					{
-						branch.erase(i);
-					}
-				}
-			}
-			else
-			{
-				unsigned int i = 0;
-				while(i < branch._M_num_elements)
-				{
-					unsigned int body_idx = branch._M_elements[i];
+			//printf("collision\n");
+			//Pair & pair = pairs[map_func(body_idx_0, body_idx_1, num_bodies)];
 
-					Body & body = bodies[body_idx];
+			assert(cb->_M_size < CollisionBuffer::LENGTH);
 
-					if(
-							(body.x[0] < branch._M_x0[0]) ||
-							(body.x[1] < branch._M_x0[1]) ||
-							(body.x[2] < branch._M_x0[2]) ||
-							(body.x[0] > branch._M_x1[0]) ||
-							(body.x[1] > branch._M_x1[1]) ||
-							(body.x[2] > branch._M_x1[2])
-					  )
-					{
-						if(DEBUG) printf("send to parent %i\n", body_idx);
-
-						// atmoic
-#if(THREADED)
-						std::lock_guard<std::mutex> lock(g_mutex_branches);
-#endif
-						branch.send_to_parent(branches, bodies, i);
-					}
-					else
-					{
-						if(DEBUG) printf("add to children %i\n", body_idx);
-
-						{
-							// atmoic
-#if(THREADED)
-							std::lock_guard<std::mutex> lock(g_mutex_branches);
-#endif
-							branch.add_to_children(*branches, bodies, body_idx);
-						}
-
-						branch.erase(i);
-					}
-					i++;
-				}
-			}
+			cb->_M_pairs[cb->_M_size].i = body_idx_0;
+			cb->_M_pairs[cb->_M_size].j = body_idx_1;
+			cb->_M_pairs[cb->_M_size].flag |= CollisionBuffer::Pair::FLAG_UNRESOLVED;
+			cb->_M_size++;
 		}
+
+		//pair._M_collision = 1;
+
+		{
+#if THREADED
+			std::lock_guard<std::mutex> lock(g_mutex_bodies);
+#endif
+
+			// atomic
+			pb0->num_collisions++;
+			// atomic
+			pb1->num_collisions++;
+		}
+
 	}
+
+	glm::vec3 v_rel = pb1->v_glm - pb0->v_glm;
+
+	float c = 1.0;
+
+	pb0->f[0] += c * v_rel[0];
+	pb0->f[1] += c * v_rel[1];
+	pb0->f[2] += c * v_rel[2];
+
+	pb1->f[0] -= c * v_rel[0];
+	pb1->f[1] -= c * v_rel[1];
+	pb1->f[2] -= c * v_rel[2];
+
 }
 
+float			gravity(
+		float m0,
+		float m1,
+		float r)
+{
+	//float f = GRAV * m0 * m1 / (r * r) / r;
+	float f = GRAV * m0 * m1 * (1.0 / (r * r) - 1.0 / (r * r * r)) / r;
 
+	return f;
+}
 
 void			step_branch_pairs(
 		Branches * branches,
@@ -268,7 +179,7 @@ void			step_branch_pairs(
 						glm::vec3 D = b1->_M_mc_glm - pb->x_glm;
 						float len_D = glm::length(D);
 
-						float f = GRAV * pb->mass * b1->_M_mass / len_D / len_D / len_D;
+						float f = gravity(pb->mass, b1->_M_mass, len_D);
 
 						assert(b1->_M_mass > 0);
 
@@ -288,7 +199,7 @@ void			step_branch_pairs(
 						glm::vec3 D = b0->_M_mc_glm - pb->x_glm;
 						float len_D = glm::length(D);
 
-						float f = GRAV * pb->mass * b0->_M_mass / len_D / len_D / len_D;
+						float f = gravity(pb->mass, b0->_M_mass, len_D);
 
 						assert(b0->_M_mass > 0);
 
@@ -303,17 +214,15 @@ void			step_branch_pairs(
 				}
 				else // use same displacement vector for all
 				{
-					float f = GRAV / d / d / d;
-
 					for(unsigned int i = 0; i < b0->_M_num_elements; i++) // for each body in branch 0
 					{
 						Body * pb = bodies + b0->_M_elements[i];
 
-						float f0 = f * pb->mass * b1->_M_mass;
+						float f0 = gravity(pb->mass, b1->_M_mass, d);
 
 						assert(b1->_M_mass > 0);
 
-						if(DEBUG) printf("inter-branch body branch1 f = %f\n", f);
+						if(DEBUG) printf("inter-branch body branch1 f = %f\n", f0);
 
 						pb->f[0] += f0 * r[0];
 						pb->f[1] += f0 * r[1];
@@ -324,11 +233,11 @@ void			step_branch_pairs(
 					{
 						Body * pb = bodies + b1->_M_elements[i];
 
-						float f1 = f * pb->mass * b0->_M_mass;
+						float f1 = gravity(pb->mass, b0->_M_mass, d);
 
 						assert(b0->_M_mass > 0);
 
-						if(DEBUG) printf("inter-branch body branch0 f = %f\n", f);
+						if(DEBUG) printf("inter-branch body branch0 f = %f\n", f1);
 
 						pb->f[0] += f1 * r[0];
 						pb->f[1] += f1 * r[1];
@@ -356,7 +265,9 @@ void			step_branch_pairs(
 
 						float len_D = glm::length(D);
 
-						float f = GRAV * pb0->mass * pb1->mass / len_D / len_D / len_D;
+						float f = gravity(pb0->mass, pb1->mass, len_D);
+
+
 
 						if(DEBUG) printf("inter-branch body-body f = %f\n", f);
 
@@ -370,34 +281,10 @@ void			step_branch_pairs(
 
 						if(len_D < (pb0->radius + pb1->radius))
 						{
-							// atomic
-							{
-#if(THREADED)
-								std::lock_guard<std::mutex> lock(cb->_M_mutex);
-#endif
-								//printf("collision\n");
-								//Pair & pair = pairs[map_func(body_idx_0, body_idx_1, num_bodies)];
+							mark_collision(cb, body_idx_0, body_idx_1, pb0, pb1);
 
-								assert(cb->_M_size < CollisionBuffer::LENGTH);
 
-								cb->_M_pairs[cb->_M_size].i = body_idx_0;
-								cb->_M_pairs[cb->_M_size].j = body_idx_1;
-								cb->_M_pairs[cb->_M_size].flag |= CollisionBuffer::Pair::FLAG_UNRESOLVED;
-								cb->_M_size++;
-							}
 
-							//pair._M_collision = 1;
-
-							{
-#if(THREADED)
-								std::lock_guard<std::mutex> lock(g_mutex_bodies);
-#endif
-
-								// atomic
-								pb0->num_collisions++;
-								// atomic
-								pb1->num_collisions++;
-							}
 						}
 
 
@@ -433,7 +320,8 @@ void			step_branch_pairs(
 
 				float len_D = glm::length(D);
 
-				float f = GRAV * pb0->mass * pb1->mass / len_D / len_D / len_D;
+				float f = gravity(pb0->mass, pb1->mass, len_D);
+
 				if(DEBUG) printf("intra-branch f = %f\n", f);
 
 				{
@@ -453,34 +341,7 @@ void			step_branch_pairs(
 
 				if(len_D < (pb0->radius + pb1->radius))
 				{
-					// atomic
-					{
-#if THREADED
-						std::lock_guard<std::mutex> lock(cb->_M_mutex);
-#endif
-						//printf("collision\n");
-						//Pair & pair = pairs[map_func(body_idx_0, body_idx_1, num_bodies)];
-
-						assert(cb->_M_size < CollisionBuffer::LENGTH);
-
-						cb->_M_pairs[cb->_M_size].i = body_idx_0;
-						cb->_M_pairs[cb->_M_size].j = body_idx_1;
-						cb->_M_pairs[cb->_M_size].flag |= CollisionBuffer::Pair::FLAG_UNRESOLVED;
-						cb->_M_size++;
-					}
-
-					//pair._M_collision = 1;
-
-					{
-#if THREADED
-						std::lock_guard<std::mutex> lock(g_mutex_bodies);
-#endif
-
-						// atomic
-						pb0->num_collisions++;
-						// atomic
-						pb1->num_collisions++;
-					}
+					mark_collision(cb, body_idx_0, body_idx_1, pb0, pb1);
 				}
 
 				count++;
@@ -490,8 +351,6 @@ void			step_branch_pairs(
 
 	if(DEBUG) printf("count = %i count_body_body = %i count_body_branch = %i\n", count, count_body_body, count_body_branch);
 }
-
-
 
 
 

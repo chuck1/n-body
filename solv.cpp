@@ -95,8 +95,8 @@ int		main(int ac, char ** av)
 
 	Problem prob;
 	
-	prob._M_num_bodies = 1e3;
-	prob._M_num_step = 1000;
+	prob._M_num_bodies = 1e4;
+	prob._M_num_step = 100;
 	
 	char ** a = av + 1;
 	if(ac >= 3)
@@ -147,8 +147,8 @@ int		main(int ac, char ** av)
 
 		//uni->random(mass);
 		//uni->get_frame(0).spin(mass, width);
-		uni->get_frame(0).sphere(mass, width, 0);
-		//uni->get_frame(0).rings(mass, width);
+		//uni->get_frame(0).sphere(mass, width, 0);
+		uni->get_frame(0).rings(mass, width);
 	}
 
 	/* Get Platform and Device Info */
