@@ -14,7 +14,7 @@ INCLUDE_DIRS = -I. -I./include/
 
 #all: play.out solv.out $(D_FILES)
 
-all: play.out solv.out
+all: play.out solv.out stat.out
 
 help:
 	@echo $(SRC)
@@ -33,12 +33,16 @@ solv.out: $(O_FILES) build/solv.o
 	@echo link $@
 	@g++ -g -o $@ build/solv.o $(O_FILES) $(LIBS) $(INCLUDE_DIRS) $(C_FLAGS)
 
+stat.out: $(O_FILES) build/stat.o
+	@echo link $@
+	@g++ -g -o $@ build/stat.o $(O_FILES) $(LIBS) $(INCLUDE_DIRS) $(C_FLAGS)
+
 $(O_FILES): build/%.o: src/%.cpp
 	@echo build $@
 	@mkdir -p $(dir $@)
 	@g++ -g -c -o $@ $< -I. $(C_FLAGS) $(INCLUDE_DIRS)
 
-build/play.o build/solv.o: build/%.o: %.cpp
+build/play.o build/solv.o build/stat.o: build/%.o: %.cpp
 	@echo build $@
 	@mkdir -p $(dir $@)
 	@g++ -g -c -o $@ $< -I. $(C_FLAGS) $(INCLUDE_DIRS)

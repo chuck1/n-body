@@ -61,6 +61,12 @@ struct Universe
 		
 		//Pairs				_M_pairs;
 		std::shared_ptr<Branches>	_M_branches;
+
+
+		// temp simulation data
+		unsigned int			_M_step;
+		float				_M_duration_real;
+		float				_M_time_sim;
 };
 
 

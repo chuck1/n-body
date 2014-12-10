@@ -9,6 +9,13 @@
 #include <Body.hpp>
 #include <decl.hpp>
 
+struct Stat
+{
+	float	min_;
+	float	max_;
+	float	avg_;
+};
+
 struct Frame
 {
 	public:

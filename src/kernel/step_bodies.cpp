@@ -82,11 +82,6 @@ void step_bodies(
 		dv[2] = dt * pb->f[2] / pb->mass;
 
 
-		// reset accumulating force
-		pb->f[0] = 0;
-		pb->f[1] = 0;
-		pb->f[2] = 0;
-
 		float e = 0.01;
 
 		if(0)

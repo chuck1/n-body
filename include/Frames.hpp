@@ -11,6 +11,7 @@ struct Frames
 	void			write(FILE* pf);
 	void			read(FILE* pf);
 	unsigned int		bytes() const;
+	Stat			stat_f3(float);
 
 	std::vector<Frame>	frames_;
 };

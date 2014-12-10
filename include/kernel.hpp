@@ -69,6 +69,15 @@ void			step_bodies(
 		float mass,
 		unsigned int * number_escaped
 		);
+void			reset_bodies(
+		struct Body * bodies,
+		float dt,
+		unsigned int num_bodies,
+		float * velocity_ratio,
+		float * mass_center,
+		float mass,
+		unsigned int * number_escaped
+		);
 
 void			step_pairs(
 		struct Body * bodies,

@@ -4,7 +4,7 @@
 
 void print(glm::vec3 const & v)
 {
-	printf("%16f%16f%16f\n", v.x, v.y, v.z);
+	printf("%16e%16e%16e\n", v.x, v.y, v.z);
 }
 void	print(float const * const v)
 {

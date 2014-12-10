@@ -120,9 +120,8 @@ int		Universe::solve()
 	unsigned int threads = 4;
 
 	unsigned int flag_multi_coll = 0;
-	float dt = 50.0;
+	float dt = 10.0;
 
-	float time_sim = 0;
 
 	unsigned int alive = count_alive(0);
 	unsigned int dead = size(0) - alive;
@@ -132,13 +131,14 @@ int		Universe::solve()
 
 	unsigned int nc = 0;
 
-	unsigned int step = first_step_;
+	_M_step = first_step_;
+	_M_time_sim = 0;
 
 
 	float velocity_ratio_min = 0.1;
 	float velocity_ratio[3];
 
-	float duration_real = 0;
+	_M_duration_real = 0;
 
 	printf("num_steps = %i\n", num_steps_);
 
@@ -160,9 +160,9 @@ int		Universe::solve()
 	{
 		if(0) printf("universe::bytes() = %i\n", bytes());
 
-		step++;
+		_M_step++;
 
-		time_sim += dt;
+		_M_time_sim += dt;
 
 		if(((t % (num_steps_ / 1)) == 0) || (t == 1)) print_header();
 
@@ -170,17 +170,17 @@ int		Universe::solve()
 		{
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - program_time_start);
 
-			duration_real = (float)duration.count() / 1000.0;
+			_M_duration_real = (float)duration.count() / 1000.0;
 
 			float eta =
-				(duration_real == 0.0) ?
+				(_M_duration_real == 0.0) ?
 				0.0 :
-				(duration_real / (float)(t-1) * (float)(num_steps_ - t));
+				(_M_duration_real / (float)(t-1) * (float)(num_steps_ - t));
 
 			printf("%12.1f%16f%16i%16i%16i%16i%16i%12.1f%12i%12i\n",
-					duration_real,
-					time_sim,
-					step,
+					_M_duration_real,
+					_M_time_sim,
+					_M_step,
 					t,
 					alive,
 					dead,
@@ -373,6 +373,24 @@ int		Universe::solve()
 		//add_frame(num_bodies_);
 		//memcpy(b(t), f.b(0), num_bodies_ * sizeof(Body));
 		frames_.frames_.push_back(f);
+
+
+		/*
+		 * reset body force variable
+		 */
+		launch(
+				threads,
+				reset_bodies,
+				f.b(0),
+				dt,
+				f.size(),
+				velocity_ratio,
+				mass_center,
+				mass,
+				&number_escaped
+		      );
+
+
 
 		if(frames_.frames_.size() != (unsigned int)(t+1))
 		{
