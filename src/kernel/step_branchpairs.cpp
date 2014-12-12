@@ -54,7 +54,7 @@ void			mark_collision(CollisionBuffer * cb,
 
 	glm::vec3 v_rel = pb1->v_glm - pb0->v_glm;
 
-	float c = 1.0;
+	float c = 10.0;
 
 	pb0->f[0] += c * v_rel[0];
 	pb0->f[1] += c * v_rel[1];
@@ -72,7 +72,7 @@ float			gravity(
 		float r)
 {
 	//float f = GRAV * m0 * m1 / (r * r) / r;
-	float f = GRAV * m0 * m1 * (1.0 / (r * r) - 1.0 / (r * r * r)) / r;
+	float f = GRAV * m0 * m1 * (1.0 / (r * r) - 10.0 / (r * r * r)) / r;
 
 	return f;
 }

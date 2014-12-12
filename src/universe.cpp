@@ -120,7 +120,7 @@ int		Universe::solve()
 	unsigned int threads = 4;
 
 	unsigned int flag_multi_coll = 0;
-	float dt =  10.0;
+	float dt =  1.0;
 
 
 	unsigned int alive = count_alive(0);

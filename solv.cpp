@@ -13,7 +13,7 @@
 
 float timestep = 1.0;
 float mass = 1e6;
-float width = 4000.0;
+float width = 100.0;
 
 // 2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768
 
@@ -95,8 +95,8 @@ int		main(int ac, char ** av)
 
 	Problem prob;
 	
-	prob._M_num_bodies = 1e4;
-	prob._M_num_step = 100;
+	prob._M_num_bodies = 8;
+	prob._M_num_step = 10000;
 	
 	char ** a = av + 1;
 	if(ac >= 3)
@@ -147,8 +147,8 @@ int		main(int ac, char ** av)
 
 		//uni->random(mass);
 		//uni->get_frame(0).spin(mass, width);
-		//uni->get_frame(0).sphere(mass, width, 0);
-		uni->get_frame(0).rings(mass, width);
+		uni->get_frame(0).sphere(mass, width, 0);
+		//uni->get_frame(0).rings(mass, width);
 	}
 
 	/* Get Platform and Device Info */
