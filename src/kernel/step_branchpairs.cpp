@@ -12,7 +12,8 @@
 #define DEBUG (0)
 
 
-void			mark_collision(CollisionBuffer * cb,
+void			mark_collision(
+		CollisionBuffer * cb,
 		unsigned int body_idx_0,
 		unsigned int body_idx_1,
 		Body * pb0,
@@ -76,7 +77,69 @@ float			gravity(
 
 	return f;
 }
+void			step_pairs_in_branch(
+		Branch * branch,
+		CollisionBuffer * cb,
+		Body * bodies)
+{
+	// for each pair of bodies in the branch
+	for(unsigned int j = 0; j < branch->_M_num_elements; j++)
+	{
+		for(unsigned int k = j + 1; k < branch->_M_num_elements; k++)
+		{
+			unsigned int body_idx_0 = branch->_M_elements[j];
+			unsigned int body_idx_1 = branch->_M_elements[k];
 
+			Body * pb0 = bodies + body_idx_0;
+			Body * pb1 = bodies + body_idx_1;
+
+			assert(pb0 != pb1);
+
+			glm::vec3 D = pb0->x_glm - pb1->x_glm;
+
+			float len_D = glm::length(D);
+
+			float f = gravity(pb0->mass, pb1->mass, len_D);
+
+			if(DEBUG) printf("intra-branch f = %f\n", f);
+
+			{
+#if THREADED
+				//std::lock_guard<std::mutex> lock(g_mutex_bodies);
+#endif
+				pb0->f_glm -= f * D;
+				pb1->f_glm += f * D;
+			}
+
+			if(len_D < (pb0->radius + pb1->radius))
+			{
+				mark_collision(cb, body_idx_0, body_idx_1, pb0, pb1);
+			}
+		}
+	}
+}
+bool			branch_pair_should_calc(
+		Branch* b0,
+		Branch* b1)
+{
+	if(!(b0->_M_flag & Branch::FLAG_IS_LEAF))
+	{
+		return false;
+	}
+	if(!(b1->_M_flag & Branch::FLAG_IS_LEAF))
+	{
+		return false;
+	}
+	if(b0->_M_num_elements == 0)
+	{
+		return false;
+	}
+	if(b1->_M_num_elements == 0)
+	{
+		return false;
+	}
+	return true;
+}
 void			step_branch_pairs(
 		Branches * branches,
 		CollisionBuffer * cb,
@@ -96,7 +159,7 @@ void			step_branch_pairs(
 	unsigned int i_local1;
 
 	//divide(branches->_M_num_branch_pairs, i_local0, i_local1);
-	divide(branches->_M_num_branches, i_local0, i_local1);
+	divide(branches->_M_num_branches, &i_local0, &i_local1);
 
 	if(DEBUG) printf("branch pairs %6i to %6i\n", i_local0, i_local1);
 
@@ -114,23 +177,7 @@ void			step_branch_pairs(
 			struct Branch* b0 = branches->_M_branches + i;
 			struct Branch* b1 = branches->_M_branches + j;
 
-			if(!(b0->_M_flag & Branch::FLAG_IS_LEAF))
-			{
-				continue;
-			}
-			if(!(b1->_M_flag & Branch::FLAG_IS_LEAF))
-			{
-				continue;
-			}
-
-			if(b0->_M_num_elements == 0)
-			{
-				continue;
-			}
-			if(b1->_M_num_elements == 0)
-			{
-				continue;
-			}
+			if(!branch_pair_should_calc(b0, b1)) continue;
 
 			//__local float * x0 = b0->x;
 			//__local float * x1 = b1->x;
@@ -267,8 +314,6 @@ void			step_branch_pairs(
 
 						float f = gravity(pb0->mass, pb1->mass, len_D);
 
-
-
 						if(DEBUG) printf("inter-branch body-body f = %f\n", f);
 
 						pb0->f[0] -= f * D[0];
@@ -282,11 +327,7 @@ void			step_branch_pairs(
 						if(len_D < (pb0->radius + pb1->radius))
 						{
 							mark_collision(cb, body_idx_0, body_idx_1, pb0, pb1);
-
-
-
 						}
-
 
 						count++;
 					}
@@ -295,62 +336,18 @@ void			step_branch_pairs(
 		}
 	}
 
-	divide(branches->_M_num_branches, i_local0, i_local1);
+	divide(branches->_M_num_branches, &i_local0, &i_local1);
 
 	if(DEBUG) printf("branches %6i to %6i\n", i_local0, i_local1);
 
 	// also must calc forces between bodies in same branch!
 	for(unsigned int i = i_local0; i < i_local1; i++)
 	{
-		Branch & branch = branches->_M_branches[i];
-
-		for(unsigned int j = 0; j < branch._M_num_elements; j++)
-		{
-			for(unsigned int k = j + 1; k < branch._M_num_elements; k++)
-			{
-				unsigned int body_idx_0 = branch._M_elements[j];
-				unsigned int body_idx_1 = branch._M_elements[k];
-
-				Body * pb0 = bodies + body_idx_0;
-				Body * pb1 = bodies + body_idx_1;
-
-				assert(pb0 != pb1);
-
-				glm::vec3 D = pb0->x_glm - pb1->x_glm;
-
-				float len_D = glm::length(D);
-
-				float f = gravity(pb0->mass, pb1->mass, len_D);
-
-				if(DEBUG) printf("intra-branch f = %f\n", f);
-
-				{
-#if THREADED
-					//std::lock_guard<std::mutex> lock(g_mutex_bodies);
-#endif
-
-					pb0->f_glm -= f * D;
-
-
-					pb1->f[0] += f * D[0];
-					pb1->f[1] += f * D[1];
-					pb1->f[2] += f * D[2];
-				}
-
-
-				if(len_D < (pb0->radius + pb1->radius))
-				{
-					mark_collision(cb, body_idx_0, body_idx_1, pb0, pb1);
-				}
-
-				count++;
-			}
-		}
+		step_pairs_in_branch(&(branches->_M_branches[i]), cb, bodies);
 	}
 
 	if(DEBUG) printf("count = %i count_body_body = %i count_body_branch = %i\n", count, count_body_body, count_body_branch);
 }
-
 
 
 

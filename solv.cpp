@@ -92,16 +92,55 @@ void		signal_callback(int signum)
 	should_exit = 1;
 }
 
+int		main_cpu(Universe* uni)
+{
+	// files.dat filename
+	char filename[128];
+	strcpy(filename, "files_");
+	strcat(filename, uni->name_);
+	strcat(filename, ".dat");
+
+	// CPU
+	for(int i = 0; i < 100; i++)
+	{
+		uni->solve();
+
+		uni->write();
+
+		// append filename
+		//filenames.push_back(u->getFilename());
+		std::ofstream ofs;
+		ofs.open(filename, std::ofstream::out | std::ofstream::app);
+		ofs << uni->getFilename() << std::endl;
+		ofs.close();
+
+		// copy last to first
+		//memcpy(u->b(0), u->b(u->num_steps_ - 1), u->num_bodies_ * sizeof(Body));
+
+		uni->get_frame(0) = uni->get_frame(uni->num_steps_ - 1);
+
+		// reset
+		uni->frames_.frames_.resize(1);
+
+		uni->first_step_ += uni->num_steps_;
 
 
+		// check abort signal	
+		if(should_exit == 1) break;
+	}
+
+	return 0;
+}
 int		main(int ac, char ** av)
 {
 	puts("Create Universe");
-
+	
 	Problem prob;
 	
 	prob._M_num_bodies = 8;
 	prob._M_num_step = 10000;
+	
+	
 	
 	char ** a = av + 1;
 	if(ac >= 3)
@@ -169,40 +208,7 @@ int		main(int ac, char ** av)
 
 	if(ret)
 	{
-		// files.dat filename
-		char filename[128];
-		strcpy(filename, "files_");
-		strcat(filename, uni->name_);
-		strcat(filename, ".dat");
-
-		// CPU
-		for(int i = 0; i < 100; i++)
-		{
-			uni->solve();
-
-			uni->write();
-
-			// append filename
-			//filenames.push_back(u->getFilename());
-			std::ofstream ofs;
-			ofs.open(filename, std::ofstream::out | std::ofstream::app);
-			ofs << uni->getFilename() << std::endl;
-			ofs.close();
-
-			// copy last to first
-			//memcpy(u->b(0), u->b(u->num_steps_ - 1), u->num_bodies_ * sizeof(Body));
-
-			uni->get_frame(0) = uni->get_frame(uni->num_steps_ - 1);
-
-			// reset
-			uni->frames_.frames_.resize(1);
-
-			uni->first_step_ += uni->num_steps_;
-
-
-			// check abort signal	
-			if(should_exit == 1) break;
-		}
+		main_cpu(uni);
 
 		exit(0);
 	}
@@ -216,11 +222,11 @@ int		main(int ac, char ** av)
 
 	/* Get Device Info */
 	ret = get_device_info(device_id);
-	
+
 	Device* device = new Device(device_id);
 
 	Context* context = device->createContext();
-	
+
 	CommandQueue* command_queue = context->createCommandQueue(device);
 
 	/* Create Memory Buffer */
@@ -230,7 +236,7 @@ int		main(int ac, char ** av)
 
 	//memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, pairs.size() * sizeof(Pair), NULL, &ret);
 	//memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * uni->size(0) * sizeof(unsigned int), NULL, &ret);
-	
+
 	Buffer* memobj_flag_multi_coll = context->createBuffer(sizeof(unsigned int));
 
 	check(__LINE__, ret);
@@ -244,7 +250,7 @@ int		main(int ac, char ** av)
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, pairs.size() * sizeof(Pair),	 &pairs.pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &pairs.map_, 0, NULL, NULL); check(__LINE__, ret);
 	memobj_flag_multi_coll->enqueueWrite(command_queue, 0, sizeof(unsigned int), &flag_multi_coll);
-	
+
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);
 	check(__LINE__, ret);
 
@@ -372,7 +378,8 @@ int		main(int ac, char ** av)
 	printf("duration = %i milliseconds\n", (int)duration.count());
 
 	/* Finalization */
-	ret = clFlush(command_queue->_M_id);check(__LINE__, ret);
+	ret = clFlush(command_queue->_M_id);
+	check(__LINE__, ret);
 
 	if(ret)
 	{

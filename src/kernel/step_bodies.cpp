@@ -1,26 +1,28 @@
+#ifdef CPU
 #include <cmath>
 #include <cstdio>
 #include <cassert>
+#include "include/free.hpp"
+#endif
 
-#include <Body.hpp>
-#include <kernel.hpp>
-#include <free.hpp>
+#include "include/Body.hpp"
+#include "include/kernel.hpp"
 
-bool	feq(float const & f0, float const & f1)
+bool	feq(float const * f0, float const * f1)
 {
-	return (abs(f0 - f1) < 0.0001);
+	return (fabs(*f0 - *f1) < 0.0001);
 }
 
-void step_bodies(
-		struct Body * bodies,
+__kernel void step_bodies(
+		__global struct Body * bodies,
 		/*struct Pair * pairs,*/
 		/*unsigned int * map,*/
 		float dt,
 		unsigned int num_bodies, // in
-		float * velocity_ratio, // in/out
-		float * mass_center, // in
+		__global float * velocity_ratio, // in/out
+		__global float * mass_center, // in
 		float mass, // in
-		unsigned int * number_escaped // out
+		__global unsigned int * number_escaped // out
 		)
 {
 	/* work group */
@@ -60,7 +62,7 @@ void step_bodies(
 	//__local struct BodyMap * pbm = 0;
 	//struct BodyMap * pbm = 0;
 
-	Body * pb = 0;
+	__global struct Body * pb = 0;
 
 	for(unsigned int b = i_local0; b < i_local1; b++)
 	{
@@ -82,20 +84,24 @@ void step_bodies(
 		dv[2] = dt * pb->f[2] / pb->mass;
 
 
-		float e = 0.01;
+		//float e = 0.01;
 
 		if(0)
 		{
+			/*
 			float rat[3];
 			rat[0] = fabs(dv[0] / pb->v[0]);
 			rat[1] = fabs(dv[1] / pb->v[1]);
 			rat[2] = fabs(dv[2] / pb->v[2]);
-
+			*/
 			// atomic
+			/*
 			if(std::isfinite(rat[0])) if(rat[0] > velocity_ratio[0]) velocity_ratio[0] = rat[0];
 			if(std::isfinite(rat[1])) if(rat[1] > velocity_ratio[1]) velocity_ratio[1] = rat[1];
 			if(std::isfinite(rat[2])) if(rat[2] > velocity_ratio[2]) velocity_ratio[2] = rat[2];
+			*/
 
+			/*
 			if(
 					((std::isfinite(rat[0])) && (rat[0] > e)) ||
 					((std::isfinite(rat[1])) && (rat[1] > e)) ||
@@ -107,6 +113,7 @@ void step_bodies(
 						rat[1],
 						rat[2]);
 			}
+			*/
 		}
 
 		pb->v[0] += dv[0];

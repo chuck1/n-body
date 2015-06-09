@@ -32,7 +32,7 @@ void		sync()
 	}
 }
 
-void		divide(unsigned int n, unsigned int & i_local0, unsigned int & i_local1)
+void		divide(unsigned int n, unsigned int * i_local0, unsigned int * i_local1)
 {
 	/* work group */
 	int local_block = n / get_num_groups(0);
@@ -45,10 +45,10 @@ void		divide(unsigned int n, unsigned int & i_local0, unsigned int & i_local1)
 	/* work item */
 	int block = (i_group1 - i_group0) / get_local_size(0);
 
-	i_local0 = i_group0 + get_local_id(0) * block;
-	i_local1 = i_local0 + block;
+	*i_local0 = i_group0 + get_local_id(0) * block;
+	*i_local1 = *i_local0 + block;
 
-	if(get_local_id(0) == (get_local_size(0) - 1)) i_local1 = i_group1;
+	if(get_local_id(0) == (get_local_size(0) - 1)) *i_local1 = i_group1;
 }
 
 void			update_branches(
@@ -66,7 +66,7 @@ void			update_branches(
 		// sync threads here
 		sync();
 
-		divide(branches->_M_num_branches, i_local0, i_local1);
+		divide(branches->_M_num_branches, &i_local0, &i_local1);
 
 		for(unsigned int idx = i_local0; idx < i_local1; idx++) // for each branch at that level
 		{
@@ -163,7 +163,6 @@ void			update_branches(
 		}
 	}
 }
-
 
 
 

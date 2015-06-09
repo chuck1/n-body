@@ -4,9 +4,15 @@
 
 struct Frame;
 struct Body;
-class Branches;
-class Map;
-class CollisionBuffer;
+struct Branches;
+struct Map;
+struct CollisionBuffer;
+
+#ifdef CPU
+#define __kernel
+#define __local
+#define __global
+#endif
 
 #endif
 

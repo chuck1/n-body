@@ -1,6 +1,13 @@
 //#include "body.h"
 #include "include/Body.hpp"
 
+void inc_velocity(float * v, float dt, float * f, float m)
+{
+	v[0] += dt * f[0] / m;
+	v[1] += dt * f[1] / m;
+	v[2] += dt * f[2] / m;
+}
+
 __kernel void step_bodies(
 		    __global struct Body * bodies,
 		    __global struct Pair * pairs,
@@ -80,6 +87,8 @@ __kernel void step_bodies(
 			f[2] += pp->u[2] * pp->f * s;
 		}
 		
+		inc_velocity(pb->v, dt, f, pb->mass);
+
 		pb->v[0] += dt * f[0] / pb->mass;
 		pb->v[1] += dt * f[1] / pb->mass;
 		pb->v[2] += dt * f[2] / pb->mass;

@@ -1,25 +1,19 @@
 #ifndef KERNEL_HPP
 #define KERNEL_HPP
 
+#ifdef CPU
 #include <iostream>
 #include <thread>
 #include <map>
 #include <thread>
 #include <mutex>
 #include <vector>
+#endif
 
-#include <decl.hpp>
+#include "include/decl.hpp"
 
 
-int						get_num_groups(int);
-int						get_group_id(int);
-int						get_local_id(int);
-int						get_local_size(int);
-int						get_global_size(int);
-float						rsqrt(float);
-
-void						divide(unsigned int n, unsigned int & i_local0, unsigned int & i_local1);
-
+#ifdef CPU
 extern unsigned int				thread_count;
 extern unsigned int				thread_count_temp;
 extern std::map<std::thread::id, unsigned int>	thread_map;
@@ -58,19 +52,34 @@ template<typename... Args> void		launch(unsigned int n, void(*f)(Args...), Args.
 
 }
 
+int						get_num_groups(int);
+int						get_group_id(int);
+int						get_local_id(int);
+int						get_local_size(int);
+int						get_global_size(int);
+float						rsqrt(float);
+
+#endif
+
+
+void						divide(
+		unsigned int n,
+		unsigned int * i_local0,
+		unsigned int * i_local1);
+
 void			step_bodies(
-		struct Body * bodies,
+		__global struct Body * bodies,
 		/*struct Pair * pairs,*/
 		/*unsigned int * map,*/
 		float dt,
 		unsigned int num_bodies,
-		float * velocity_ratio,
-		float * mass_center,
+		__global float * velocity_ratio,
+		__global float * mass_center,
 		float mass,
-		unsigned int * number_escaped
+		__global unsigned int * number_escaped
 		);
 void			reset_bodies(
-		struct Body * bodies,
+		__global struct Body * bodies,
 		float dt,
 		unsigned int num_bodies,
 		float * velocity_ratio,
@@ -80,35 +89,35 @@ void			reset_bodies(
 		);
 
 void			step_pairs(
-		struct Body * bodies,
-		struct Pair * pairs,
+		__global struct Body * bodies,
+		__global struct Pair * pairs,
 		unsigned int num_pairs
 	       );
 
 void			step_collisions(
-		struct Body* bodies, /* readonly */
-		CollisionBuffer * cb,
+		__global struct Body* bodies, /* readonly */
+		__global struct CollisionBuffer * cb,
 		/*struct Pair* pairs,*/
 		unsigned int * flag_multi_coll,
 		unsigned int * nc
 		/*unsigned int num_bodies*/
 		);
 void			clear_bodies_num_collisions(
-		struct Body * bodies,
+		__global struct Body * bodies,
 		unsigned int num_bodies
 		);
 void			update_branches(
-		Branches * branches,
-		Body * bodies
+		__global struct Branches * branches,
+		__global struct Body * bodies
 		);
 void			step_branch_pairs(
-		Branches * branches,
-		CollisionBuffer * cb,
-		Body * bodies
+		__global struct Branches * branches,
+		__global struct CollisionBuffer * cb,
+		__global struct Body * bodies
 		);
 void			refresh_branch_mass(
-		Branches * branches,
-		Body * bodies);
+		__global struct Branches * branches,
+		__global struct Body * bodies);
 
 #endif
 
