@@ -1,4 +1,5 @@
-#include "body.h"
+//#include "body.h"
+#include "include/Body.hpp"
 
 __kernel void clear_bodies_num_collisions(
 		    __global struct Body * bodies

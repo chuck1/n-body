@@ -1,4 +1,6 @@
-#include "body.h"
+//#include "body.h"
+#include "include/Body.hpp"
+#include "include/Pair.hpp"
 
 __kernel void step_pairs(
 		    __global struct Body * bodies,

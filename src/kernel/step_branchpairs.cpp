@@ -329,9 +329,8 @@ void			step_branch_pairs(
 					//std::lock_guard<std::mutex> lock(g_mutex_bodies);
 #endif
 
-					pb0->f[0] -= f * D[0];
-					pb0->f[1] -= f * D[1];
-					pb0->f[2] -= f * D[2];
+					pb0->f_glm -= f * D;
+
 
 					pb1->f[0] += f * D[0];
 					pb1->f[1] += f * D[1];

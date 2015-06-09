@@ -7,7 +7,7 @@ SRC = $(shell find src -name '*.cpp')
 O_FILES = $(patsubst src/%.cpp, build/%.o, $(SRC))
 D_FILES = $(patsubst src/%.cpp, build/%.d, $(SRC))
 
-C_FLAGS = -std=c++0x -g -Wall -Werror -pthread -MMD
+C_FLAGS = -std=c++0x -g -Wall -Werror -pthread -MMD -DCPU=1
 
 INCLUDE_DIRS = -I. -I./include/
 

@@ -11,6 +11,8 @@
 #include "other.hpp"
 #include "Branches.hpp"
 
+#include "cl.hpp"
+
 float timestep = 1.0;
 float mass = 1e6;
 float width = 100.0;
@@ -89,6 +91,9 @@ void		signal_callback(int signum)
 {
 	should_exit = 1;
 }
+
+
+
 int		main(int ac, char ** av)
 {
 	puts("Create Universe");
@@ -153,7 +158,12 @@ int		main(int ac, char ** av)
 
 	/* Get Platform and Device Info */
 	puts("Get Platform and Device Info");
-	ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms); check(__LINE__, ret);
+	ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
+	check(__LINE__, ret);
+
+	printf("clGetPlatformIDs %i\n", ret);
+
+	if (ret) exit(1);
 
 	//std::vector<std::string>	filenames;
 
@@ -206,24 +216,23 @@ int		main(int ac, char ** av)
 
 	/* Get Device Info */
 	ret = get_device_info(device_id);
+	
+	Device* device = new Device(device_id);
 
-	/* Create OpenCL context */
-	puts("create context");
-	context = clCreateContext(NULL, 1, &device_id, notify_context, NULL, &ret);
-	check(__LINE__, ret);
-
-	/* Create Command Queue */
-	puts("create queue");
-	command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
-	check(__LINE__, ret);
-
+	Context* context = device->createContext();
+	
+	CommandQueue* command_queue = context->createCommandQueue(device);
 
 	/* Create Memory Buffer */
 	puts("create buffer");
-	memobj_bodies   = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * sizeof(Body), NULL, &ret);
+
+	Buffer* memobj_bodies = context->createBuffer(uni->size(0) * sizeof(Body));
+
 	//memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, pairs.size() * sizeof(Pair), NULL, &ret);
 	//memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * uni->size(0) * sizeof(unsigned int), NULL, &ret);
-	memobj_flag_multi_coll = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned int), NULL, &ret);
+	
+	Buffer* memobj_flag_multi_coll = context->createBuffer(sizeof(unsigned int));
+
 	check(__LINE__, ret);
 
 	unsigned int flag_multi_coll = 0;
@@ -231,15 +240,16 @@ int		main(int ac, char ** av)
 
 	/* Write to buffers */
 	puts("write buffers");
-	ret = clEnqueueWriteBuffer(command_queue, memobj_bodies,   CL_TRUE, 0, uni->size(0) * sizeof(Body),	 uni->b(0), 0, NULL, NULL); check(__LINE__, ret);
+	memobj_bodies->enqueueWrite(command_queue, 0, uni->size(0) * sizeof(Body), uni->b(0));
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, pairs.size() * sizeof(Pair),	 &pairs.pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &pairs.map_, 0, NULL, NULL); check(__LINE__, ret);
-	ret = clEnqueueWriteBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
+	memobj_flag_multi_coll->enqueueWrite(command_queue, 0, sizeof(unsigned int), &flag_multi_coll);
+	
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);
 	check(__LINE__, ret);
 
 	/* Create Kernel Program from the source */
-	program = create_program_from_file(context, device_id);
+	program = create_program_from_file(context->_M_id, device_id);
 
 	/* Create OpenCL Kernel */
 	kernel_pairs = clCreateKernel(program, "step_pairs", &ret); check(__LINE__, ret);
@@ -286,43 +296,42 @@ int		main(int ac, char ** av)
 
 		/* Execute "step_pairs" kernel */
 
-		ret = clEnqueueNDRangeKernel(command_queue, kernel_pairs, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_pairs, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 		check(__LINE__, ret);
 		if(ret) break;
 
-		clFinish(command_queue);
+		clFinish(command_queue->_M_id);
 		check(__LINE__, ret);
 
 		/* Execute "step_bodies" kernel */
-		ret = clEnqueueNDRangeKernel( command_queue, kernel_bodies, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+		ret = clEnqueueNDRangeKernel( command_queue->_M_id, kernel_bodies, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 		check(__LINE__, ret);
 		if(ret) break;
 
-		clFinish(command_queue);
+		clFinish(command_queue->_M_id);
 		check(__LINE__, ret);
 
 		/* Execute "step_collisions" kernel */
-		ret = clEnqueueNDRangeKernel(command_queue, kernel_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 
 		check(__LINE__, ret);
 		if(ret) break;
 
-		clFinish(command_queue); check(__LINE__, ret);
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
 
 		/* Read flag_multi_coll */
-		ret = clEnqueueReadBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
+		ret = clEnqueueReadBuffer(command_queue->_M_id, memobj_flag_multi_coll->_M_id, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
 		if(ret) break;
 
-		clFinish(command_queue); check(__LINE__, ret);
-
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
 
 
 		/* Execute "clear_bodies_num_collisions" kernel */
-		ret = clEnqueueNDRangeKernel(command_queue, kernel_clear_bodies_num_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_clear_bodies_num_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 		check(__LINE__, ret);
 		if(ret) break;
 
-		clFinish(command_queue); check(__LINE__, ret);
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
 
 		if(flag_multi_coll)
 		{
@@ -332,12 +341,12 @@ int		main(int ac, char ** av)
 			global_size = 1;
 			local_size = 1;
 
-			ret = clEnqueueNDRangeKernel(command_queue, kernel_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+			ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
 
 			check(__LINE__, ret);
 			if(ret) break;
 
-			clFinish(command_queue); check(__LINE__, ret);
+			clFinish(command_queue->_M_id); check(__LINE__, ret);
 
 			global_size = GLOBAL_SIZE;
 			local_size = LOCAL_SIZE;
@@ -346,16 +355,16 @@ int		main(int ac, char ** av)
 		/* Reset flag_multi_coll */
 		flag_multi_coll = 0;
 
-		ret = clEnqueueWriteBuffer(command_queue, memobj_flag_multi_coll, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
-		clFinish(command_queue); check(__LINE__, ret);
+		ret = clEnqueueWriteBuffer(command_queue->_M_id, memobj_flag_multi_coll->_M_id, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
 
 
 		/* Store data for timestep */
-		ret = clEnqueueReadBuffer(command_queue, memobj_bodies, CL_TRUE, 0, uni->size(0) * sizeof(Body), uni->b(t), 0, NULL, NULL);
+		ret = clEnqueueReadBuffer(command_queue->_M_id, memobj_bodies->_M_id, CL_TRUE, 0, uni->size(0) * sizeof(Body), uni->b(t), 0, NULL, NULL);
 		check(__LINE__, ret);
 		if(ret) break;
 
-		clFinish(command_queue); check(__LINE__, ret);
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
 	}
 
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - program_time_start);
@@ -363,14 +372,14 @@ int		main(int ac, char ** av)
 	printf("duration = %i milliseconds\n", (int)duration.count());
 
 	/* Finalization */
-	ret = clFlush(command_queue);check(__LINE__, ret);
+	ret = clFlush(command_queue->_M_id);check(__LINE__, ret);
 
 	if(ret)
 	{
 		return 1;
 	}
 
-	ret = clFinish(command_queue);check(__LINE__, ret);
+	ret = clFinish(command_queue->_M_id);check(__LINE__, ret);
 
 	ret = cleanup();
 

@@ -79,7 +79,13 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 
 
 	FILE *fp;
-	char const * fileName[] = {"./kernel/kernel.cl", "./kernel/step_pairs.cl", "./kernel/step_bodies.cl"};
+	char const * fileName[] = {
+		"./include/Body.hpp",
+		"./include/Pair.hpp",
+		"./kernel/kernel.cl",
+		"./kernel/step_pairs.cl",
+		"./kernel/step_bodies.cl"
+	};
 
 	const size_t numFiles = sizeof fileName / sizeof(const char *);
 

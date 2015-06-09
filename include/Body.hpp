@@ -1,9 +1,6 @@
 #ifndef BODY_H
 #define BODY_H
 
-#include <cstdio>
-#include <cstring>
-#include <cassert>
 
 //#define NUM_BODIES (16)
 //#define NUM_PAIRS (NUM_BODIES * (NUM_BODIES - 1) / 2)
@@ -12,9 +9,10 @@
 #define LOCAL_SIZE (8)
 #define NUM_GROUPS (GLOBAL_SIZE / LOCAL_SIZE)
 
-#define CPU 1
-
 #ifdef CPU
+#include <cstdio>
+#include <cstring>
+#include <cassert>
 #include <glm/glm.hpp>
 #endif
 
@@ -47,17 +45,23 @@ struct Body
 	union
 	{
 		float		x[3];		// 12  12
+#ifdef CPU
 		glm::vec3	x_glm;
+#endif
 	};
 	union
 	{
 		float		v[3];		// 12  24
+#ifdef CPU
 		glm::vec3	v_glm;
+#endif
 	};
 	union
 	{
 		float		f[3];		// 12  24
+#ifdef CPU
 		glm::vec3	f_glm;
+#endif
 	};
 
 	float		mass;		//  4  28
