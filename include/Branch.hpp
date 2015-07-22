@@ -61,7 +61,7 @@ struct Branch
 	// move body from this to parent
 	void			erase(unsigned int i);
 	void			send_to_parent(Branches * branches, Body * bodies, unsigned int i);
-
+	bool			is_valid();
 	unsigned int		get_child_branch_index(
 			unsigned int i,
 			unsigned int j,

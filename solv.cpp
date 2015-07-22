@@ -100,7 +100,10 @@ int		main(int ac, char ** av)
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help", "produce help message")
-		("setup", po::value<std::string>(), "set compression level")
+		("setup", po::value<std::string>(), "simulation setup option")
+		("num-bodies", po::value<int>(), "number of bodies")
+		("num-steps", po::value<int>(), "number of bodies")
+		("hcp-n", po::value< std::vector<int> >(), "for hcp setup, number of bodies in each direction")
 		;
 
 	po::variables_map vm;
@@ -171,8 +174,44 @@ int		main(int ac, char ** av)
 		std::map< std::string, std::function<void()> > m;
 
 		m["hcp"] = [&] () {
+			std::vector<int> n;
+			if(vm.count("hcp-n")) {
+				n = vm["hcp-n"].as< std::vector<int> >();
+			} else {
+				printf("--hcp-n option missing\n");
+				exit(1);
+			}
 
+			if(n.size() == 3) {
+				uni->get_frame(0).hexagonal_close_packed(
+						mass,
+						n[0],
+						n[1],
+						n[2],
+						glm::vec3(),
+						glm::vec3());
+			} else if(n.size() == 1) {
+				uni->get_frame(0).hexagonal_close_packed(
+						mass,
+						n[0],
+						n[0],
+						n[0],
+						glm::vec3(),
+						glm::vec3());
+			} else {
+				printf("wrong number of values for --hcp-n");
+				exit(1);
+			}
 		};
+
+		auto it = m.find(setup);
+		if(it == m.end()) {
+			abort();
+		}
+		if(!it->second) {
+			abort();
+		}
+		it->second();
 
 	} else {
 
@@ -185,7 +224,7 @@ int		main(int ac, char ** av)
 
 			//uni->random(mass);
 			//uni->get_frame(0).spin(mass, width);
-			uni->get_frame(0).hexagonal_close_packed(mass, glm::vec3(0,0,0), glm::vec3());
+
 			//uni->get_frame(0).sphere(mass, width, 0);
 			//uni->get_frame(0).collision_coarse(mass, glm::vec3(width, 20, 0), -.02);
 			//uni->get_frame(0).rings(mass, width);

@@ -434,7 +434,7 @@ int		Universe::solve()
 void	Universe::add_frame(unsigned int n)
 {
 	frames_.frames_.emplace_back();
-	frames_.frames_.back().alloc(n);
+	//frames_.frames_.back().alloc(n);
 }
 std::string	Universe::getFilename()
 {

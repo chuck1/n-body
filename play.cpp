@@ -21,6 +21,7 @@ static glm::vec3 body_std;
 
 static std::vector<std::string> fileNames;
 
+int resolution = 16;
 
 
 static int ct = 0;
@@ -150,7 +151,6 @@ void		render_frame(Frame & f)
 					f.b(i)->x[1],
 					f.b(i)->x[2]);
 
-			int resolution = 16;
 
 			glutSolidSphere(
 					f.b(i)->radius * g_radiusScale,
@@ -509,6 +509,7 @@ int main(int argc, char** argv)
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help", "produce help message")
+		("res", po::value<int>(), "sphere resolution")
 		("input-file", po::value< std::vector< std::string > >(), "input file")
 		;
 	
@@ -523,6 +524,9 @@ int main(int argc, char** argv)
 		std::cout << desc << "\n";
 		return 1;
 	}
+	if(vm.count("res")) {
+		resolution = vm["res"].as<int>();
+	}
 	
 	auto input = vm["input-file"].as< std::vector < std::string > >();
 
@@ -530,11 +534,11 @@ int main(int argc, char** argv)
 	
 	std::cout << "extension = " << e << "\n";
 
-	if(argc != 2)
-	{
-		printf("wrong number of arguments\n");
-		exit(1);
-	}
+	//if(argc != 2)
+	//{
+	//	printf("wrong number of arguments\n");
+	//	exit(1);
+	//}
 
 	// get extension
 	char * c = argv[1] + strlen(argv[1]);
@@ -546,10 +550,10 @@ int main(int argc, char** argv)
 
 	char line_buffer[128];
 
-	if(strcmp(c, ".dat") == 0)
+	if(strcmp(e.c_str(), ".dat") == 0)
 	{
-		FILE* pf = fopen(argv[1], "r");
-
+		//FILE* pf = fopen(argv[1], "r");
+		FILE* pf = fopen(input[0].c_str(), "r");
 		while(fgets(line_buffer, 128, pf))
 		{
 			int l = strlen(line_buffer);

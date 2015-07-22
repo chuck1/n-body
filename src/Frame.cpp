@@ -42,10 +42,12 @@ unsigned int		Frame::size() const
 {
 	return bodies_.size();
 }
+/*
 void			Frame::alloc(int n)
 {
 	bodies_.resize(n);
 }
+*/
 void			Frame::copy(Body* b, int n)
 {
 	bodies_.resize(n);
@@ -87,21 +89,28 @@ unsigned int		Frame::reduce()
 	}
 	return n;
 }
-void			Frame::collision_coarse(float m, glm::vec3 w, float v)
+void			Frame::collision_coarse(
+		float m,
+		unsigned int n0,
+		unsigned int n1,
+		glm::vec3 w,
+		float v)
 {
 	hexagonal_close_packed(
 			m,
+			n0,
+			n0,
+			n0,
 			-w,
-			glm::vec3(v,0,0),
-			0,
-			bodies_.size() / 2);
+			glm::vec3(v,0,0));
 
 	hexagonal_close_packed(
 			m,
+			n1,
+			n1,
+			n1,
 			w,
-			glm::vec3(-v,0,0),
-			bodies_.size() / 2,
-			bodies_.size());
+			glm::vec3(-v,0,0));
 }
 void			Frame::sphere(float m, float w, float v)
 {
@@ -241,24 +250,17 @@ int			Frame::try_insert(
 
 	return 1;
 }
-void			Frame::hexagonal_close_packed(float m, glm::vec3 o, glm::vec3 v)
-{
-	hexagonal_close_packed(m, o, v, 0, bodies_.size());
-}
-void			Frame::hexagonal_close_packed(float m, glm::vec3 o, glm::vec3 v, unsigned int i0, unsigned int i1)
+void			Frame::hexagonal_close_packed(
+		float m,
+		unsigned int nx,
+		unsigned int ny,
+		unsigned int nz,
+		glm::vec3 o,
+		glm::vec3 v)
 {
 	/* randomly place bodies in a sphere of diameter w
 	 * give bodies velocity components between -v and v
 	 */
-	
-	unsigned int N = i1-i0;
-
-	unsigned int nx = (unsigned int)floor(pow((double)N, 1./3.));
-	unsigned int ny = nx;
-	unsigned int nz = N / nx / ny;
-
-	// make sure there is room for all bodies
-	nx++;
 	
 	float rad = radius(m);
 
@@ -270,20 +272,18 @@ void			Frame::hexagonal_close_packed(float m, glm::vec3 o, glm::vec3 v, unsigned
 
 	//float ox = (nx - 0.5) * dx;
 
-	unsigned int i = i0;
-
-	printf("%12u%12u%12u\n", nx, ny, nz);
+	//printf("%12u%12u%12u\n", nx, ny, nz);
 
 	for(ix = 0; ix < nx; ix++) {
 		for(iy = 0; iy < ny; iy++) {
 			for(iz = 0; iz < nz; iz++) {
-				Body & b = bodies_[i];
+				Body b;
 
 				b.x[0] = (2.f * ix + ((iy+iz) % 2));
 				b.x[1] = (sqrt(3) * (iy + (iz % 2) / 3.f));
 				b.x[2] = 2.f * sqrt(6.f) / 3.f * iz;
 
-				printf("%12u%12u%12u%12u%12f%12f%12f\n", i, ix, iy, iz, b.x[0], b.x[1], b.x[2]);
+				//printf("%12u%12u%12u%12f%12f%12f\n", ix, iy, iz, b.x[0], b.x[1], b.x[2]);
 
 				b.x_glm *= dx;
 
@@ -305,8 +305,7 @@ void			Frame::hexagonal_close_packed(float m, glm::vec3 o, glm::vec3 v, unsigned
 				b.mass = m;
 				b.radius = radius(b.mass);
 
-				i++;
-				if(i == i1) return;
+				bodies_.push_back(b);
 			}
 		}
 	}

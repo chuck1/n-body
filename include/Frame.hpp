@@ -32,7 +32,7 @@ struct Frame
 		Body*			b(unsigned int i);
 		Body const *		b(unsigned int i) const;
 		unsigned int		size() const;
-		void			alloc(int n);
+		//void			alloc(int n);
 		int			try_insert(
 				float * x,
 				float a0,
@@ -49,11 +49,21 @@ struct Frame
 		// initial condition options
 		void			random(float m, float w, float v);
 		void			sphere(float m, float w, float v);
-		void			collision_coarse(float m, glm::vec3 w, float v);
+		void			collision_coarse(
+				float m,
+				unsigned int n0,
+				unsigned int n1,
+				glm::vec3 w,
+				float v);
 		void			spin(float m, float w);
 		void			rings(float m, float w);
-		void			hexagonal_close_packed(float m, glm::vec3 o, glm::vec3 v);
-		void			hexagonal_close_packed(float m, glm::vec3 o, glm::vec3 v, unsigned int i0, unsigned int i1);
+		void			hexagonal_close_packed(
+				float m,
+				unsigned int nx,
+				unsigned int ny,
+				unsigned int nz,
+				glm::vec3 o,
+				glm::vec3 v);
 
 		unsigned int		count_dead();
 		unsigned int		count_alive();

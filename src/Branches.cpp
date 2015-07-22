@@ -25,7 +25,17 @@ void			Branches::init(Frame & f)
 	float mass;
 	
 	f.mass_center(&mass_center.x, &std.x, &mass);
-	
+
+	if(std.x == 0) {
+		assert(0);
+	}
+	if(std.y == 0) {
+		assert(0);
+	}
+	if(std.z == 0) {
+		assert(0);
+	}
+
 	glm::vec3 x0 = mass_center - std * 10.0f;
 	glm::vec3 x1 = mass_center + std * 10.0f;
 
@@ -59,11 +69,20 @@ void			Branches::init(Frame & f, glm::vec3 x0, glm::vec3 x1)
 
 	auto bb = f.get_bounding_box();
 	
-	auto w = glm::vec3(glm::length(bb.b - bb.a));
-
+	auto w = glm::length(bb.b - bb.a);
+	
+	auto W = glm::vec3(w);
+	
 	//_M_branches[0] = Branch(0, 0, 0, x0, x1);
 	// using bounding box ensures that all bodies are contained
-	_M_branches[0] = Branch(0, 0, 0, bb.a - w, bb.b + w);
+	_M_branches[0] = Branch(0, 0, 0, bb.a - W, bb.b + W);
+
+	//printf("%s\n", __PRETTY_FUNCTION__);
+	//printf("  % 12.2e% 12.2e% 12.2e\n",W.x, W.y, W.z);
+
+	if(!_M_branches[0].is_valid()) {
+		assert(0);
+	}
 
 	int ret;
 
@@ -104,9 +123,21 @@ Branch &		Branches::get_branch(unsigned int i)
 }
 int			Branches::alloc(Branch & b)
 {
+	/* allocate 8 new branches to be children of branch b
+	 */
+
+
 	if(DEBUG_BRANCHES) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 
-	assert((_M_num_branches + 8) <= BTREE_MAX_BRANCHES);
+	if(!b.is_valid()) {
+		assert(0);
+	}
+
+	if((_M_num_branches + 8) > BTREE_MAX_BRANCHES) {
+		printf("_M_num_branches    %i\n", _M_num_branches);
+		printf("BTREE_MAX_BRANCHES %i\n", BTREE_MAX_BRANCHES);
+		assert(0);
+	}
 
 	for(unsigned int i = 0; i < 8; i++)
 	{
@@ -139,6 +170,7 @@ int			Branches::alloc(Branch & b)
 					x0.x = (b._M_x0_glm.x + b._M_x1_glm.x) * 0.5f;
 					x1.x = b._M_x1_glm.x;
 				}
+
 				if(j == 0)
 				{
 					x0.y = b._M_x0_glm.y;
@@ -162,6 +194,7 @@ int			Branches::alloc(Branch & b)
 
 				if(DEBUG_BRANCHES)
 				{
+					printf("  %i %i %i\n", i,j,k);
 					::print(x0);
 					::print(x1);
 				}

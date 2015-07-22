@@ -7,9 +7,12 @@
 #include <debug.hpp>
 
 
-Branch::Branch(): _M_branches{0,0,0,0,0,0,0,0}, _M_num_elements(0), _M_flag(FLAG_IS_LEAF)
+Branch::Branch():
+	_M_branches{0,0,0,0,0,0,0,0},
+	_M_num_elements(0),
+	_M_flag(FLAG_IS_LEAF)
 {
-	if(DEBUG_BRANCH) printf("%s %p\n", __PRETTY_FUNCTION__, this);
+	//if(DEBUG_BRANCH) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 }
 Branch::Branch(Branch && b):
 	_M_idx(b._M_idx),
@@ -81,6 +84,7 @@ void			Branch::fiss(Branches & branches, Body const * bodies)
 
 	assert(!(_M_flag & FLAG_IS_LEAF));
 
+	// allocate my children
 	branches.alloc(*this);
 
 	// distribute elements among children
@@ -111,38 +115,31 @@ void			Branch::fuse()
 int			Branch::add(Branches & branches, Body const * bodies, unsigned int body_idx)
 {
 	Body const * b = bodies + body_idx;
+	
+	// the bounds of a non-leaf branch should still be valid
+	// so test this first
+	if(!glm::all(glm::greaterThanEqual(b->x_glm, _M_x0_glm)))
+	{
+		if(DEBUG_BRANCH) {
+			printf("failed (%12.1f%12.1f%12.1f) < (%12.1f%12.1f%12.1f)\n",
+					b->x_glm.x, b->x_glm.y, b->x_glm.z,
+					_M_x0_glm.x,  _M_x0_glm.y, _M_x0_glm.z);
+		}
+		return 1;
+	}
+	if(!glm::all(glm::lessThan(b->x_glm, _M_x1_glm)))
+	{
+		if(DEBUG_BRANCH) {
+			printf("failed (%12.1f%12.1f%12.1f) > (%12.1f%12.1f%12.1f)\n",
+					b->x_glm.x, b->x_glm.y, b->x_glm.z,
+					_M_x1_glm.x, _M_x1_glm.y, _M_x1_glm.z);
+		}
+		return 1;
+	}
 
 	if(_M_flag & FLAG_IS_LEAF)
 	{
 		if(DEBUG_BRANCH) printf("add to this\n");
-
-		if(!glm::all(glm::greaterThanEqual(b->x_glm, _M_x0_glm)))
-		{
-			/*
-			   printf("(%12.1f%12.1f%12.1f) < (%12.1f%12.1f%12.1f)\n",
-			   b->x_glm.x,
-			   b->x_glm.y,
-			   b->x_glm.z,
-			   _M_x0_glm.x,
-			   _M_x0_glm.y,
-			   _M_x0_glm.z);
-			   */		
-			return 1;
-		}
-
-		if(!glm::all(glm::lessThan(b->x_glm, _M_x1_glm)))
-		{
-			/*
-			   printf("(%12.1f%12.1f%12.1f) > (%12.1f%12.1f%12.1f)\n",
-			   b->x_glm.x,
-			   b->x_glm.y,
-			   b->x_glm.z,
-			   _M_x1_glm.x,
-			   _M_x1_glm.y,
-			   _M_x1_glm.z);
-			   */		
-			return 1;
-		}
 
 		if(_M_num_elements == BTREE_LEAF_SIZE)
 		{
@@ -157,7 +154,9 @@ int			Branch::add(Branches & branches, Body const * bodies, unsigned int body_id
 
 			_M_num_elements++;
 
-			//printf("num_elements = %i\n", _M_num_elements);
+			if(DEBUG_BRANCH) {
+				printf("success, num_elements = %i\n", _M_num_elements);
+			}
 
 			return 0;
 		}
@@ -280,7 +279,7 @@ void			Branch::send_to_parent(Branches * branches, Body * bodies, unsigned int i
 			//printf("warning: parent full\n");
 			return;
 		}
-		
+
 		// add to parent
 		parent._M_elements[parent._M_num_elements] = body_idx;
 		parent._M_num_elements++;
@@ -308,7 +307,23 @@ unsigned int		Branch::count_bodies() const
 {
 	return _M_num_elements;
 }
-
+bool			Branch::is_valid()
+{
+	if(DEBUG_BRANCH) printf("%s %p\n", __PRETTY_FUNCTION__, this);
+	auto W = _M_x1_glm - _M_x0_glm;
+	//printf("W\n");
+	//::print(W);
+	if(abs(W.x) < 1e-16) {
+		return false;
+	}
+	if(abs(W.y) < 1e-16) {
+		return false;
+	}
+	if(abs(W.z) < 1e-16) {
+		return false;
+	}
+	return true;
+}
 
 
 
