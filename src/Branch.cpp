@@ -277,7 +277,7 @@ void			Branch::send_to_parent(Branches * branches, Body * bodies, unsigned int i
 		if(parent._M_num_elements >= BTREE_LEAF_SIZE)
 		{
 			//abort();
-			printf("warning: parent full\n");
+			//printf("warning: parent full\n");
 			return;
 		}
 		

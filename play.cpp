@@ -3,11 +3,16 @@
 #include <algorithm>
 #include <cstring>
 
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+
 #include "universe.h"
 #include <free.hpp>
 #include "Branches.hpp"
 
 static std::vector<Universe*> u;
+Frame* frame;
 static unsigned int universe_index = 0;
 
 static glm::vec3 body_center;
@@ -47,6 +52,10 @@ enum {
 	MENU_TEXTURING,
 	MENU_EXIT,
 	MENU_RESTART
+};
+enum MODE {
+	UNIVERSE,
+	FRAME
 };
 
 typedef int BOOL;
@@ -127,28 +136,37 @@ Branches* branches;
 static glm::vec3 tree_x0(-5000.0f);
 static glm::vec3 tree_x1( 5000.0f);
 
-inline void RenderObjects2(int t)
+void		render_branch(Branch & b);
+
+void		render_frame(Frame & f)
+{
+	for(unsigned int i = 0; i < f.size(); i++) {
+		if(f.b(i)->alive == 0) continue;
+
+		glPushMatrix();
+		{
+			glTranslatef(
+					f.b(i)->x[0],
+					f.b(i)->x[1],
+					f.b(i)->x[2]);
+
+			int resolution = 16;
+
+			glutSolidSphere(
+					f.b(i)->radius * g_radiusScale,
+					resolution,
+					resolution);
+		}
+		glPopMatrix();
+	}
+}
+inline void	RenderObjects2(int t)
 {
 	Frame & f = u[universe_index]->get_frame(t);
 
 	glColor3f(0.0,1.0,1.0);
 
-	for(unsigned int i = 0; i < f.size(); i++)
-	{
-		if(f.b(i)->alive == 0) continue;
-
-		glPushMatrix();
-		glTranslatef(
-				f.b(i)->x[0],
-				f.b(i)->x[1],
-				f.b(i)->x[2]);
-
-		glutSolidSphere(f.b(i)->radius * g_radiusScale, 8, 8);
-
-		//printf("radius = %f\n", f.b(i)->radius);
-
-		glPopMatrix();
-	}
+	render_frame(f);
 
 	if(g_flags & FLAG::RENDER_BRANCH)
 	{	
@@ -162,27 +180,29 @@ inline void RenderObjects2(int t)
 		for(unsigned int i = 0; i < branches->_M_num_branches; i++)
 		{
 			Branch & b = branches->get_branch(i);
+			render_branch(b);
+		}
+	}
+}
+void		render_branch(Branch & b)
+{
+	if(b._M_flag & Branch::FLAG_IS_LEAF) {
+		if(b._M_num_elements > 0) {
+			glm::vec3 c = (b._M_x0_glm + b._M_x1_glm) * 0.5f;
+			glm::vec3 w = b._M_x1_glm - b._M_x0_glm;
 
-			if(b._M_flag & Branch::FLAG_IS_LEAF)
-			{
-				if(b._M_num_elements > 0)
-				{
-					glm::vec3 c = (b._M_x0_glm + b._M_x1_glm) * 0.5f;
-					glm::vec3 w = b._M_x1_glm - b._M_x0_glm;
-
-					if(0)
-					{
-						print(c);
-						print(w);
-					}
-
-					glPushMatrix();
-					glTranslatef(c.x, c.y, c.z);
-					glScalef(w.x, w.y, w.z);
-					glutWireCube(1.0);
-					glPopMatrix();
-				}
+			if(0) {
+				print(c);
+				print(w);
 			}
+
+			glPushMatrix();
+			{
+				glTranslatef(c.x, c.y, c.z);
+				glScalef(w.x, w.y, w.z);
+				glutWireCube(1.0);
+			}
+			glPopMatrix();
 		}
 	}
 }
@@ -282,8 +302,8 @@ inline void InitGraphics(void)
 	glDepthFunc(GL_LESS);
 	glShadeModel(GL_SMOOTH);
 
-	//glEnable(GL_LIGHTING);
-	//glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
 
 	// Create texture for cube; load marble texture from file and bind it
 	/*
@@ -472,9 +492,44 @@ inline int BuildPopupMenu (void)
 
 	return menu;
 }
-
+void	read_universes()
+{
+}
+std::string	split_ext(std::string s)
+{
+	size_t p = s.find('.');
+	if(p == std::string::npos) {
+		assert(0);
+	}
+	return s.substr(p);
+}
 int main(int argc, char** argv)
 {
+	// Declare the supported options.
+	po::options_description desc("Allowed options");
+	desc.add_options()
+		("help", "produce help message")
+		("input-file", po::value< std::vector< std::string > >(), "input file")
+		;
+	
+	po::positional_options_description p;
+	p.add("input-file", 1);
+	
+	po::variables_map vm;
+	po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
+	po::notify(vm); 
+	
+	if(vm.count("help")) {
+		std::cout << desc << "\n";
+		return 1;
+	}
+	
+	auto input = vm["input-file"].as< std::vector < std::string > >();
+
+	auto e = split_ext(input[0]);
+	
+	std::cout << "extension = " << e << "\n";
+
 	if(argc != 2)
 	{
 		printf("wrong number of arguments\n");
@@ -515,17 +570,13 @@ int main(int argc, char** argv)
 	{
 		Universe* utemp = new Universe;
 
-		try
-		{
+		try {
 			ret = utemp->read(fileName);
-		}
-		catch(std::bad_alloc & e)
-		{
+		} catch(std::bad_alloc & e) {
 			break;
 		}
 
-		if(ret)
-		{
+		if(ret) {
 			printf("read failed: %s\n", fileName.c_str());
 			exit(ret);
 		}
@@ -535,8 +586,7 @@ int main(int argc, char** argv)
 		u.push_back(utemp);
 	}
 
-	if(u.empty())
-	{
+	if(u.empty()) {
 		printf("universes empty\n");
 		exit(1);
 	}
@@ -597,8 +647,6 @@ int main(int argc, char** argv)
 
 	// Turn the flow of control over to GLUT
 	glutMainLoop();
-
-
 
 	return 0;
 }

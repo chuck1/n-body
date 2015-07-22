@@ -1,5 +1,5 @@
 #LIBS = -lOpenCL
-LIBS = -lOpenCL -lGL -lglut -lGLU
+LIBS = -lOpenCL -lGL -lglut -lGLU -lboost_program_options
 #LIBS = -l/usr/lib/x86_64-linux-gnu/libOpenCL.so
 
 SRC = $(shell find src -name '*.cpp')
@@ -7,7 +7,8 @@ SRC = $(shell find src -name '*.cpp')
 O_FILES = $(patsubst src/%.cpp, build/%.o, $(SRC))
 D_FILES = $(patsubst src/%.cpp, build/%.d, $(SRC))
 
-C_FLAGS = -std=c++0x -g -Wall -Werror -pthread -MMD -DCPU=1
+#C_FLAGS = -g -Wall -Werror -pthread -std=c++0x -MMD -DCPU=1
+C_FLAGS = -g -Wall -Werror -pthread -std=c++0x -DCPU=1 -Wl,--no-as-needed
 
 INCLUDE_DIRS = -I. -I./include/
 
@@ -27,25 +28,25 @@ help:
 
 play.out: $(O_FILES) build/play.o
 	@echo link $@
-	@g++ -g -o $@ build/play.o $(O_FILES) $(LIBS) $(INCLUDE_DIRS) $(C_FLAGS)
+	@g++ -o $@ build/play.o $(O_FILES) $(LIBS) $(INCLUDE_DIRS) $(C_FLAGS)
 
 solv.out: $(O_FILES) build/solv.o
 	@echo link $@
-	@g++ -g -o $@ build/solv.o $(O_FILES) $(LIBS) $(INCLUDE_DIRS) $(C_FLAGS)
+	@g++ -o $@ build/solv.o $(O_FILES) $(LIBS) $(INCLUDE_DIRS) $(C_FLAGS)
 
 stat.out: $(O_FILES) build/stat.o
 	@echo link $@
-	@g++ -g -o $@ build/stat.o $(O_FILES) $(LIBS) $(INCLUDE_DIRS) $(C_FLAGS)
+	@g++ -o $@ build/stat.o $(O_FILES) $(LIBS) $(INCLUDE_DIRS) $(C_FLAGS)
 
 $(O_FILES): build/%.o: src/%.cpp
 	@echo build $@
 	@mkdir -p $(dir $@)
-	@g++ -g -c -o $@ $< -I. $(C_FLAGS) $(INCLUDE_DIRS)
+	@g++ -c -o $@ $< $(C_FLAGS) $(INCLUDE_DIRS)
 
 build/play.o build/solv.o build/stat.o: build/%.o: %.cpp
 	@echo build $@
 	@mkdir -p $(dir $@)
-	@g++ -g -c -o $@ $< -I. $(C_FLAGS) $(INCLUDE_DIRS)
+	@g++ -c -o $@ $< $(C_FLAGS) $(INCLUDE_DIRS)
 
 clean:
 	rm -rf build/

@@ -91,14 +91,14 @@ void		print_header()
 }
 void		Universe::refresh_pairs(Frame & f)
 {
-	float w = 20000;
+	//float w = 20000;
 	//_M_pairs.init(f);
 
 	assert(_M_branches);
 
-	_M_branches->init(f, glm::vec3(-w * 0.5), glm::vec3(w * 0.5));
+	//_M_branches->init(f, glm::vec3(-w * 0.5), glm::vec3(w * 0.5));
+	_M_branches->init(f);
 }
-
 
 
 
@@ -160,6 +160,13 @@ int		Universe::solve()
 	{
 		if(0) printf("universe::bytes() = %i\n", bytes());
 
+		// dynamic time step
+		// timestep set such that fastest body moves 1/10 of radius per step
+		auto spd = f.get_speed_max();
+		auto rad = f.get_radius_min();
+		dt = rad / (100.0 * spd);
+		dt = std::min(10.f, dt);
+
 		_M_step++;
 
 		_M_time_sim += dt;
@@ -177,7 +184,7 @@ int		Universe::solve()
 				0.0 :
 				(_M_duration_real / (float)(t-1) * (float)(num_steps_ - t));
 
-			printf("%12.1f%16f%16i%16i%16i%16i%16i%12.1f%12i%12i\n",
+			printf("%12.1f%16f%16i%16i%16i%16i%16i%12.1f%12i%12i%12f%12f%12f\n",
 					_M_duration_real,
 					_M_time_sim,
 					_M_step,
@@ -187,7 +194,10 @@ int		Universe::solve()
 					temp_dead,
 					eta,
 					number_escaped,
-					branches()->_M_num_branches
+					branches()->_M_num_branches,
+					spd,
+					rad,
+					dt
 			      );
 		}
 
@@ -428,13 +438,18 @@ void	Universe::add_frame(unsigned int n)
 }
 std::string	Universe::getFilename()
 {
-	char buffer[8];
+	char buffer0[16];
+	char buffer[16];
 	sprintf(buffer, "%i", num_steps_ + first_step_);
+
+	memset(buffer0,   0, 16);
+	memset(buffer0, '_', 16-strlen(buffer));
 
 	char fileName[128];
 	strcpy(fileName, "data/data_");
 	strcat(fileName, name_);
 	strcat(fileName, "_");
+	strcat(fileName, buffer0);
 	strcat(fileName, buffer);
 	strcat(fileName, ".dat");
 
@@ -448,6 +463,7 @@ void		Universe::write()
 	if(pfile == 0)
 	{
 		perror("fopen");
+		printf("%s\n",filename.c_str());
 		exit(1);
 	}
 

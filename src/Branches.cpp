@@ -5,7 +5,9 @@
 #include <free.hpp>
 #include <debug.hpp>
 
-Branches::Branches(): _M_num_branches(0), _M_lowest_level(0)
+Branches::Branches():
+	_M_num_branches(0),
+	_M_lowest_level(0)
 {
 	if(DEBUG_BRANCHES || 1) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 	//memset(_M_num_at_level, 0, OCTREE_LEVELS * sizeof(unsigned int));
@@ -27,7 +29,7 @@ void			Branches::init(Frame & f)
 	glm::vec3 x0 = mass_center - std * 10.0f;
 	glm::vec3 x1 = mass_center + std * 10.0f;
 
-	/*
+	if(0) {
 	printf("extents:\n");
 	printf("%16f%16f%16f\n",
 			mass_center.x,
@@ -37,7 +39,7 @@ void			Branches::init(Frame & f)
 			std.x,
 			std.y,
 			std.z);
-	*/
+	}
 
 	init(f, x0, x1);
 }
@@ -54,8 +56,14 @@ void			Branches::level_insert(unsigned int idx, unsigned int level)
 void			Branches::init(Frame & f, glm::vec3 x0, glm::vec3 x1)
 {
 	_M_num_branches = 1;
+
+	auto bb = f.get_bounding_box();
 	
-	_M_branches[0] = Branch(0, 0, 0, x0, x1);
+	auto w = glm::vec3(glm::length(bb.b - bb.a));
+
+	//_M_branches[0] = Branch(0, 0, 0, x0, x1);
+	// using bounding box ensures that all bodies are contained
+	_M_branches[0] = Branch(0, 0, 0, bb.a - w, bb.b + w);
 
 	int ret;
 
@@ -67,7 +75,7 @@ void			Branches::init(Frame & f, glm::vec3 x0, glm::vec3 x1)
 
 		if(ret)
 		{
-			printf("not added\n");
+			//printf("not added\n");
 
 			if(0)
 			{
@@ -90,7 +98,7 @@ Branch &		Branches::get_branch(unsigned int i)
 	if(i >= _M_num_branches)
 	{
 		printf("_M_branches.size() <= i   %i %i\n", (int)_M_num_branches, (int)i);
-		abort();
+		assert(0);
 	}
 	return _M_branches[i];
 }

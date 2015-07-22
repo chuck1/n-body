@@ -16,6 +16,13 @@ struct Stat
 	float	avg_;
 };
 
+class BoundingBox
+{
+public:
+	glm::vec3 a;
+	glm::vec3 b;
+};
+
 struct Frame
 {
 	public:
@@ -38,10 +45,16 @@ struct Frame
 				unsigned int idx);
 		void			copy(Body* b, int n);
 		unsigned int		reduce();
+
+		// initial condition options
 		void			random(float m, float w, float v);
 		void			sphere(float m, float w, float v);
+		void			collision_coarse(float m, glm::vec3 w, float v);
 		void			spin(float m, float w);
 		void			rings(float m, float w);
+		void			hexagonal_close_packed(float m, glm::vec3 o, glm::vec3 v);
+		void			hexagonal_close_packed(float m, glm::vec3 o, glm::vec3 v, unsigned int i0, unsigned int i1);
+
 		unsigned int		count_dead();
 		unsigned int		count_alive();
 		void			write(FILE* pf);
@@ -53,8 +66,13 @@ struct Frame
 		 * need kernel function for this operation
 		 */
 		int			mass_center(float * x, float * s, float * m) const;
+		float			get_speed_max() const;
+		float			get_radius_min() const;
+		BoundingBox		get_bounding_box() const;
 	public:	
 		std::vector<Body>	bodies_;
 };
 
 #endif
+
+

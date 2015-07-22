@@ -52,12 +52,23 @@ static glm::vec3 tree_x1( 5000.0f);
 
 int main(int argc, char** argv)
 {
+	if(argc == 3) {
+		if(strcmp(argv[1], "saveframe")==0) {
+			Universe* u = new Universe();
+			u->read(argv[2], 0);
+			FILE* pf2 = fopen("sample.frame", "w");
+			u->frames_.frames_[0].write(pf2);
+			fclose(pf2);
+			return 0;
+		}
+	}
+	
 	if(argc != 2)
 	{
 		printf("wrong number of arguments\n");
 		exit(1);
 	}
-
+	
 	// get extension
 	char * c = argv[1] + strlen(argv[1]);
 	while(*c != '.')
@@ -77,6 +88,8 @@ int main(int argc, char** argv)
 			int l = strlen(line_buffer);
 			line_buffer[l-1] = 0;
 			fileNames.emplace_back(line_buffer);
+
+			printf("%s\n", line_buffer);
 		}
 	}
 	/*
@@ -92,17 +105,14 @@ int main(int argc, char** argv)
 	{
 		Universe* utemp = new Universe;
 
-		try
-		{
+		try {
 			ret = utemp->read(fileName);
 		}
-		catch(std::bad_alloc & e)
-		{
+		catch(std::bad_alloc & e) {
 			break;
 		}
 
-		if(ret)
-		{
+		if(ret) {
 			printf("read failed: %s\n", fileName.c_str());
 			exit(ret);
 		}

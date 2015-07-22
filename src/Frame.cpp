@@ -27,7 +27,10 @@ Frame &			Frame::operator=(Frame const & f)
 }
 Body*			Frame::b(unsigned int i)
 {
-	assert(bodies_.size() > i);
+	if(!(bodies_.size() > i)) {
+		printf("%u %lu\n",i,bodies_.size());
+		assert(0);
+	}
 	return &bodies_[i];
 }
 Body const *		Frame::b(unsigned int i) const
@@ -60,7 +63,6 @@ void			Frame::print()
 				bodies_[i].mass,
 				bodies_[i].radius,
 				bodies_[i].alive);
-
 	}
 
 }
@@ -85,8 +87,28 @@ unsigned int		Frame::reduce()
 	}
 	return n;
 }
+void			Frame::collision_coarse(float m, glm::vec3 w, float v)
+{
+	hexagonal_close_packed(
+			m,
+			-w,
+			glm::vec3(v,0,0),
+			0,
+			bodies_.size() / 2);
+
+	hexagonal_close_packed(
+			m,
+			w,
+			glm::vec3(-v,0,0),
+			bodies_.size() / 2,
+			bodies_.size());
+}
 void			Frame::sphere(float m, float w, float v)
 {
+	/* randomly place bodies in a sphere of diameter w
+	 * give bodies velocity components between -v and v
+	 */
+
 	float rad = radius(m);
 
 	for(unsigned int i = 0; i < bodies_.size(); i++)
@@ -219,14 +241,84 @@ int			Frame::try_insert(
 
 	return 1;
 }
+void			Frame::hexagonal_close_packed(float m, glm::vec3 o, glm::vec3 v)
+{
+	hexagonal_close_packed(m, o, v, 0, bodies_.size());
+}
+void			Frame::hexagonal_close_packed(float m, glm::vec3 o, glm::vec3 v, unsigned int i0, unsigned int i1)
+{
+	/* randomly place bodies in a sphere of diameter w
+	 * give bodies velocity components between -v and v
+	 */
+	
+	unsigned int N = i1-i0;
+
+	unsigned int nx = (unsigned int)floor(pow((double)N, 1./3.));
+	unsigned int ny = nx;
+	unsigned int nz = N / nx / ny;
+
+	// make sure there is room for all bodies
+	nx++;
+	
+	float rad = radius(m);
+
+	unsigned int ix = 0;
+	unsigned int iy = 0;
+	unsigned int iz = 0;
+
+	float dx = rad * 1.1;
+
+	//float ox = (nx - 0.5) * dx;
+
+	unsigned int i = i0;
+
+	printf("%12u%12u%12u\n", nx, ny, nz);
+
+	for(ix = 0; ix < nx; ix++) {
+		for(iy = 0; iy < ny; iy++) {
+			for(iz = 0; iz < nz; iz++) {
+				Body & b = bodies_[i];
+
+				b.x[0] = (2.f * ix + ((iy+iz) % 2));
+				b.x[1] = (sqrt(3) * (iy + (iz % 2) / 3.f));
+				b.x[2] = 2.f * sqrt(6.f) / 3.f * iz;
+
+				printf("%12u%12u%12u%12u%12f%12f%12f\n", i, ix, iy, iz, b.x[0], b.x[1], b.x[2]);
+
+				b.x_glm *= dx;
+
+				b.x_glm += o;
+
+				//::print(b.x);
+				//printf("w = %12f d = %12f\n", w, d);
+
+				/*
+				if(v > 0.0)
+				{
+					b.v[0] = (float)(rand() % (int)v) - v * 0.5;
+					b.v[1] = (float)(rand() % (int)v) - v * 0.5;
+					b.v[2] = (float)(rand() % (int)v) - v * 0.5;
+				}*/
+
+				b.v_glm = v;
+
+				b.mass = m;
+				b.radius = radius(b.mass);
+
+				i++;
+				if(i == i1) return;
+			}
+		}
+	}
+}
 void			Frame::rings(float m, float w)
 {
 	// give bodies xz velocity orbiting mass_center
 
 	float rad = radius(m);
 
-	printf("radius = %f w = %f\n", rad, w);
-	printf("num bodies = %i\n", size());
+	//printf("radius = %f w = %f\n", rad, w);
+	//printf("num bodies = %i\n", size());
 
 	// universe mass
 	float umass = size() * m;
@@ -234,26 +326,27 @@ void			Frame::rings(float m, float w)
 	float x[3];
 
 	int n = 0;
-
-
+	
 	//for(Body & b : bodies_)
 	for(unsigned int i = 0; i < bodies_.size(); i++)
 	{
 		Body & b = bodies_[i];
-
+		
 		if(try_insert(x, w, 0.0, w, func1, func2, func1, rad, i)) n++;
-
+		
 		b.x[0] = x[0];
 		b.x[1] = x[1];
 		b.x[2] = x[2];
-
+		
+		b.x_glm.y = ((float)(rand() % 1000000) / 1E6f * 2.0f - 1.0f) * 0.01 * rad;
+		
 		/*
 		   b.x[0] = (float)(rand() % (int)w) - w * 0.5;
 		   b.x[1] = 0.0;
 		   b.x[2] = (float)(rand() % (int)w) - w * 0.5;
 		   */
 		//::print(b.x);
-
+		
 		float r = sqrt(b.x[0] * b.x[0] + b.x[1] * b.x[1] + b.x[2] * b.x[2]);
 
 		float rxz = sqrt(b.x[0] * b.x[0] + b.x[2] * b.x[2]);
@@ -302,6 +395,60 @@ glm::vec3	Frame::body_min()
 	}
 
 	return e;
+}
+float		Frame::get_radius_min() const
+{
+	float r = 1e16;
+
+	for(Body const & b : bodies_) {
+		r = std::min(r, b.radius);
+	}
+
+	return r;
+}
+BoundingBox	Frame::get_bounding_box() const
+{
+	BoundingBox bb;
+	
+	bb.a = glm::vec3( 1e10);
+	bb.b = glm::vec3(-1e10);
+
+	for(Body const & b : bodies_) {
+		if(b.alive) {
+			bb.a.x = std::min(bb.a.x, b.x_glm.x);
+			bb.a.y = std::min(bb.a.y, b.x_glm.y);
+			bb.a.z = std::min(bb.a.z, b.x_glm.z);
+
+			bb.b.x = std::max(bb.b.x, b.x_glm.x);
+			bb.b.y = std::max(bb.b.y, b.x_glm.y);
+			bb.b.z = std::max(bb.b.z, b.x_glm.z);
+
+			if(0) printf("body:% 12.2e% 12.2e% 12.2e\n",
+					b.x_glm.x,
+					b.x_glm.y,
+					b.x_glm.z);
+		}
+	}
+	
+	if(0) printf("bounding box:\n% 12.2e% 12.2e% 12.2e\n% 12.2e% 12.2e% 12.2e\n",
+			bb.a.x,
+			bb.a.y,
+			bb.a.z,
+			bb.b.x,
+			bb.b.y,
+			bb.b.z);
+
+	return bb;
+}
+float		Frame::get_speed_max() const
+{
+	float s = 0;
+
+	for(Body const & b : bodies_) {
+		s = std::max(s, glm::length(b.v_glm));
+	}
+
+	return s;
 }
 int		Frame::mass_center(float * x, float * s, float * m) const
 {
@@ -380,7 +527,6 @@ void		Frame::write(FILE* pf)
 	unsigned int n = bodies_.size();
 	fwrite(&n, sizeof(unsigned int), 1, pf);
 	fwrite(&bodies_[0], sizeof(Body), n, pf);
-
 }
 void		Frame::read(FILE* pf)
 {
@@ -388,8 +534,6 @@ void		Frame::read(FILE* pf)
 	fread(&n, sizeof(unsigned int), 1, pf);
 	bodies_.resize(n);
 	fread(&bodies_[0], sizeof(Body), n, pf);
-
-	//print();
 }
 
 

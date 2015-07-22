@@ -70,12 +70,43 @@ void			mark_collision(
 float			gravity(
 		float m0,
 		float m1,
-		float r)
+		float r,
+		float p,
+		float v_p)
 {
-	//float f = GRAV * m0 * m1 / (r * r) / r;
-	float f = GRAV * m0 * m1 * (1.0 / (r * r) - 10.0 / (r * r * r)) / r;
+	/* this function actually returns f/r (force/radius)
+	 * this allows the resulting scalar to be multiplied each component of r vector to get
+	 * the correct force components
+	 *
+	 * r center distance
+	 * p penetration
+	 */
 
-	return f;
+	// a useful quantity
+	float K = GRAV * m0 * m1;
+
+	// simple attraction equation
+	float f = K / pow(r,2);
+	
+	if(p > 0) {
+		// arbitrary repulsion
+		//
+		// treat repulsion like a spring/damper pair
+		
+		//printf("penetration %f\n", p);
+	
+		// spring
+		f -= K * 1000.0 * pow(p,2);
+
+		// dramper, apply force opposite the relative velocity along distance vector
+		f -= K * 1000.0 * v_p;
+	}
+
+	/* return f/r (force/radius)
+	 * this allows the resulting scalar to be multiplied each component of r vector to get
+	 * the correct force components
+	 */
+	return f/r;
 }
 void			step_pairs_in_branch(
 		Branch * branch,
@@ -99,7 +130,16 @@ void			step_pairs_in_branch(
 
 			float len_D = glm::length(D);
 
-			float f = gravity(pb0->mass, pb1->mass, len_D);
+			// radius sum
+			float RS = pb0->radius + pb1->radius;
+			// penetration (positive means penetrating)
+			float pen = RS - len_D;
+			// relative velocity of body 1 wrt body 0 (body 0 stationary)
+			auto v = pb1->v_glm - pb0->v_glm;
+			// relative speed along positive p_vector (moving toward each other is positive)
+			auto v_p = glm::dot(v,D) / len_D;
+
+			float f = gravity(pb0->mass, pb1->mass, len_D, pen, v_p);
 
 			if(DEBUG) printf("intra-branch f = %f\n", f);
 
@@ -226,7 +266,7 @@ void			step_branch_pairs(
 						glm::vec3 D = b1->_M_mc_glm - pb->x_glm;
 						float len_D = glm::length(D);
 
-						float f = gravity(pb->mass, b1->_M_mass, len_D);
+						float f = gravity(pb->mass, b1->_M_mass, len_D, -1, 0);
 
 						assert(b1->_M_mass > 0);
 
@@ -246,7 +286,7 @@ void			step_branch_pairs(
 						glm::vec3 D = b0->_M_mc_glm - pb->x_glm;
 						float len_D = glm::length(D);
 
-						float f = gravity(pb->mass, b0->_M_mass, len_D);
+						float f = gravity(pb->mass, b0->_M_mass, len_D, -1, 0);
 
 						assert(b0->_M_mass > 0);
 
@@ -265,7 +305,7 @@ void			step_branch_pairs(
 					{
 						Body * pb = bodies + b0->_M_elements[i];
 
-						float f0 = gravity(pb->mass, b1->_M_mass, d);
+						float f0 = gravity(pb->mass, b1->_M_mass, d, -1, 0);
 
 						assert(b1->_M_mass > 0);
 
@@ -280,7 +320,7 @@ void			step_branch_pairs(
 					{
 						Body * pb = bodies + b1->_M_elements[i];
 
-						float f1 = gravity(pb->mass, b0->_M_mass, d);
+						float f1 = gravity(pb->mass, b0->_M_mass, d, -1, 0);
 
 						assert(b0->_M_mass > 0);
 
@@ -308,11 +348,21 @@ void			step_branch_pairs(
 
 						assert(pb0 != pb1);
 
+						// vecotr pointing toward body 0
 						glm::vec3 D = pb0->x_glm - pb1->x_glm;
 
 						float len_D = glm::length(D);
 
-						float f = gravity(pb0->mass, pb1->mass, len_D);
+						// radius sum
+						float RS = pb0->radius + pb1->radius;
+						// penetration (positive means penetrating)
+						float pen = RS - len_D;
+						// relative velocity of body 1 wrt body 0 (body 0 stationary)
+						auto v = pb1->v_glm - pb0->v_glm;
+						// relative speed along positive p_vector (moving toward each other is positive)
+						auto v_p = glm::dot(v,D) / len_D;
+
+						float f = gravity(pb0->mass, pb1->mass, len_D, pen, v_p);
 
 						if(DEBUG) printf("inter-branch body-body f = %f\n", f);
 

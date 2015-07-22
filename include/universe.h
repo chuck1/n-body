@@ -21,9 +21,6 @@
 float	radius(float m);
 //void	print(float * x);
 
-
-
-
 struct Universe
 {
 	public:
