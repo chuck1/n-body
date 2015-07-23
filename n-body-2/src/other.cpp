@@ -1,9 +1,12 @@
+#include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
 #include <chrono>
 #include <CL/cl.h>
 
+/*
 #include "universe.h"
+*/
 #include "other.hpp"
 
 float radius(float m)
@@ -50,9 +53,9 @@ int		get_device_info(cl_device_id device_id)
 	}
 
 	printf("setup:\n");
-	printf("%32s = %i\n", "global size", GLOBAL_SIZE);
-	printf("%32s = %i\n", "local size", LOCAL_SIZE);
-	printf("%32s = %i\n", "num groups", NUM_GROUPS);
+	//printf("%32s = %i\n", "global size", GLOBAL_SIZE);
+	//printf("%32s = %i\n", "local size", LOCAL_SIZE);
+	//printf("%32s = %i\n", "num groups", NUM_GROUPS);
 
 	check(__LINE__, ret);
 
@@ -88,8 +91,10 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 	};
 	*/
 	char const * fileName[] = {
-		"./include/Body.hpp",
-		"./src/kernel/step_bodies.cpp"
+		"./include/kernel/kBody.hpp",
+		"./include/kernel/kCollisionBuffer.hpp",
+		"./kernel/step_bodies.cl",
+		"./kernel/step_branchpairs.cl"
 	};
 
 	const size_t numFiles = sizeof fileName / sizeof(const char *);
@@ -105,7 +110,7 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 	{
 		fp = fopen(fileName[i], "r");
 		if (!fp) {
-			fprintf(stderr, "Failed to load kernel.\n");
+			fprintf(stderr, "Failed to load kernel: %s.\n", fileName[i]);
 			exit(1);
 		}
 		source_str[i] = (char*)malloc(MAX_SOURCE_SIZE);
@@ -167,7 +172,7 @@ void check(int line, int ret)
 	if(ret)
 	{
 		printf("%i: %i\n", line, ret);
-		//exit(1);
+		exit(1);
 	}
 }
 void notify_context(const char * errinfo, const void * private_info, size_t cb, void * user_data)

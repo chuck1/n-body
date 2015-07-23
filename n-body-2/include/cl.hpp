@@ -28,8 +28,33 @@ class Buffer
 {
 	public:
 		Buffer(cl_mem m): _M_id(m) {}
-		void			enqueueWrite(CommandQueue* cq, size_t offset, size_t size, const void* ptr);
+		void			enqueueWrite(
+				CommandQueue* cq,
+				size_t offset,
+				size_t size,
+				const void* ptr);
+		void			enqueueRead(
+				CommandQueue* cq,
+				size_t offset,
+				size_t size,
+				void* ptr);
+		void			release();
+
+		size_t			_M_size;
 		cl_mem			_M_id;
+};
+
+class Kernel
+{
+	public:
+		Kernel(cl_kernel k): _M_kernel(k) {}
+
+		void			SetKernelArg(
+				cl_uint arg_index,
+				size_t  arg_size,
+				const void* arg_value);
+
+		cl_kernel		_M_kernel;
 };
 
 class CommandQueue
