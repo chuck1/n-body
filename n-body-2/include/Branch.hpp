@@ -5,15 +5,18 @@
 #include <vector>
 #include <string>
 
+#define BTREE_LEAF_SIZE 16
+
 #include "decl.hpp"
-#include <Map.hpp>
-#include <Octree.hpp>
+//#include <Map.hpp>
+//#include <Octree.hpp>
 
 /**
  * coordinate in binary-tree
  *
  * @warning must be kernel-safe
  */
+/*
 struct Coor
 {
 	unsigned char	coor(int dim, int lvl)
@@ -26,8 +29,7 @@ struct Coor
 
 	unsigned char	_M_coor[DIM][COOR_BYTE_LEN];
 };
-
-struct Branches;
+*/
 
 /**
  * branch in binary-tree
@@ -75,7 +77,7 @@ struct Branch
 	unsigned int		_M_parent_idx;
 	unsigned int		_M_level;
 	// branch indicies
-	unsigned int		_M_branches[SPLIT];
+	unsigned int		_M_branches[8];
 	// body indicies (indicies in body array, frame.b(i))
 	// tree must be rebuilt when frame is reduced!
 	// elements array must be sorted every time an element is removed!

@@ -6,6 +6,7 @@
 #include <other.hpp>
 #include <cl.hpp>
 #include <Body.hpp>
+#include <Universe.hpp>
 
 //cl_context context = NULL;
 //cl_command_queue command_queue = NULL;
@@ -59,6 +60,7 @@ Context* context = 0;
 Device* device = 0;
 
 Buffer* memobj_bodies = 0;
+Buffer* memobj_branchpairs = 0;
 Buffer* memobj_flag_multi_coll = 0;
 
 void	setup()
@@ -125,8 +127,9 @@ void	run_step_bodies()
 
 	clFinish(command_queue->_M_id); check(__LINE__, ret);
 }
-int	main()
+int	main(int ac, char ** av)
 {
+	/*
 	// temporary data to use for testing
 	size_t num_bodies = 3;
 	Body bodies[num_bodies];
@@ -140,6 +143,10 @@ int	main()
 	bodies[2].v = glm::vec3(0,0,0);
 
 	for(int i = 0; i < num_bodies; ++i) bodies[i].print();
+	*/
+
+	Universe * u = new Universe();
+	u->parse_args(ac, av);
 
 	// the opencl computing part and the simulation management parts
 	// of the code should be very seperate.
@@ -153,9 +160,8 @@ int	main()
 
 	int ret;
 
-
-	memobj_bodies = context->createBuffer(num_bodies * sizeof(Body));
-
+	memobj_bodies = context->createBuffer(u->_M_key_frame->size() * sizeof(Body));
+	//memobj_bodies = context->createBuffer(u->_M_key_frame->size() * sizeof(Body));
 
 	//memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, pairs.size() * sizeof(Pair), NULL, &ret);
 	//memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * uni->size(0) * sizeof(unsigned int), NULL, &ret);

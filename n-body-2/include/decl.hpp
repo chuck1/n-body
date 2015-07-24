@@ -8,6 +8,12 @@ struct kBranches;
 struct kMap;
 struct kCollisionBuffer;
 
+struct Frame;
+struct Body;
+struct Branches;
+struct Map;
+struct CollisionBuffer;
+
 #ifdef CPU
 #define __kernel
 #define __local

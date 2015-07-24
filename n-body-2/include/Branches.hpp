@@ -7,8 +7,8 @@
 
 #include "decl.hpp"
 #include <Branch.hpp>
-#include <Map.hpp>
-#include <Octree.hpp>
+//#include <Map.hpp>
+#include <config.hpp>
 
 /**
  *
@@ -21,7 +21,7 @@ struct Branches
 	Branches();
 	void			init(Frame & f);
 	void			init(Frame & f, glm::vec3 x0, glm::vec3 x1);
-	Branch &		get_branch(Coor const & coor);
+	//Branch &		get_branch(Coor const & coor);
 	Branch &		get_branch(unsigned int i);
 	int			alloc(Branch & branch);
 	void			print();
