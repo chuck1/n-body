@@ -25,6 +25,7 @@ struct Universe
 {
 	public:
 		Universe();
+		void				refresh_name();
 		Body*				b(int t);
 		Body*				b(int t, int i);
 		int				solve();
@@ -42,26 +43,30 @@ struct Universe
 		void				refresh_pairs(Frame & f);
 		std::shared_ptr<Branches>	branches();
 		unsigned int			bytes() const;
-		void				parse_args(int, char**);
+		// call immediately before stepping with OpenCL
+		void				pre_step();
+		int				parse_args(int, char**);
 	public:
 		Frames				frames_;
-
+		
 		static const unsigned int	NAME_SIZE = 32;
-
+		
 		int				num_steps_;
-
+		
 		int				first_step_;
-
+		
 		char				name_[NAME_SIZE];
-
+		
+		float				_M_timestep;
+		
 		// extra timeseries data
 		std::vector<glm::vec3>		mass_center_;
 		
 		//Pairs				_M_pairs;
 		std::shared_ptr<Branches>	_M_branches;
-
+		
 		Frame				_M_key_frame;
-
+		
 		// temp simulation data
 		unsigned int			_M_step;
 		float				_M_duration_real;

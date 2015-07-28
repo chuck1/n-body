@@ -7,12 +7,16 @@
 #include <thread>
 #include <iostream>
 
+#include <boost/program_options.hpp>
+
 #include <Body.hpp>
 #include "kernel.hpp"
-#include "universe.h"
+#include "Universe.hpp"
 #include "Branch.hpp"
 #include <CollisionBuffer.hpp>
 #include <config.hpp>
+
+namespace po = boost::program_options;
 
 #define DEBUG (1)
 
@@ -214,34 +218,32 @@ int		Universe::solve()
 		/*
 		 * Update Branches
 		 */
-		if(THREADED)
-		{
+
+		/*		
+		if(0) {//if(THREADED) {
 			launch(
 					threads,
 					update_branches,
 					branches().get(),
 					f.b(0)
 					);
-		}
-		else
-		{
+		} else {
 			update_branches(branches().get(), f.b(0));
 		}
+		*/
 
-		if(1)
-		{
-		if(not(branches()->count_bodies() == f.count_alive()))
-		{
-			printf("_M_branches.count_bodies() = %i f.count_alive() = %i\n", branches()->count_bodies(), f.count_alive());
-			abort();
-		}
+		if(1) {
+			if(not(branches()->count_bodies() == f.count_alive())) {
+				printf("_M_branches.count_bodies() = %i f.count_alive() = %i\n", branches()->count_bodies(), f.count_alive());
+				abort();
+			}
 		}
 
 		/*
 		 * refresh branch masses
 		 */
-		if(THREADED)
-		{
+		/*
+		if(0) {//if(THREADED)
 			launch(
 					threads,
 					refresh_branch_mass,
@@ -253,10 +255,11 @@ int		Universe::solve()
 		{
 			branches()->refresh_mass(branches().get(), f.b(0));
 		}
-
+		*/
 		/* 
 		 * Execute "step_pairs" kernel
 		 */
+		/*
 		if(THREADED)
 		{
 			launch(
@@ -273,15 +276,15 @@ int		Universe::solve()
 					branches().get(),
 					&cb,
 					f.b(0)
-					/*&_M_pairs.pairs_[0]*/
-					/*_M_pairs.map_.ptr(),*/
-					/*f.size()*/
+					//&_M_pairs.pairs_[0]
+					//_M_pairs.map_.ptr(),
+					//f.size()
 					); 
 		}
 
-		/*
-		 * Execute "step_bodies" kernel
-		 */
+		
+		// Execute "step_bodies" kernel
+		
 		if(0)
 		{
 			f.mass_center(mass_center, 0, &mass);
@@ -335,34 +338,36 @@ int		Universe::solve()
 				dt *= 0.5;
 			}
 		}
-
-
-		/* Execute "step_collisions" kernel */
+		*/
+		
+		// Execute "step_collisions" kernel
+		/*
 		step_collisions(
 				f.b(0),
 				&cb, //&_M_pairs.pairs_[0],
 				&flag_multi_coll,
 				&nc
-				/*_M_pairs.size()*/
+				//_M_pairs.size()
 			       );
-
+		*/
 		/* Execute "clear_bodies_num_collisions" kernel */
+		/*
 		clear_bodies_num_collisions(f.b(0), f.size());
 
 		if(flag_multi_coll)
 		{
 			puts("resolve multi_coll");
 
-			/* Execute "step_collisions" kernel on a single thread to resolve bodies with multiple collisions */
+			/ Execute "step_collisions" kernel on a single thread to resolve bodies with multiple collisions 
 			step_collisions(
 					f.b(0),
 					&cb, //&_M_pairs.pairs_[0],
 					&flag_multi_coll,
 					&nc
-					/*_M_pairs.size()*/
+					//_M_pairs.size()
 				       );
 		}
-
+		*/
 		cb._M_size = 0;
 
 		alive -= nc;
@@ -370,7 +375,7 @@ int		Universe::solve()
 		temp_dead += nc;
 		nc = 0;
 
-		/* Reset flag_multi_coll */
+		// Reset flag_multi_coll
 		flag_multi_coll = 0;
 
 		if(0)
@@ -382,15 +387,14 @@ int		Universe::solve()
 			}
 		}
 
-		/* Store data for timestep */
+		// Store data for timestep
 		//add_frame(num_bodies_);
 		//memcpy(b(t), f.b(0), num_bodies_ * sizeof(Body));
 		frames_.frames_.push_back(f);
 
 
+		// reset body force variable
 		/*
-		 * reset body force variable
-		 */
 		launch(
 				threads,
 				reset_bodies,
@@ -402,7 +406,7 @@ int		Universe::solve()
 				mass,
 				&number_escaped
 		      );
-
+		*/
 
 
 		if(frames_.frames_.size() != (unsigned int)(t+1))
@@ -428,7 +432,6 @@ int		Universe::solve()
 			}
 		}
 	}
-
 	return 0;
 }
 void	Universe::add_frame(unsigned int n)
@@ -481,7 +484,10 @@ void		Universe::write()
 int		Universe::read(std::string fileName, int num_steps)
 {
 	FILE * pfile = fopen(fileName.c_str(), "r");
-	if(!pfile) return 1;
+	if(!pfile) {
+		perror("fopen");
+		return 1;
+	}
 
 	int num_steps_old;
 
@@ -560,9 +566,126 @@ void				Universe::pre_step()
 {
 	_M_key_frame = get_frame(0);
 
-	_M_branches->init(f);
+	_M_branches->init(_M_key_frame);
 }
+void				Universe::refresh_name()
+{
+	time_t rawtime;
+	tm * timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	strftime(name_, 32, "%Y_%m_%d_%H_%M_%S", timeinfo);
+	printf("name = %s\n", name_);
+}
+int				Universe::parse_args(int ac, char** av)
+{
+	// Declare the supported options.
+	po::options_description desc("Allowed options");
+	desc.add_options()
+		("help", "produce help message")
+		("setup", po::value<std::string>(), "simulation setup option")
+		("load", po::value<std::string>(), "simulation setup option")
+		("inputfile", po::value<std::string>(), "input filename for loading simulation or frame")
+		("num-bodies", po::value<int>(), "number of bodies")
+		("num-steps", po::value<int>(), "number of bodies")
+		("mass", po::value<float>(), "mass of new bodies")
+		("hcp-n", po::value< std::vector<int> >(), "for hcp setup, number of bodies in each direction")
+		;
 
+	po::variables_map vm;
+	po::store(po::parse_command_line(ac, av, desc), vm);
+	po::notify(vm); 
+
+	if(vm.count("help")) {
+		std::cout << desc << "\n";
+		return 1;
+	}
+
+	// create universe and perform some initialization (some of which should be removed)
+	refresh_name();
+	//alloc(prob._M_num_bodies, prob._M_num_step);
+
+	// defaults and variables for holding options
+	int num_step = 1000;
+	try {
+		num_step = vm["num-steps"].as<int>();
+	} catch (...) {}
+
+	float mass = 1000.f;
+	try {
+		mass = vm["mass"].as<float>();
+	} catch (...) {}
+
+	Frame & f = _M_key_frame;
+
+	// determine how to setup problem based on commandline args
+	if (vm.count("setup")) {
+		auto setup = vm["setup"].as<std::string>();
+		std::cout << "setup = " << setup << "\n";
+
+		std::map< std::string, std::function<void()> > m;
+
+		m["hcp"] = [&] () {
+			std::vector<int> n;
+			if(vm.count("hcp-n")) {
+				n = vm["hcp-n"].as< std::vector<int> >();
+			} else {
+				printf("--hcp-n option missing\n");
+				exit(1);
+			}
+
+			if(n.size() == 3) {
+				f.hexagonal_close_packed(
+						mass,
+						n[0],
+						n[1],
+						n[2],
+						glm::vec3(),
+						glm::vec3());
+			} else if(n.size() == 1) {
+				f.hexagonal_close_packed(
+						mass,
+						n[0],
+						n[0],
+						n[0],
+						glm::vec3(),
+						glm::vec3());
+			} else {
+				printf("wrong number of values for --hcp-n");
+				exit(1);
+			}
+		};
+
+		// load initial frame from .frame file
+		m["load"] = [&] () {
+			if(!vm.count("inputfile")) {
+				abort();
+			}
+			auto fn = vm["inputfile"].as<std::string>();
+			FILE* pf = fopen(fn.c_str(), "r");
+			get_frame(0).read(pf);
+			fclose(pf);
+		};
+
+		// find lambda function from setup option string
+		auto it = m.find(setup);
+		if(it == m.end()) {
+			abort();
+		}
+		if(!it->second) {
+			abort();
+		}
+		it->second();
+
+	} else if(vm.count("load")) {
+		auto fn = vm["load"].as<std::string>();
+
+		read(fn, num_step);
+
+	}
+
+	return 0;
+}
 
 
 

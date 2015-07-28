@@ -1,11 +1,11 @@
 
 cpp_files = $(shell find ./src -name '*.cpp')
 
-include_dirs = -Iinclude
+include_dirs = -Iinclude -I.
 
-cflags = -g -std=c++0x
+cflags = -g -std=c++0x -DCPU=1
 
-libs = -lOpenCL
+libs = -lOpenCL -lboost_program_options
 
 all:
 	@echo $(cpp_files)

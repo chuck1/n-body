@@ -146,8 +146,11 @@ int	main(int ac, char ** av)
 	*/
 
 	Universe * u = new Universe();
-	u->parse_args(ac, av);
-
+	if(u->parse_args(ac, av)) {
+		printf("parse args failed\n");
+		return 1;
+	}
+	Frame& f = u->_M_key_frame;
 	// the opencl computing part and the simulation management parts
 	// of the code should be very seperate.
 	// 1. the boss gets a simulation into a state where it needs to be computed
@@ -160,7 +163,7 @@ int	main(int ac, char ** av)
 
 	int ret;
 
-	memobj_bodies = context->createBuffer(u->_M_key_frame->size() * sizeof(Body));
+	memobj_bodies = context->createBuffer(u->_M_key_frame.size() * sizeof(Body));
 	//memobj_bodies = context->createBuffer(u->_M_key_frame->size() * sizeof(Body));
 
 	//memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, pairs.size() * sizeof(Pair), NULL, &ret);
@@ -173,7 +176,7 @@ int	main(int ac, char ** av)
 	// Write to buffers
 	puts("write buffers");
 
-	write(bodies, num_bodies, &flag_multi_coll);
+	write(f.b(0), f.size(), &flag_multi_coll);
 
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, pairs.size() * sizeof(Pair),	 &pairs.pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &pairs.map_, 0, NULL, NULL); check(__LINE__, ret);
@@ -205,9 +208,11 @@ int	main(int ac, char ** av)
 	check(__LINE__, ret);
 	*/
 
+	auto num_bodies = f.size();
+
 	// Set OpenCL Kernel Parameters 
 	kernel_bodies->SetKernelArg(0, sizeof(cl_mem),       (void *)&memobj_bodies->_M_id);
-	kernel_bodies->SetKernelArg(1, sizeof(float),        (void *)&timestep);
+	kernel_bodies->SetKernelArg(1, sizeof(float),        (void *)&u->_M_timestep);
 	kernel_bodies->SetKernelArg(2, sizeof(unsigned int), (void *)&num_bodies);
 	//kernel_bodies->SetKernelArg(3, sizeof(float *),  (void *)velocity_ratio);
 	//kernel_bodies->SetKernelArg(4, sizeof(float *),  (void *)mass_center);
@@ -230,8 +235,7 @@ int	main(int ac, char ** av)
 
 	auto program_time_start = std::chrono::system_clock::now();
 	*/
-	for(unsigned int t = 0; t < 100; t++)
-	{
+	for(unsigned int t = 0; t < 100; t++) {
 		if((t % 10) == 0) printf("t = %5i\n", t);
 
 		/*
@@ -302,7 +306,7 @@ int	main(int ac, char ** av)
 				command_queue,
 				0,
 				num_bodies * sizeof(Body),
-				bodies);
+				f.b(0));
 
 		/*
 		   clFinish(command_queue->_M_id); check(__LINE__, ret);
@@ -354,7 +358,7 @@ int	main(int ac, char ** av)
 	memobj_bodies->release();
 
 	// print results
-	for(int i = 0; i < num_bodies; ++i) bodies[i].print();
+	for(int i = 0; i < num_bodies; ++i) f.b(i)->print();
 
 	return 0;
 }

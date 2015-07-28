@@ -1,6 +1,6 @@
 
-#ifndef DECL_HPP
-#define DECL_HPP
+#ifndef NBODY_DECL_HPP
+#define NBODY_DECL_HPP
 
 struct kFrame;
 struct kBody;
