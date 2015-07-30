@@ -6,6 +6,7 @@
 #include <string>
 
 #include "decl.hpp"
+#include "include/kernel/kBranches.hpp"
 #include <Branch.hpp>
 //#include <Map.hpp>
 #include <config.hpp>

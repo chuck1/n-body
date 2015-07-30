@@ -273,8 +273,7 @@ void			Branch::send_to_parent(Branches * branches, Body * bodies, unsigned int i
 {
 	unsigned int body_idx = _M_elements[i];
 
-	if(_M_flag & FLAG_HAS_PARENT)
-	{
+	if(_M_flag & FLAG_HAS_PARENT) {
 		Branch & parent = branches->_M_branches[_M_parent_idx];
 
 		if(parent._M_num_elements >= BTREE_LEAF_SIZE)
@@ -287,9 +286,8 @@ void			Branch::send_to_parent(Branches * branches, Body * bodies, unsigned int i
 		// add to parent
 		parent._M_elements[parent._M_num_elements] = body_idx;
 		parent._M_num_elements++;
-	}
-	else // body is outside octree, kill it
-	{
+	} else {
+		// body is outside octree, kill it
 		bodies[body_idx].alive = 0;
 	}
 

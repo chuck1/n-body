@@ -205,8 +205,7 @@ int		Universe::solve()
 			      );
 		}
 
-		if(temp_dead >= one_tenth)
-		{
+		if(temp_dead >= one_tenth) {
 			one_tenth = alive / 10;
 			temp_dead = 0;
 
@@ -564,8 +563,7 @@ unsigned int			Universe::bytes() const
 }
 void				Universe::pre_step()
 {
-	_M_key_frame = get_frame(0);
-
+	if(not _M_branches) _M_branches.reset(new Branches);
 	_M_branches->init(_M_key_frame);
 }
 void				Universe::refresh_name()

@@ -5,7 +5,6 @@
 
 #include "cl.hpp"
 
-
 Context*	Device::createContext()
 {
 	cl_int ret;
@@ -35,7 +34,9 @@ CommandQueue*	Context::createCommandQueue(Device* device)
 
 	return cq;
 }
-Buffer*		Context::createBuffer(unsigned long size)
+Buffer*		Context::createBuffer(
+			std::string name,
+			unsigned long size)
 {
 	cl_int ret;
 
@@ -48,7 +49,7 @@ Buffer*		Context::createBuffer(unsigned long size)
 	
 	check(__LINE__, ret);
 	
-	Buffer* b = new Buffer(id);
+	Buffer* b = new Buffer(name, id);
 	b->_M_size = size;
 
 	return b;
@@ -57,9 +58,11 @@ void			Buffer::enqueueWrite(
 		CommandQueue* cq,
 		size_t offset,
 		size_t size,
-		const void* ptr)
+		const void * ptr)
 {
 	assert(size == _M_size);
+
+	assert(ptr != NULL);
 
 	cl_int ret;
 
@@ -74,7 +77,7 @@ void			Buffer::enqueueWrite(
 		NULL,
 		NULL);
 	
-	check(__LINE__, ret);
+	check(__FILE__, __LINE__, ret, _M_name);
 }
 void		Buffer::enqueueRead(
 		CommandQueue* cq,
@@ -106,9 +109,18 @@ void			Kernel::SetKernelArg(
 		const void* arg_value)
 {
 	int ret = clSetKernelArg(_M_kernel, arg_index, arg_size, arg_value);
-	check(__LINE__, ret);
+	check(__FILE__, __LINE__, ret, "");
 }
-
-
+Program::Program(cl_program p):
+	_M_program(p)
+{}
+Kernel *		Program::createKernel(
+		const char * name)
+{
+	int ret;
+	cl_kernel temp = clCreateKernel(_M_program, name, &ret);
+	check(__LINE__, ret);
+	return new Kernel(temp);
+}
 
 

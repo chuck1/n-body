@@ -1,10 +1,9 @@
-#ifndef K_BRANCHES_HPP
-#define K_BRANCHES_HPP
+#ifndef KBRANCHES_HPP
+#define KBRANCHES_HPP
 
-//#include "decl.hpp"
+#include "include/config.hpp"
 #include "include/kernel/kBranch.hpp"
 
-#define BTREE_MAX_BRANCHES 32000
 
 /**
  *

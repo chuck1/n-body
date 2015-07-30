@@ -7,6 +7,7 @@
 #include <cl.hpp>
 #include <Body.hpp>
 #include <Universe.hpp>
+#include <CollisionBuffer.hpp>
 
 //cl_context context = NULL;
 //cl_command_queue command_queue = NULL;
@@ -16,12 +17,14 @@
 //cl_mem memobj_map = NULL;
 //cl_mem memobj_flag_multi_coll = NULL;
 
-cl_program program = NULL;
+Program * program = NULL;
 
-cl_kernel kernel_pairs = NULL;
-Kernel* kernel_bodies = 0;
-cl_kernel kernel_collisions = NULL;
-cl_kernel kernel_clear_bodies_num_collisions = NULL;
+Kernel* kernel_step_bodies = 0;
+Kernel* kernel_step_branchpairs = 0;
+
+//cl_kernel kernel_pairs = NULL;
+//cl_kernel kernel_collisions = NULL;
+//cl_kernel kernel_clear_bodies_num_collisions = NULL;
 
 cl_platform_id platform_id = NULL;
 cl_uint ret_num_devices;
@@ -60,7 +63,8 @@ Context* context = 0;
 Device* device = 0;
 
 Buffer* memobj_bodies = 0;
-Buffer* memobj_branchpairs = 0;
+Buffer* memobj_branches = 0;
+Buffer* memobj_cb = 0;
 Buffer* memobj_flag_multi_coll = 0;
 
 void	setup()
@@ -94,16 +98,27 @@ void	setup()
 	command_queue = context->createCommandQueue(device);
 }
 void	write(
-		Body*  bodies,
-		size_t num_bodies,
+		Universe * u,
+		CollisionBuffer * cb,
 		unsigned int * flag_multi_coll
-	     )
+		)
+	/*
+		std::shared_ptr<Branches>	branches,
+		Body *				bodies,
+		size_t				num_bodies,
+		unsigned int *			flag_multi_coll
+	     )*/
 {
+
+	Frame & f = u->_M_key_frame;
+	
+	//write(u->_M_branches, f.b(0), f.size(), &flag_multi_coll);
+	
 	memobj_bodies->enqueueWrite(
 			command_queue,
 			0,
-			num_bodies * sizeof(Body),
-			bodies);
+			f.size() * sizeof(Body),
+			f.b(0));
 
 	memobj_flag_multi_coll->enqueueWrite(
 			command_queue,
@@ -111,12 +126,24 @@ void	write(
 			sizeof(unsigned int),
 			flag_multi_coll);
 
+	memobj_branches->enqueueWrite(
+			command_queue,
+			0,
+			sizeof(kBranches),
+			u->_M_branches.get());
+
+	memobj_cb->enqueueWrite(
+			command_queue,
+			0,
+			sizeof(kCollisionBuffer),
+			cb);
+
 }
-void	run_step_bodies()
+void	run_step_branchpairs()
 {
 	ret = clEnqueueNDRangeKernel(
 			command_queue->_M_id,
-			kernel_bodies->_M_kernel,
+			kernel_step_branchpairs->_M_kernel,
 			1,
 			NULL,
 			&global_size,
@@ -127,8 +154,28 @@ void	run_step_bodies()
 
 	clFinish(command_queue->_M_id); check(__LINE__, ret);
 }
+void	run_step_bodies()
+{
+	ret = clEnqueueNDRangeKernel(
+			command_queue->_M_id,
+			kernel_step_bodies->_M_kernel,
+			1,
+			NULL,
+			&global_size,
+			&local_size,
+			0,
+			NULL,
+			NULL); check(__LINE__, ret);
+
+	clFinish(command_queue->_M_id); check(__LINE__, ret);
+}
+void	info()
+{
+	printf("sizeof(kBranches) = %lu\n", sizeof(kBranches));
+}
 int	main(int ac, char ** av)
 {
+	info();
 	/*
 	// temporary data to use for testing
 	size_t num_bodies = 3;
@@ -158,47 +205,53 @@ int	main(int ac, char ** av)
 	// 3. the compute part computes...
 	// 4. the boss steps forward
 	// 5. repeat
-
+	
+	
+	
 	setup();
 
+	// needed to initialize _M_branches
+	u->pre_step();
+
 	int ret;
-
-	memobj_bodies = context->createBuffer(u->_M_key_frame.size() * sizeof(Body));
+	
+	memobj_bodies		= context->createBuffer("bodies",		f.size() * sizeof(Body));
+	memobj_branches		= context->createBuffer("branches",		sizeof(kBranches));
+	memobj_cb		= context->createBuffer("cb",			sizeof(kCollisionBuffer));
+	memobj_flag_multi_coll	= context->createBuffer("flag_multi_coll",	sizeof(unsigned int));
+	
 	//memobj_bodies = context->createBuffer(u->_M_key_frame->size() * sizeof(Body));
-
 	//memobj_pairs    = clCreateBuffer(context, CL_MEM_READ_WRITE, pairs.size() * sizeof(Pair), NULL, &ret);
 	//memobj_map      = clCreateBuffer(context, CL_MEM_READ_WRITE, uni->size(0) * uni->size(0) * sizeof(unsigned int), NULL, &ret);
 
-	memobj_flag_multi_coll = context->createBuffer(sizeof(unsigned int));
-
-	unsigned int flag_multi_coll = 0;
 
 	// Write to buffers
 	puts("write buffers");
+	
+	unsigned int flag_multi_coll = 0;
+	CollisionBuffer cb;
+	
+	write(u, &cb, &flag_multi_coll);
 
-	write(f.b(0), f.size(), &flag_multi_coll);
-
-	//ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, pairs.size() * sizeof(Pair),	 &pairs.pairs_[0], 0, NULL, NULL); check(__LINE__, ret);
-	//ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &pairs.map_, 0, NULL, NULL); check(__LINE__, ret);
-	memobj_flag_multi_coll->enqueueWrite(command_queue, 0, sizeof(unsigned int), &flag_multi_coll);
-
-	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL); check(__LINE__, ret);
+	//ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, pairs.size() * sizeof(Pair),	 &pairs.pairs_[0], 0, NULL, NULL);
+	//ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &pairs.map_, 0, NULL, NULL);
+	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL);
 
 	// Create Kernel Program from the source
-	program = create_program_from_file(context->_M_id, device->_M_id);
+	program = new Program(create_program_from_file(context->_M_id, device->_M_id));
 
 	// Create OpenCL Kernel /
 	//kernel_pairs = clCreateKernel(program, "step_pairs", &ret); check(__LINE__, ret);
-	cl_kernel temp = clCreateKernel(program, "step_bodies", &ret); check(__LINE__, ret);
-	kernel_bodies = new Kernel(temp);
+
+	kernel_step_branchpairs = program->createKernel("step_branchpairs");
+	kernel_step_bodies      = program->createKernel("step_bodies");
+	
 	//kernel_collisions = clCreateKernel(program, "step_collisions", &ret); check(__LINE__, ret);
 	//kernel_clear_bodies_num_collisions = clCreateKernel(program, "clear_bodies_num_collisions", &ret); check(__LINE__, ret);
-
 
 	// Set OpenCL Kernel Parameters 
 	//ret = clSetKernelArg(kernel_pairs, 0, sizeof(cl_mem), (void *)&memobj_bodies); check(__LINE__, ret);
 	//ret = clSetKernelArg(kernel_pairs, 1, sizeof(cl_mem), (void *)&memobj_pairs);
-
 
 	/*
 	// Set OpenCL Kernel Parameters 
@@ -211,9 +264,17 @@ int	main(int ac, char ** av)
 	auto num_bodies = f.size();
 
 	// Set OpenCL Kernel Parameters 
-	kernel_bodies->SetKernelArg(0, sizeof(cl_mem),       (void *)&memobj_bodies->_M_id);
-	kernel_bodies->SetKernelArg(1, sizeof(float),        (void *)&u->_M_timestep);
-	kernel_bodies->SetKernelArg(2, sizeof(unsigned int), (void *)&num_bodies);
+	
+	kernel_step_branchpairs->SetKernelArg(0, sizeof(cl_mem), (void *)memobj_branches->_M_id);
+	kernel_step_branchpairs->SetKernelArg(1, sizeof(cl_mem), (void *)memobj_cb->_M_id);
+	kernel_step_branchpairs->SetKernelArg(2, sizeof(cl_mem), (void *)memobj_bodies->_M_id);
+	//	__global struct kBranches * branches,
+	//	__global struct kCollisionBuffer * cb,
+	//	__global struct kBody * bodies
+
+	kernel_step_bodies->SetKernelArg(0, sizeof(cl_mem),       (void *)&memobj_bodies->_M_id);
+	kernel_step_bodies->SetKernelArg(1, sizeof(float),        (void *)&u->_M_timestep);
+	kernel_step_bodies->SetKernelArg(2, sizeof(unsigned int), (void *)&num_bodies);
 	//kernel_bodies->SetKernelArg(3, sizeof(float *),  (void *)velocity_ratio);
 	//kernel_bodies->SetKernelArg(4, sizeof(float *),  (void *)mass_center);
 	//kernel_bodies->SetKernelArg(5, sizeof(float),  (void *)mass);
@@ -238,6 +299,8 @@ int	main(int ac, char ** av)
 	for(unsigned int t = 0; t < 100; t++) {
 		if((t % 10) == 0) printf("t = %5i\n", t);
 
+		u->pre_step();
+
 		/*
 		// Execute "step_pairs" kernel *
 
@@ -250,6 +313,9 @@ int	main(int ac, char ** av)
 		*/
 		// Execute "step_bodies" kernel
 		//
+
+		run_step_branchpairs();
+		
 		run_step_bodies();
 
 		/*

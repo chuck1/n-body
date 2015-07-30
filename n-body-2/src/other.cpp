@@ -94,7 +94,9 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 		"./include/kernel/kBody.hpp",
 		"./include/kernel/kCollisionBuffer.hpp",
 		"./kernel/step_bodies.cl",
-		"./kernel/step_branchpairs.cl"
+		"./kernel/step_branchpairs.cl",
+		"./kernel/update_branches.cl",
+		"./kernel/vec.cl"
 	};
 
 	const size_t numFiles = sizeof fileName / sizeof(const char *);
@@ -169,9 +171,15 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 }
 void check(int line, int ret)
 {
-	if(ret)
-	{
+	if(ret) {
 		printf("%i: %i\n", line, ret);
+		exit(1);
+	}
+}
+void check(const char * f, int line, int ret, std::string msg)
+{
+	if(ret) {
+		printf("%s:%i: %i: %s\n", f, line, ret, msg.c_str());
 		exit(1);
 	}
 }

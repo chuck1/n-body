@@ -1,7 +1,10 @@
-#ifndef TREE_HPP
-#define TREE_HPP
+#ifndef KBRANCH_HPP
+#define KBRANCH_HPP
 
 #define BTREE_LEAF_SIZE 16
+
+#define KBRANCH_FLAG_IS_LEAF      1 << 0
+#define KBRANCH_FLAG_HAS_PARENT   1 << 1
 
 //#include "decl.hpp"
 
@@ -31,8 +34,6 @@ struct kBranches;
  *
  * @warning must be kernel-safe
  */
-#define KBRANCH_FLAG_IS_LEAF      1 << 0
-#define KBRANCH_FLAG_HAS_PARENT   1 << 1
 struct kBranch
 {
 	unsigned int		_M_idx;
@@ -64,6 +65,14 @@ struct kBranch
 };
 
 
+void		kbranch_send_to_parent(
+			__global struct kBranch * branch,
+			__global struct kBranches * branches,
+			__global struct kBody * bodies,
+			unsigned int i);
+void		kbranch_erase(
+			__global struct kBranch * branch,
+			unsigned int i);
 
 
 #endif

@@ -1,11 +1,12 @@
 #ifndef COLLISION_BUFFER_HPP
 #define COLLISION_BUFFER_HPP
 
-#include <mutex>
+#include <kernel/kCollisionBuffer.hpp>
 
-class CollisionBuffer
+class CollisionBuffer: public kCollisionBuffer
 {
 	public:
+/*
 		enum
 		{
 			LENGTH = 10000,
@@ -21,13 +22,17 @@ class CollisionBuffer
 				unsigned int	j;
 				unsigned int	flag;
 		};
-		
-		CollisionBuffer(): _M_size(0) {}
-		
+*/		
+		CollisionBuffer()
+		{
+			_M_size = 0;
+		}
+
+/*		
 		Pair		_M_pairs[LENGTH];
 		unsigned int	_M_size;
+*/
 
-		std::mutex	_M_mutex;
 };
 
 #endif

@@ -20,14 +20,17 @@ class Context
 	public:
 		Context(cl_context c): _M_id(c) {}
 		CommandQueue*		createCommandQueue(Device*);
-		Buffer*			createBuffer(unsigned long);
+		Buffer*			createBuffer(std::string name, unsigned long);
 		cl_context		_M_id;
 };
 
 class Buffer
 {
 	public:
-		Buffer(cl_mem m): _M_id(m) {}
+		Buffer(std::string name, cl_mem m):
+			_M_name(name),
+			_M_id(m)
+		{}
 		void			enqueueWrite(
 				CommandQueue* cq,
 				size_t offset,
@@ -40,6 +43,7 @@ class Buffer
 				void* ptr);
 		void			release();
 
+		std::string		_M_name;
 		size_t			_M_size;
 		cl_mem			_M_id;
 };
@@ -62,6 +66,13 @@ class CommandQueue
 	public:
 		CommandQueue(cl_command_queue cq): _M_id(cq) {}
 		cl_command_queue	_M_id;
+};
+class Program
+{
+public:
+	Program(cl_program);
+	Kernel *		createKernel(const char *);
+	cl_program		_M_program;
 };
 
 #endif
