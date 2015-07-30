@@ -81,7 +81,8 @@ void			step_bodies(
 void			reset_bodies(
 		__global struct kBody * bodies,
 //		float dt,
-		unsigned int num_bodies
+		unsigned int num_bodies,
+		__global struct kDebug * db
 //		float * velocity_ratio,
 //		float * mass_center,
 //		float mass,

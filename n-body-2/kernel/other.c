@@ -43,7 +43,10 @@ float			gravity(
 	return f/r;
 }
 
-void		divide(unsigned int n, unsigned int * i_local0, unsigned int * i_local1)
+void			divide(
+		unsigned int n,
+		unsigned int * i_local0,
+		unsigned int * i_local1)
 {
 	// work group
 	int local_block = n / get_num_groups(0);

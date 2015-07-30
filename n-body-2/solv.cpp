@@ -9,14 +9,12 @@
 #include <Body.hpp>
 #include <Universe.hpp>
 #include <CollisionBuffer.hpp>
+#include <kernel/kDebug.hpp>
 
 //cl_context context = NULL;
 //cl_command_queue command_queue = NULL;
 
-//cl_mem memobj_bodies = NULL;
-//cl_mem memobj_pairs = NULL;
 //cl_mem memobj_map = NULL;
-//cl_mem memobj_flag_multi_coll = NULL;
 
 Program * program = NULL;
 
@@ -24,7 +22,6 @@ Kernel* kernel_reset_bodies = 0;
 Kernel* kernel_step_bodies = 0;
 Kernel* kernel_step_branchpairs = 0;
 
-//cl_kernel kernel_pairs = NULL;
 //cl_kernel kernel_collisions = NULL;
 //cl_kernel kernel_clear_bodies_num_collisions = NULL;
 
@@ -57,13 +54,14 @@ int		cleanup() {
 }
 */
 
-size_t global_size = 2;
-size_t local_size = 1;
+size_t global_size = GLOBAL_SIZE;
+size_t local_size  = LOCAL_SIZE;
 
 CommandQueue* command_queue = 0;
 Context* context = 0;
 Device* device = 0;
 
+Buffer* memobj_debug = 0;
 Buffer* memobj_bodies = 0;
 Buffer* memobj_branches = 0;
 Buffer* memobj_cb = 0;
@@ -102,7 +100,8 @@ void	setup()
 void	write(
 		Universe * u,
 		CollisionBuffer * cb,
-		unsigned int * flag_multi_coll
+		unsigned int * flag_multi_coll,
+		kDebug * db
 		)
 	/*
 		std::shared_ptr<Branches>	branches,
@@ -152,9 +151,13 @@ void	run_step_branchpairs()
 			&local_size,
 			0,
 			NULL,
-			NULL); check(__LINE__, ret);
+			NULL);
+	
+	check(__FILE__, __LINE__, ret, "run_step_branchpairs");
 
-	clFinish(command_queue->_M_id); check(__LINE__, ret);
+	clFinish(command_queue->_M_id);
+
+	check(__FILE__, __LINE__, ret, "run_step_branchpairs");
 }
 void	run_step_bodies()
 {
@@ -191,28 +194,28 @@ void	info()
 	printf("sizeof(kBranches) = %lu\n", sizeof(kBranches));
 }
 
-
+void	save_frame(Universe * u)
+{
+	Frame & f = u->_M_key_frame;
+	
+	// Store data for timestep *
+	memobj_bodies->enqueueRead(
+			command_queue,
+			0,
+			f.size() * sizeof(Body),
+			f.b(0));
+	
+	// save data
+	u->frames_.frames_.push_back(f);
+}
 void	solve_system(Universe * u)
 {
 	Frame & f = u->_M_key_frame;
 
 	for(unsigned int t = 0; t < 100; t++) {
-		if((t % 10) == 0) printf("t = %5i\n", t);
+		if((t % 1) == 0) printf("t = %5i\n", t);
 
 		u->pre_step();
-
-		/*
-		// Execute "step_pairs" kernel *
-
-		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_pairs, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-		check(__LINE__, ret);
-		if(ret) break;
-
-		clFinish(command_queue->_M_id);
-		check(__LINE__, ret);
-		*/
-		// Execute "step_bodies" kernel
-		//
 
 		run_step_branchpairs();
 		
@@ -269,24 +272,11 @@ void	solve_system(Universe * u)
 		clFinish(command_queue->_M_id); check(__LINE__, ret);
 
 */
-		// Store data for timestep *
-		memobj_bodies->enqueueRead(
-				command_queue,
-				0,
-				f.size() * sizeof(Body),
-				f.b(0));
-		
-		clFinish(command_queue->_M_id); check(__LINE__, ret);
-	
-		// save data
-		u->frames_.frames_.push_back(f);
-		
+		//save_frame(u);
+
 		// print results
 		//for(size_t i = 0; i < f.size(); ++i) f.b(i)->print();
-
-
 	}
-
 }
 int		main_cpu(Universe* uni)
 {
@@ -328,21 +318,6 @@ int		main_cpu(Universe* uni)
 int	main(int ac, char ** av)
 {
 	info();
-	/*
-	// temporary data to use for testing
-	size_t num_bodies = 3;
-	Body bodies[num_bodies];
-	float timestep = 1;
-
-	bodies[0].x = glm::vec3(1,0,0);
-	bodies[1].x = glm::vec3(0,1,0);
-	bodies[2].x = glm::vec3(0,0,0);
-	bodies[0].v = glm::vec3(1,0,0);
-	bodies[1].v = glm::vec3(0,1,0);
-	bodies[2].v = glm::vec3(0,0,0);
-
-	for(int i = 0; i < num_bodies; ++i) bodies[i].print();
-	*/
 
 	Universe * u = new Universe();
 	if(u->parse_args(ac, av)) {
@@ -359,7 +334,6 @@ int	main(int ac, char ** av)
 	// 5. repeat
 	
 	
-	
 	setup();
 
 	// needed to initialize _M_branches
@@ -367,6 +341,7 @@ int	main(int ac, char ** av)
 
 	int ret;
 	
+	memobj_debug		= context->createBuffer("debug",		sizeof(kDebug));
 	memobj_bodies		= context->createBuffer("bodies",		f.size() * sizeof(Body));
 	memobj_branches		= context->createBuffer("branches",		sizeof(kBranches));
 	memobj_cb		= context->createBuffer("cb",			sizeof(kCollisionBuffer));
@@ -382,8 +357,9 @@ int	main(int ac, char ** av)
 	
 	unsigned int flag_multi_coll = 0;
 	CollisionBuffer cb;
+	kDebug db;
 	
-	write(u, &cb, &flag_multi_coll);
+	write(u, &cb, &flag_multi_coll, &db);
 
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_pairs,    CL_TRUE, 0, pairs.size() * sizeof(Pair),	 &pairs.pairs_[0], 0, NULL, NULL);
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_map,      CL_TRUE, 0, sizeof(Map),	                 &pairs.map_, 0, NULL, NULL);
@@ -418,12 +394,13 @@ int	main(int ac, char ** av)
 
 	// Set OpenCL Kernel Parameters 
 	
+	kernel_reset_bodies->SetKernelArg(0, sizeof(cl_mem),       (void *)&memobj_bodies->_M_id);
+	kernel_reset_bodies->SetKernelArg(1, sizeof(unsigned int), (void *)&num_bodies);
+	kernel_reset_bodies->SetKernelArg(2, sizeof(cl_mem),       (void *)&memobj_debug->_M_id);
+
 	kernel_step_branchpairs->SetKernelArg(0, sizeof(cl_mem), (void *)&memobj_branches->_M_id);
 	kernel_step_branchpairs->SetKernelArg(1, sizeof(cl_mem), (void *)&memobj_cb->_M_id);
 	kernel_step_branchpairs->SetKernelArg(2, sizeof(cl_mem), (void *)&memobj_bodies->_M_id);
-	//	__global struct kBranches * branches,
-	//	__global struct kCollisionBuffer * cb,
-	//	__global struct kBody * bodies
 
 	kernel_step_bodies->SetKernelArg(0, sizeof(cl_mem),       (void *)&memobj_bodies->_M_id);
 	kernel_step_bodies->SetKernelArg(1, sizeof(float),        (void *)&u->_M_timestep);

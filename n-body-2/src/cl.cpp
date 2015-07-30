@@ -64,9 +64,7 @@ void			Buffer::enqueueWrite(
 
 	assert(ptr != NULL);
 
-	cl_int ret;
-
-	ret = clEnqueueWriteBuffer(
+	cl_int ret = clEnqueueWriteBuffer(
 		cq->_M_id,
 		_M_id,
 		CL_TRUE,
@@ -85,7 +83,11 @@ void		Buffer::enqueueRead(
 		size_t size,
 		void* ptr)
 {
-	int ret = clEnqueueReadBuffer(
+	assert(size == _M_size);
+
+	assert(ptr != NULL);
+
+	cl_int ret = clEnqueueReadBuffer(
 			cq->_M_id,
 			_M_id,
 			CL_TRUE,
@@ -95,12 +97,18 @@ void		Buffer::enqueueRead(
 			0,
 			NULL,
 			NULL);
-	check(__LINE__, ret);
+	
+	check(__FILE__, __LINE__, ret, _M_name);
+
+	clFinish(cq->_M_id);
+
+	check(__FILE__, __LINE__, ret, _M_name);
 }
 
 void		Buffer::release()
 {
-	int ret = clReleaseMemObject(_M_id); check(__LINE__, ret);
+	int ret = clReleaseMemObject(_M_id);
+	check(__LINE__, ret);
 }
 
 void			Kernel::SetKernelArg(

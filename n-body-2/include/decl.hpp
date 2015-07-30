@@ -2,6 +2,7 @@
 #ifndef NBODY_DECL_HPP
 #define NBODY_DECL_HPP
 
+struct kDebug;
 struct kFrame;
 struct kBody;
 struct kBranches;

@@ -1,3 +1,3 @@
 #!/bin/bash
-./solv --setup hcp --hcp-n 2
+./build/solv --setup hcp --hcp-n 2
 
