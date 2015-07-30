@@ -26,7 +26,9 @@ void		print(float * a)
 }
 
 
-Universe::Universe(): first_step_(0)
+Universe::Universe():
+	first_step_(0),
+	_M_timestep(1)
 {
 }
 Body*		Universe::b(int t)
@@ -39,13 +41,15 @@ Body*		Universe::b(int t, int i)
 	assert(frames_.frames_.size() > (unsigned int)t);
 	return frames_.frames_[t].b(i); //&_M_bodies[0] + (t * num_bodies_ + i);
 }
+/*
 void		Universe::alloc(int num_bodies, int num_steps)
 {
-	num_steps_ = num_steps;
+	//num_steps_ = num_steps;
 
-	/* Allocate bodies */
+	// Allocate bodies
 	add_frame(num_bodies);
 }
+*/
 unsigned int	count_alive(Body * b, int n)
 {
 	int na = 0;
@@ -144,7 +148,7 @@ int		Universe::solve()
 
 	_M_duration_real = 0;
 
-	printf("num_steps = %i\n", num_steps_);
+	//printf("num_steps = %i\n", num_steps_);
 
 	auto program_time_start = std::chrono::system_clock::now();
 
@@ -155,13 +159,10 @@ int		Universe::solve()
 
 	CollisionBuffer cb;
 
-	if(0)
-	{
-		branches()->print();
-	}
+	if(0) branches()->print();
 
-	for(int t = 1; t < num_steps_; t++)
-	{
+	int num_steps = 1000;
+	for(int t = 1; t < num_steps; t++) {
 		if(0) printf("universe::bytes() = %i\n", bytes());
 
 		// dynamic time step
@@ -175,9 +176,9 @@ int		Universe::solve()
 
 		_M_time_sim += dt;
 
-		if(((t % (num_steps_ / 1)) == 0) || (t == 1)) print_header();
+		if(((t % (num_steps / 1)) == 0) || (t == 1)) print_header();
 
-		if((t % (num_steps_ / 10)) == 0)
+		if((t % (num_steps / 10)) == 0)
 		{
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - program_time_start);
 
@@ -186,7 +187,7 @@ int		Universe::solve()
 			float eta =
 				(_M_duration_real == 0.0) ?
 				0.0 :
-				(_M_duration_real / (float)(t-1) * (float)(num_steps_ - t));
+				(_M_duration_real / (float)(t-1) * (float)(num_steps - t));
 
 			printf("%12.1f%16f%16i%16i%16i%16i%16i%12.1f%12i%12i%12f%12f%12f\n",
 					_M_duration_real,
@@ -442,7 +443,8 @@ std::string	Universe::getFilename()
 {
 	char buffer0[16];
 	char buffer[16];
-	sprintf(buffer, "%i", num_steps_ + first_step_);
+	
+	sprintf(buffer, "%lu", frames_.frames_.size() + first_step_);
 
 	memset(buffer0,   0, 16);
 	memset(buffer0, '_', 16-strlen(buffer));
@@ -461,6 +463,8 @@ void		Universe::write()
 {
 	auto filename = getFilename();
 
+	int num_steps = frames_.frames_.size();
+
 	FILE * pfile = fopen(filename.c_str(), "w");
 	if(pfile == 0)
 	{
@@ -469,7 +473,7 @@ void		Universe::write()
 		exit(1);
 	}
 
-	fwrite(&num_steps_, sizeof(int), 1, pfile);
+	fwrite(&num_steps, sizeof(int), 1, pfile);
 	fwrite(&first_step_, sizeof(int), 1, pfile);
 
 	fwrite(&name_, 1, NAME_SIZE, pfile);
@@ -500,9 +504,9 @@ int		Universe::read(std::string fileName, int num_steps)
 	if(num_steps > 0)
 	{
 		// Read in order to continue simulation
-		num_steps_ = num_steps;
+		//num_steps_ = num_steps;
 
-		first_step_ += num_steps_;
+		first_step_ += num_steps;
 
 		// temporary frames
 		Frames frames;
@@ -513,11 +517,11 @@ int		Universe::read(std::string fileName, int num_steps)
 	}
 	else
 	{
-		num_steps_ = num_steps_old;
+		//num_steps_ = num_steps_old;
 
 		frames_.read(pfile);
 
-		alloc(size(0), num_steps_);
+		//alloc(size(0), num_steps_);
 	}
 
 	fclose(pfile);
@@ -532,11 +536,13 @@ void		Universe::stats()
 {
 	float m;
 
-	mass_center_.resize(num_steps_);
+	int num_steps = frames_.frames_.size();
+
+	mass_center_.resize(num_steps);
 
 	float s[3];
 
-	for(int t = 0; t < num_steps_; t++)
+	for(int t = 0; t < num_steps; t++)
 	{
 		mass_center(t, &mass_center_[t].x, s, &m);
 	}
@@ -613,7 +619,7 @@ int				Universe::parse_args(int ac, char** av)
 		num_step = vm["num-steps"].as<int>();
 	} catch (...) {}
 
-	float mass = 1000.f;
+	float mass = 10000.f;
 	try {
 		mass = vm["mass"].as<float>();
 	} catch (...) {}

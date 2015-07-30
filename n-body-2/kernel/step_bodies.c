@@ -41,8 +41,17 @@ __kernel void step_bodies(
 //		__global unsigned int * number_escaped // out
 		)
 {
+	/*
 	__local unsigned int i_local0;
 	__local unsigned int i_local1;
+	__local unsigned int pi0[1];
+	__local unsigned int pi1[1];
+
+	step_bodies_local_indices(num_bodies, pi0, pi1);
+
+	i_local0 = *pi0;
+	i_local1 = *pi1;
+	*/
 	/*
 	// work group
 	int local_block = num_bodies / get_num_groups(0);
@@ -61,13 +70,11 @@ __kernel void step_bodies(
 	if(get_local_id(0) == (get_local_size(0) - 1)) i_local1 = i_group1;
 
 	*/
-	__local unsigned int pi0[1];
-	__local unsigned int pi1[1];
 
-	step_bodies_local_indices(num_bodies, pi0, pi1);
+	unsigned int i_local0;
+	unsigned int i_local1;
 
-	i_local0 = *pi0;
-	i_local1 = *pi1;
+	divide(num_bodies, &i_local0, &i_local1);
 
 	/*
 	   printf("local_block = %i\n", local_block);
@@ -92,7 +99,7 @@ __kernel void step_bodies(
 
 	__global struct kBody * pb = 0;
 
-	for(unsigned int b = *pi0; b < i_local1; b++)
+	for(unsigned int b = i_local0; b < i_local1; b++)
 	{
 		//pbm = local_bodymaps + b;
 		//pbm = bodymaps + b;

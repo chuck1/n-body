@@ -29,7 +29,7 @@ struct Universe
 		Body*				b(int t);
 		Body*				b(int t, int i);
 		int				solve();
-		void				alloc(int num_bodies, int num_steps);
+//		void				alloc(int num_bodies, int num_steps);
 		int				mass_center(int t, float * x, float * s, float * m);
 		void				write();
 		int				read(std::string fileName = std::string("data.dat"), int num_steps = 0);
@@ -51,7 +51,7 @@ struct Universe
 		
 		static const unsigned int	NAME_SIZE = 32;
 		
-		int				num_steps_;
+		//int				num_steps_;
 		
 		int				first_step_;
 		

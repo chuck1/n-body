@@ -1,6 +1,7 @@
 
 #include <cstdio>
-
+#include <cstring>
+#include <fstream>
 #include <CL/cl.h>
 
 #include <other.hpp>
@@ -19,6 +20,7 @@
 
 Program * program = NULL;
 
+Kernel* kernel_reset_bodies = 0;
 Kernel* kernel_step_bodies = 0;
 Kernel* kernel_step_branchpairs = 0;
 
@@ -169,10 +171,160 @@ void	run_step_bodies()
 
 	clFinish(command_queue->_M_id); check(__LINE__, ret);
 }
+void	run_reset_bodies()
+{
+	ret = clEnqueueNDRangeKernel(
+			command_queue->_M_id,
+			kernel_reset_bodies->_M_kernel,
+			1,
+			NULL,
+			&global_size,
+			&local_size,
+			0,
+			NULL,
+			NULL); check(__LINE__, ret);
+
+	clFinish(command_queue->_M_id); check(__LINE__, ret);
+}
 void	info()
 {
 	printf("sizeof(kBranches) = %lu\n", sizeof(kBranches));
 }
+
+
+void	solve_system(Universe * u)
+{
+	Frame & f = u->_M_key_frame;
+
+	for(unsigned int t = 0; t < 100; t++) {
+		if((t % 10) == 0) printf("t = %5i\n", t);
+
+		u->pre_step();
+
+		/*
+		// Execute "step_pairs" kernel *
+
+		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_pairs, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+		check(__LINE__, ret);
+		if(ret) break;
+
+		clFinish(command_queue->_M_id);
+		check(__LINE__, ret);
+		*/
+		// Execute "step_bodies" kernel
+		//
+
+		run_step_branchpairs();
+		
+		run_step_bodies();
+
+		run_reset_bodies();
+
+		/*
+		// Execute "step_collisions" kernel *
+		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+
+		check(__LINE__, ret);
+		if(ret) break;
+
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
+
+		// Read flag_multi_coll *
+		ret = clEnqueueReadBuffer(command_queue->_M_id, memobj_flag_multi_coll->_M_id, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
+		if(ret) break;
+
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
+
+
+		// Execute "clear_bodies_num_collisions" kernel *
+		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_clear_bodies_num_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+		check(__LINE__, ret);
+		if(ret) break;
+
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
+
+		if(flag_multi_coll)
+		{
+		puts("resolve multi_coll");
+
+		// Execute "step_collisions" kernel on a single thread to resolve bodies with multiple collisions *
+		global_size = 1;
+		local_size = 1;
+
+		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
+
+		check(__LINE__, ret);
+		if(ret) break;
+
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
+
+		global_size = GLOBAL_SIZE;
+		local_size = LOCAL_SIZE;
+		}
+
+		// Reset flag_multi_coll *
+		flag_multi_coll = 0;
+
+		ret = clEnqueueWriteBuffer(command_queue->_M_id, memobj_flag_multi_coll->_M_id, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
+
+*/
+		// Store data for timestep *
+		memobj_bodies->enqueueRead(
+				command_queue,
+				0,
+				f.size() * sizeof(Body),
+				f.b(0));
+		
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
+	
+		// save data
+		u->frames_.frames_.push_back(f);
+		
+		// print results
+		//for(size_t i = 0; i < f.size(); ++i) f.b(i)->print();
+
+
+	}
+
+}
+int		main_cpu(Universe* uni)
+{
+	// files.dat filename
+	char filename[128];
+	strcpy(filename, "files_");
+	strcat(filename, uni->name_);
+	strcat(filename, ".dat");
+
+	// CPU
+	for(int i = 0; i < 100; i++)
+	{
+		solve_system(uni);
+
+		uni->write();
+
+		// append filename
+		//filenames.push_back(u->getFilename());
+		std::ofstream ofs;
+		ofs.open(filename, std::ofstream::out | std::ofstream::app);
+		ofs << uni->getFilename() << std::endl;
+		ofs.close();
+
+		// copy last frame to first frame
+		uni->get_frame(0) = uni->get_frame(uni->frames_.frames_.size() - 1);
+		
+		// reset frame vector
+		uni->frames_.frames_.resize(1);
+		
+		uni->first_step_ += uni->frames_.frames_.size();
+
+		// check abort signal	
+		//if(should_exit == 1) break;
+	}
+
+	return 0;
+}
+
 int	main(int ac, char ** av)
 {
 	info();
@@ -245,6 +397,7 @@ int	main(int ac, char ** av)
 
 	kernel_step_branchpairs = program->createKernel("step_branchpairs");
 	kernel_step_bodies      = program->createKernel("step_bodies");
+	kernel_reset_bodies     = program->createKernel("reset_bodies");
 	
 	//kernel_collisions = clCreateKernel(program, "step_collisions", &ret); check(__LINE__, ret);
 	//kernel_clear_bodies_num_collisions = clCreateKernel(program, "clear_bodies_num_collisions", &ret); check(__LINE__, ret);
@@ -296,90 +449,11 @@ int	main(int ac, char ** av)
 
 	auto program_time_start = std::chrono::system_clock::now();
 	*/
-	for(unsigned int t = 0; t < 10; t++) {
-		if((t % 1) == 0) printf("t = %5i\n", t);
 
-		u->pre_step();
+	//solve_system(u);
 
-		/*
-		// Execute "step_pairs" kernel *
-
-		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_pairs, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-		check(__LINE__, ret);
-		if(ret) break;
-
-		clFinish(command_queue->_M_id);
-		check(__LINE__, ret);
-		*/
-		// Execute "step_bodies" kernel
-		//
-
-		run_step_branchpairs();
-		
-		run_step_bodies();
-
-
-		/*
-		// Execute "step_collisions" kernel *
-		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-
-		check(__LINE__, ret);
-		if(ret) break;
-
-		clFinish(command_queue->_M_id); check(__LINE__, ret);
-
-		// Read flag_multi_coll *
-		ret = clEnqueueReadBuffer(command_queue->_M_id, memobj_flag_multi_coll->_M_id, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
-		if(ret) break;
-
-		clFinish(command_queue->_M_id); check(__LINE__, ret);
-
-
-		// Execute "clear_bodies_num_collisions" kernel *
-		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_clear_bodies_num_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-		check(__LINE__, ret);
-		if(ret) break;
-
-		clFinish(command_queue->_M_id); check(__LINE__, ret);
-
-		if(flag_multi_coll)
-		{
-		puts("resolve multi_coll");
-
-		// Execute "step_collisions" kernel on a single thread to resolve bodies with multiple collisions *
-		global_size = 1;
-		local_size = 1;
-
-		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-
-		check(__LINE__, ret);
-		if(ret) break;
-
-		clFinish(command_queue->_M_id); check(__LINE__, ret);
-
-		global_size = GLOBAL_SIZE;
-		local_size = LOCAL_SIZE;
-		}
-
-		// Reset flag_multi_coll *
-		flag_multi_coll = 0;
-
-		ret = clEnqueueWriteBuffer(command_queue->_M_id, memobj_flag_multi_coll->_M_id, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
-		clFinish(command_queue->_M_id); check(__LINE__, ret);
-
-*/
-		// Store data for timestep *
-		memobj_bodies->enqueueRead(
-				command_queue,
-				0,
-				num_bodies * sizeof(Body),
-				f.b(0));
-		
-		clFinish(command_queue->_M_id); check(__LINE__, ret);
-		
-		// print results
-		for(size_t i = 0; i < f.size(); ++i) f.b(i)->print();
-	}
+	main_cpu(u);
+	
 
 	/*
 	   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - program_time_start);
@@ -427,5 +501,8 @@ int	main(int ac, char ** av)
 
 	return 0;
 }
+
+
+
 
 

@@ -4,6 +4,7 @@
 //#include <kBranches.hpp>
 #include "include/kernel/kBody.hpp"
 #include "include/kernel/kBranches.hpp"
+#include "include/kernel/other.hpp"
 #include "include/kernel/vec.hpp"
 
 #define GRAV (6.67384E-11)
@@ -39,11 +40,12 @@ void			mark_collision(
 	}
 
 	//__global float v_rel[3];
+	if(0) {
 	float v_rel[3];
 	vec_sub_3(v_rel, pb1->v, pb0->v);
 	
 	float c = 10.0;
-	
+
 	pb0->f[0] += c * v_rel[0];
 	pb0->f[1] += c * v_rel[1];
 	pb0->f[2] += c * v_rel[2];
@@ -51,50 +53,9 @@ void			mark_collision(
 	pb1->f[0] -= c * v_rel[0];
 	pb1->f[1] -= c * v_rel[1];
 	pb1->f[2] -= c * v_rel[2];
-
-}
-
-float			gravity(
-				float m0,
-				float m1,
-				float r,
-				float p,
-				float v_p)
-{
-	/* this function actually returns f/r (force/radius)
-	 * this allows the resulting scalar to be multiplied each component of r vector to get
-	* the correct force components
-	*
-	* r center distance
-	* p penetration
-	*/
-
-	// a useful quantity
-	float K = GRAV * m0 * m1;
-
-	// simple attraction equation
-	float f = K / pow(r,2);
-
-	if(p > 0) {
-		// arbitrary repulsion
-		//
-		// treat repulsion like a spring/damper pair
-	
-		//rintf("penetration %f\n", p);
-	
-		// spring
-		f -= K * 1000.0 * pow(p,2);
-		
-		// dramper, apply force opposite the relative velocity along distance vector
-		f -= K * 1000.0 * v_p;
 	}
-
-	/* return f/r (force/radius)
-	* this allows the resulting scalar to be multiplied each component of r vector to get
-	* the correct force components
-	*/
-	return f/r;
 }
+
 void			step_pairs_in_branch(
 		__global struct kBranch * branch,
 		__global struct kCollisionBuffer * cb,
@@ -165,6 +126,7 @@ __kernel void			step_branchpairs(
 		__global struct kBranches * branches,
 		__global struct kCollisionBuffer * cb,
 		__global struct kBody * bodies
+		//__global struct 
 		  /*
 		  Pair * pairs,
 		  unsigned int * map,
@@ -328,8 +290,11 @@ __kernel void			step_branchpairs(
 						vec_sub_prod(pb0->f, D, f);
 						vec_add_prod(pb1->f, D, f);
 						
+						// currently using gravity() function to handle collision
+						if(0) {
 						if(len_D < (pb0->radius + pb1->radius)) {
 							mark_collision(cb, body_idx_0, body_idx_1, pb0, pb1);
+						}
 						}
 	
 						count++;

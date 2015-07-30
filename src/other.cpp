@@ -95,12 +95,10 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 		"./include/kernel/kBranches.hpp",
 		"./include/kernel/kBody.hpp",
 		"./include/kernel/kCollisionBuffer.hpp",
-		"./kernel/step_bodies.c",
-		"./kernel/reset_bodies.c",
-		"./kernel/step_branchpairs.c",
-		"./kernel/update_branches.c",
-		"./kernel/other.c",
-		"./kernel/vec.c"
+		"./kernel/step_bodies.cl",
+		"./kernel/step_branchpairs.cl",
+		"./kernel/update_branches.cl",
+		"./kernel/vec.cl"
 	};
 
 	const size_t numFiles = sizeof fileName / sizeof(const char *);

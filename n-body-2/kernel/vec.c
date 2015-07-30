@@ -29,27 +29,27 @@ void	vec_sub(
 		float * b,
 		float * c)
 {
-	c[0] = a[0] - b[0];
-	c[1] = a[1] - b[1];
-	c[2] = a[2] - b[2];
+	a[0] = b[0] - c[0];
+	a[1] = b[1] - c[1];
+	a[2] = b[2] - c[2];
 }
 void	vec_sub_2(
 		float * a,
 		__local float * b,
 		__local float * c)
 {
-	c[0] = a[0] - b[0];
-	c[1] = a[1] - b[1];
-	c[2] = a[2] - b[2];
+	a[0] = b[0] - c[0];
+	a[1] = b[1] - c[1];
+	a[2] = b[2] - c[2];
 }
 void	vec_sub_3(
 		float * a,
 		__global float * b,
 		__global float * c)
 {
-	c[0] = a[0] - b[0];
-	c[1] = a[1] - b[1];
-	c[2] = a[2] - b[2];
+	a[0] = b[0] - c[0];
+	a[1] = b[1] - c[1];
+	a[2] = b[2] - c[2];
 }
 void	vec_sub_prod(
 		__global float * a,

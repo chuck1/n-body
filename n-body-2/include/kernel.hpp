@@ -80,12 +80,12 @@ void			step_bodies(
 		);
 void			reset_bodies(
 		__global struct kBody * bodies,
-		float dt,
-		unsigned int num_bodies,
-		float * velocity_ratio,
-		float * mass_center,
-		float mass,
-		unsigned int * number_escaped
+//		float dt,
+		unsigned int num_bodies
+//		float * velocity_ratio,
+//		float * mass_center,
+//		float mass,
+//		unsigned int * number_escaped
 		);
 
 /*

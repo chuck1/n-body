@@ -10,6 +10,6 @@ Body::Body():
 }
 void	Body::print()
 {
-	printf("position = %12.2e%12.2e%12.2e\n", x.x, x.y, x.z);
+	printf("position = %12.2e%12.2e%12.2e%12.2e%12.2e%12.2e%12.2e%12.2e\n", x.x, x.y, x.z, f.x, f.y, f.z, radius, mass);
 }
 

@@ -28,6 +28,7 @@ struct kCoor
 };
 */
 struct kBranches;
+struct kBody;
 
 /**
  * branch in binary-tree
