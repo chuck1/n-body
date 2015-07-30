@@ -19,7 +19,16 @@ __kernel void			reset_bodies(
 	unsigned int i_local1;
 	
 	divide(num_bodies, i_local0, i_local1);
+
+	// debug info
+	int i = get_local_id(0) + get_local_size(0) * get_num_groups(0);
+	db->_M_i_local_0[i] = i_local0;
+	db->_M_i_local_1[i] = i_local1;
+	db->_M_n = num_bodies;
+	db->_M_global_size = get_num_groups(0);
+	db->_M_local_size = get_local_size(0);
 	
+
 	__global struct kBody * pb = 0;
 
 	for(unsigned int b = i_local0; b < i_local1; b++) {

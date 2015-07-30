@@ -72,7 +72,8 @@ void			step_bodies(
 		/*struct Pair * pairs,*/
 		/*unsigned int * map,*/
 		float dt,
-		unsigned int num_bodies
+		unsigned int num_bodies,
+		__global struct kDebug * db
 	//	__global float * velocity_ratio,
 	//	__global float * mass_center,
 	//	float mass,
@@ -112,7 +113,7 @@ void			update_branches(
 		__global struct kBranches * branches,
 		__global struct kBody * bodies
 		);
-void			step_branch_pairs(
+void			step_branchpairs(
 		__global struct kBranches * branches,
 		__global struct kCollisionBuffer * cb,
 		__global struct kBody * bodies

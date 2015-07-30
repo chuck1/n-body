@@ -28,7 +28,7 @@ void		print(float * a)
 
 Universe::Universe():
 	first_step_(0),
-	_M_timestep(1)
+	_M_timestep(10)
 {
 }
 Body*		Universe::b(int t)
@@ -185,7 +185,6 @@ int		Universe::solve()
 		if((t % (num_steps / 10)) == 0)
 		{
 			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - program_time_start);
-
 			_M_duration_real = (float)duration.count() / 1000.0;
 
 			float eta =

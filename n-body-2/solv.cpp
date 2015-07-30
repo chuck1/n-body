@@ -1,4 +1,5 @@
 
+#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -9,7 +10,7 @@
 #include <Body.hpp>
 #include <Universe.hpp>
 #include <CollisionBuffer.hpp>
-#include <kernel/kDebug.hpp>
+#include <Debug.hpp>
 
 //cl_context context = NULL;
 //cl_command_queue command_queue = NULL;
@@ -54,8 +55,8 @@ int		cleanup() {
 }
 */
 
-size_t global_size = GLOBAL_SIZE;
-size_t local_size  = LOCAL_SIZE;
+size_t global_size = 1;
+size_t local_size  = 1;
 
 CommandQueue* command_queue = 0;
 Context* context = 0;
@@ -187,6 +188,7 @@ void	run_reset_bodies()
 			NULL,
 			NULL); check(__LINE__, ret);
 
+	clFlush(command_queue->_M_id); check(__LINE__, ret);
 	clFinish(command_queue->_M_id); check(__LINE__, ret);
 }
 void	info()
@@ -221,15 +223,22 @@ void	save_frame(Universe * u)
 	// save data
 	u->frames_.frames_.push_back(f);
 }
+
+
+
 void	solve_system(
 		Universe * u,
 		Debug * db)
 {
 	Frame & f = u->_M_key_frame;
 
-	for(unsigned int t = 0; t < 100; t++) {
-		if((t % 1) == 0) printf("t = %5i\n", t);
+	// performance info
+	auto program_time_start = std::chrono::system_clock::now();
 
+	int num_step = 1000;
+	for(unsigned int t = 0; t < num_step; t++) {
+		if((t % (num_step / 10)) == 0) printf("t = %5i\n", t);
+		
 		u->pre_step();
 
 		run_step_branchpairs();
@@ -287,14 +296,21 @@ void	solve_system(
 
 		save_frame(u);
 
-		read(u);
-
-		f.print();
-
-		db->print();
+		read(u, db);
+		
+		//f.print();
+		//db->print();
 	}
+
+	// performance info
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - program_time_start);
+	float duration_real = (float)duration.count() / 1000.0;
+	printf("real time = %f\n", duration_real);
+
 }
-int		main_cpu(Universe* uni)
+int		main_cpu(
+			Universe * uni,
+			Debug * db)
 {
 	// files.dat filename
 	char filename[128];
@@ -304,7 +320,7 @@ int		main_cpu(Universe* uni)
 
 	// CPU
 	for(int i = 0; i < 3; i++) {
-		solve_system(uni);
+		solve_system(uni, db);
 
 		uni->write();
 
@@ -332,9 +348,20 @@ int		main_cpu(Universe* uni)
 
 	return 0;
 }
+void	sanity_check()
+{
+	assert(sizeof(Body) == sizeof(kBody));
+}
+void	memory_usage(Universe * u)
+{
+	Frame & f = u->_M_key_frame;
 
+	printf("memory\n");
+	printf("  bodies   %lu\n", f.size() * sizeof(kBody));
+}
 int	main(int ac, char ** av)
 {
+	sanity_check();
 	info();
 
 	Universe * u = new Universe();
@@ -351,7 +378,8 @@ int	main(int ac, char ** av)
 	// 4. the boss steps forward
 	// 5. repeat
 	
-	
+	memory_usage(u);
+
 	setup();
 
 	// needed to initialize _M_branches
@@ -375,7 +403,7 @@ int	main(int ac, char ** av)
 	
 	unsigned int flag_multi_coll = 0;
 	CollisionBuffer cb;
-	kDebug db;
+	Debug db;
 	
 	write(u, &cb, &flag_multi_coll, &db);
 
@@ -423,6 +451,7 @@ int	main(int ac, char ** av)
 	kernel_step_bodies->SetKernelArg(0, sizeof(cl_mem),       (void *)&memobj_bodies->_M_id);
 	kernel_step_bodies->SetKernelArg(1, sizeof(float),        (void *)&u->_M_timestep);
 	kernel_step_bodies->SetKernelArg(2, sizeof(unsigned int), (void *)&num_bodies);
+	kernel_step_bodies->SetKernelArg(3, sizeof(cl_mem),       (void *)&memobj_debug->_M_id);
 	//kernel_bodies->SetKernelArg(3, sizeof(float *),  (void *)velocity_ratio);
 	//kernel_bodies->SetKernelArg(4, sizeof(float *),  (void *)mass_center);
 	//kernel_bodies->SetKernelArg(5, sizeof(float),  (void *)mass);
@@ -447,7 +476,7 @@ int	main(int ac, char ** av)
 
 	//solve_system(u);
 
-	main_cpu(u);
+	main_cpu(u, &db);
 	
 
 	/*

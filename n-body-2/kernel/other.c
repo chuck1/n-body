@@ -48,20 +48,26 @@ void			divide(
 		unsigned int * i_local0,
 		unsigned int * i_local1)
 {
-	// work group
-	int local_block = n / get_num_groups(0);
+	int G = get_num_groups(0);
+	int L = get_local_size(0);
 
-	int i_group0 = get_group_id(0) * local_block;
+	int g = get_group_id(0);
+	int l = get_local_id(0);
+
+	// work group
+	int local_block = n / 1;
+
+	int i_group0 = g * local_block;
 	int i_group1 = i_group0 + local_block;
 
-	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = n;
+	if(g == (G - 1)) i_group1 = n;
 
 	// work item
-	int block = (i_group1 - i_group0) / get_local_size(0);
+	int block = (i_group1 - i_group0) / L;
 
-	*i_local0 = i_group0 + get_local_id(0) * block;
+	*i_local0 = i_group0 + l * block;
 	*i_local1 = *i_local0 + block;
 
-	if(get_local_id(0) == (get_local_size(0) - 1)) *i_local1 = i_group1;
+	if(l == (L - 1)) *i_local1 = i_group1;
 }
 

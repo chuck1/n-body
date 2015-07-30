@@ -1,4 +1,5 @@
 
+#include "include/kernel/kDebug.hpp"
 #include "include/kernel/kBody.hpp"
 #include "include/kernel.hpp"
 
@@ -7,74 +8,32 @@ bool	feq(float const * f0, float const * f1)
 	return (fabs(*f0 - *f1) < 0.0001);
 }
 
-__kernel void step_bodies_local_indices(
-		unsigned int s,
-		__local unsigned int * i_local0,
-		__local unsigned int * i_local1)
-{
-	/* work group */
-	int local_block = s / get_num_groups(0);
-
-	unsigned int i_group0 = get_group_id(0) * local_block;
-	unsigned int i_group1 = i_group0 + local_block;
-
-	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = s;
-
-	/* work item */
-	int block = (i_group1 - i_group0) / get_local_size(0);
-
-	*i_local0 = i_group0 + get_local_id(0) * block;
-	*i_local1 = *i_local0 + block;
-
-	if(get_local_id(0) == (get_local_size(0) - 1)) *i_local1 = i_group1;
-}
-
 __kernel void step_bodies(
 		__global struct kBody * bodies,
 		/*struct Pair * pairs,*/
 		/*unsigned int * map,*/
 		float dt,
-		unsigned int num_bodies // in
+		unsigned int num_bodies,
+		__global struct kDebug * db
 //		__global float * velocity_ratio, // in/out
 //		__global float * mass_center, // in
 //		float mass, // in
 //		__global unsigned int * number_escaped // out
 		)
 {
-	/*
-	__local unsigned int i_local0;
-	__local unsigned int i_local1;
-	__local unsigned int pi0[1];
-	__local unsigned int pi1[1];
-
-	step_bodies_local_indices(num_bodies, pi0, pi1);
-
-	i_local0 = *pi0;
-	i_local1 = *pi1;
-	*/
-	/*
-	// work group
-	int local_block = num_bodies / get_num_groups(0);
-
-	unsigned int i_group0 = get_group_id(0) * local_block;
-	unsigned int i_group1 = i_group0 + local_block;
-
-	if(get_group_id(0) == (get_num_groups(0) - 1)) i_group1 = num_bodies;
-
-	// work item
-	int block = (i_group1 - i_group0) / get_local_size(0);
-
-	i_local0 = i_group0 + get_local_id(0) * block;
-	i_local1 = i_local0 + block;
-
-	if(get_local_id(0) == (get_local_size(0) - 1)) i_local1 = i_group1;
-
-	*/
 
 	unsigned int i_local0;
 	unsigned int i_local1;
 
 	divide(num_bodies, &i_local0, &i_local1);
+
+	// debug info
+	int i = get_local_id(0) + get_global_id(0) * get_local_size(0);
+	db->_M_i_local_0[i] = i_local0;
+	db->_M_i_local_1[i] = i_local1;
+	db->_M_n = num_bodies;
+	db->_M_global_size = get_num_groups(0);
+	db->_M_local_size = get_local_size(0);
 
 	/*
 	   printf("local_block = %i\n", local_block);
@@ -117,8 +76,12 @@ __kernel void step_bodies(
 		dv[0] = dt * pb->f[0] / pb->mass;
 		dv[1] = dt * pb->f[1] / pb->mass;
 		dv[2] = dt * pb->f[2] / pb->mass;
-
-
+		
+		// force can now be reset
+		pb->f[0] = 0;
+		pb->f[1] = 0;
+		pb->f[2] = 0;
+		
 		//float e = 0.01;
 
 		if(0)

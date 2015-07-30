@@ -95,6 +95,7 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 		"./include/kernel/kBranches.hpp",
 		"./include/kernel/kBody.hpp",
 		"./include/kernel/kCollisionBuffer.hpp",
+		"./include/kernel/vec.hpp",
 		"./kernel/step_bodies.c",
 		"./kernel/reset_bodies.c",
 		"./kernel/step_branchpairs.c",

@@ -127,7 +127,7 @@ Kernel *		Program::createKernel(
 {
 	int ret;
 	cl_kernel temp = clCreateKernel(_M_program, name, &ret);
-	check(__LINE__, ret);
+	check(__FILE__, __LINE__, ret, name);
 	return new Kernel(temp);
 }
 
