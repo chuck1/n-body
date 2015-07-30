@@ -55,9 +55,7 @@ void			Frame::copy(Body* b, int n)
 }
 void			Frame::print()
 {
-	for(unsigned int i = 0; i < bodies_.size(); i++)
-	{
-
+	for(unsigned int i = 0; i < bodies_.size(); i++) {
 		printf("x = % 12f % 12f % 12f m = % 12e r = % 12f alive = %i\n",
 				bodies_[i].x[0],
 				bodies_[i].x[1],
@@ -66,7 +64,6 @@ void			Frame::print()
 				bodies_[i].radius,
 				bodies_[i].alive);
 	}
-
 }
 
 unsigned int		Frame::reduce()

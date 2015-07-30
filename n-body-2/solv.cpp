@@ -194,16 +194,20 @@ void	info()
 	printf("sizeof(kBranches) = %lu\n", sizeof(kBranches));
 }
 
-void	save_frame(Universe * u)
+void	read(Universe * u)
 {
 	Frame & f = u->_M_key_frame;
-	
-	// Store data for timestep *
+
+	// Store data for timestep
 	memobj_bodies->enqueueRead(
 			command_queue,
 			0,
 			f.size() * sizeof(Body),
 			f.b(0));
+}
+void	save_frame(Universe * u)
+{
+	Frame & f = u->_M_key_frame;
 	
 	// save data
 	u->frames_.frames_.push_back(f);
@@ -221,23 +225,20 @@ void	solve_system(Universe * u)
 		
 		run_step_bodies();
 
-		run_reset_bodies();
+		//run_reset_bodies();
 
 		/*
 		// Execute "step_collisions" kernel *
 		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-
 		check(__LINE__, ret);
-		if(ret) break;
 
 		clFinish(command_queue->_M_id); check(__LINE__, ret);
 
 		// Read flag_multi_coll *
-		ret = clEnqueueReadBuffer(command_queue->_M_id, memobj_flag_multi_coll->_M_id, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL); check(__LINE__, ret);
-		if(ret) break;
-
+		ret = clEnqueueReadBuffer(
+			command_queue->_M_id, memobj_flag_multi_coll->_M_id, CL_TRUE, 0, sizeof(unsigned int), &flag_multi_coll, 0, NULL, NULL);
+		check(__LINE__, ret);
 		clFinish(command_queue->_M_id); check(__LINE__, ret);
-
 
 		// Execute "clear_bodies_num_collisions" kernel *
 		ret = clEnqueueNDRangeKernel(command_queue->_M_id, kernel_clear_bodies_num_collisions, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
@@ -272,10 +273,13 @@ void	solve_system(Universe * u)
 		clFinish(command_queue->_M_id); check(__LINE__, ret);
 
 */
-		//save_frame(u);
 
-		// print results
-		//for(size_t i = 0; i < f.size(); ++i) f.b(i)->print();
+		save_frame(u);
+
+		read(u);
+
+		f.print();
+
 	}
 }
 int		main_cpu(Universe* uni)
@@ -301,9 +305,12 @@ int		main_cpu(Universe* uni)
 		ofs.close();
 
 		// copy last frame to first frame
-		uni->get_frame(0) = uni->get_frame(uni->frames_.frames_.size() - 1);
-		
+		// why?
+		if(!uni->frames_.frames_.empty()) {
+			uni->get_frame(0) = uni->get_frame(uni->frames_.frames_.size() - 1);
+		}
 		// reset frame vector
+		// why do this?
 		uni->frames_.frames_.resize(1);
 		
 		uni->first_step_ += uni->frames_.frames_.size();

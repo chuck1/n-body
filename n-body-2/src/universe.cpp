@@ -75,7 +75,11 @@ unsigned int	Universe::count_alive(int t)
 }
 Frame &		Universe::get_frame(int t)
 {
-	assert(frames_.frames_.size() > (unsigned int)t);
+	if(frames_.frames_.size() <= (unsigned int)t) {
+		printf("frames_.frames_.size() = %lu\n", frames_.frames_.size());
+		printf("t                      = %i\n", t);
+		abort();
+	}
 	return frames_.frames_[t];
 }
 unsigned int	Universe::count_dead(int t)
