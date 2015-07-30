@@ -194,16 +194,25 @@ void	info()
 	printf("sizeof(kBranches) = %lu\n", sizeof(kBranches));
 }
 
-void	read(Universe * u)
+void	read(
+		Universe * u,
+		kDebug * db)
 {
 	Frame & f = u->_M_key_frame;
 
 	// Store data for timestep
+
 	memobj_bodies->enqueueRead(
 			command_queue,
 			0,
 			f.size() * sizeof(Body),
 			f.b(0));
+
+	memobj_debug->enqueueRead(
+			command_queue,
+			0,
+			sizeof(kDebug),
+			db);
 }
 void	save_frame(Universe * u)
 {
@@ -212,7 +221,9 @@ void	save_frame(Universe * u)
 	// save data
 	u->frames_.frames_.push_back(f);
 }
-void	solve_system(Universe * u)
+void	solve_system(
+		Universe * u,
+		Debug * db)
 {
 	Frame & f = u->_M_key_frame;
 
@@ -280,6 +291,7 @@ void	solve_system(Universe * u)
 
 		f.print();
 
+		db->print();
 	}
 }
 int		main_cpu(Universe* uni)
@@ -291,8 +303,7 @@ int		main_cpu(Universe* uni)
 	strcat(filename, ".dat");
 
 	// CPU
-	for(int i = 0; i < 100; i++)
-	{
+	for(int i = 0; i < 3; i++) {
 		solve_system(uni);
 
 		uni->write();
