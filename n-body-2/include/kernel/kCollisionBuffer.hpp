@@ -7,7 +7,7 @@ struct kCollisionBuffer
 {
 	enum
 	{
-		LENGTH = 10000,
+		LENGTH = 1000,
 	};
 	struct kPair
 	{

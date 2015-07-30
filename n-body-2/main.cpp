@@ -265,9 +265,9 @@ int	main(int ac, char ** av)
 
 	// Set OpenCL Kernel Parameters 
 	
-	kernel_step_branchpairs->SetKernelArg(0, sizeof(cl_mem), (void *)memobj_branches->_M_id);
-	kernel_step_branchpairs->SetKernelArg(1, sizeof(cl_mem), (void *)memobj_cb->_M_id);
-	kernel_step_branchpairs->SetKernelArg(2, sizeof(cl_mem), (void *)memobj_bodies->_M_id);
+	kernel_step_branchpairs->SetKernelArg(0, sizeof(cl_mem), (void *)&memobj_branches->_M_id);
+	kernel_step_branchpairs->SetKernelArg(1, sizeof(cl_mem), (void *)&memobj_cb->_M_id);
+	kernel_step_branchpairs->SetKernelArg(2, sizeof(cl_mem), (void *)&memobj_bodies->_M_id);
 	//	__global struct kBranches * branches,
 	//	__global struct kCollisionBuffer * cb,
 	//	__global struct kBody * bodies
@@ -296,8 +296,8 @@ int	main(int ac, char ** av)
 
 	auto program_time_start = std::chrono::system_clock::now();
 	*/
-	for(unsigned int t = 0; t < 100; t++) {
-		if((t % 10) == 0) printf("t = %5i\n", t);
+	for(unsigned int t = 0; t < 10; t++) {
+		if((t % 1) == 0) printf("t = %5i\n", t);
 
 		u->pre_step();
 
@@ -317,6 +317,7 @@ int	main(int ac, char ** av)
 		run_step_branchpairs();
 		
 		run_step_bodies();
+
 
 		/*
 		// Execute "step_collisions" kernel *
@@ -373,11 +374,13 @@ int	main(int ac, char ** av)
 				0,
 				num_bodies * sizeof(Body),
 				f.b(0));
-
-		/*
-		   clFinish(command_queue->_M_id); check(__LINE__, ret);
-		   */
+		
+		clFinish(command_queue->_M_id); check(__LINE__, ret);
+		
+		// print results
+		for(size_t i = 0; i < f.size(); ++i) f.b(i)->print();
 	}
+
 	/*
 	   auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - program_time_start);
 
@@ -410,15 +413,11 @@ int	main(int ac, char ** av)
 	 u->b(NUM_STEPS - 1, 0).x[2]);
 	 *
 
-	 if(ret)
-	 {
-	 return 1;
-	 }
-
+	 if(ret) { return 1; }
+	
 	 puts("Write");
 	 uni->write();
-
-*/
+	*/
 	//ret = cleanup();
 
 	memobj_bodies->release();
@@ -428,3 +427,5 @@ int	main(int ac, char ** av)
 
 	return 0;
 }
+
+

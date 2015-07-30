@@ -77,10 +77,10 @@ void			Branches::init(Frame & f, glm::vec3 x0, glm::vec3 x1)
 	// using bounding box ensures that all bodies are contained
 	_M_branches[0] = Branch(0, 0, 0, bb.a - W, bb.b + W);
 
-	//printf("%s\n", __PRETTY_FUNCTION__);
-	//printf("  % 12.2e% 12.2e% 12.2e\n",W.x, W.y, W.z);
 
 	if(!_M_branches[0].is_valid()) {
+		printf("%s\n", __PRETTY_FUNCTION__);
+		printf("  % 12.2e% 12.2e% 12.2e\n",W.x, W.y, W.z);
 		assert(0);
 	}
 

@@ -47,6 +47,7 @@ int		get_device_info(cl_device_id device_id)
 	printf("%32s = %i\n", "device_mem_base_addr_align", (int)device_mem_base_addr_align / 8);
 	printf("%32s = %i\n", "max_work_group_size", (int)max_work_group_size);
 	printf("%32s = %i\n", "max_work_item_dimensions", max_work_item_dimensions);
+
 	for(unsigned int i = 0; i < max_work_item_dimensions; i++)
 	{
 		printf("%29s[%i] = %i\n", "max_work_item_sizes", i, (int)max_work_item_sizes[i]);
@@ -91,6 +92,7 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 	};
 	*/
 	char const * fileName[] = {
+		"./include/kernel/kBranches.hpp",
 		"./include/kernel/kBody.hpp",
 		"./include/kernel/kCollisionBuffer.hpp",
 		"./kernel/step_bodies.cl",
@@ -173,14 +175,14 @@ void check(int line, int ret)
 {
 	if(ret) {
 		printf("%i: %i\n", line, ret);
-		exit(1);
+		abort();
 	}
 }
 void check(const char * f, int line, int ret, std::string msg)
 {
 	if(ret) {
 		printf("%s:%i: %i: %s\n", f, line, ret, msg.c_str());
-		exit(1);
+		abort();
 	}
 }
 void notify_context(const char * errinfo, const void * private_info, size_t cb, void * user_data)

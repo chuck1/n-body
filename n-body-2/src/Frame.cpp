@@ -451,14 +451,14 @@ float		Frame::get_speed_max() const
 }
 int		Frame::mass_center(float * x, float * s, float * m) const
 {
+	
+	
 	float temp[3] = {0,0,0};
-
+	
 	*m = 0;
-
-	for(Body const & b : bodies_)
-	{
-		if(b.alive)
-		{
+	
+	for(Body const & b : bodies_) {
+		if(b.alive) {
 			temp[0] += b.x[0] * b.mass;
 			temp[1] += b.x[1] * b.mass;
 			temp[2] += b.x[2] * b.mass;

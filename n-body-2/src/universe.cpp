@@ -563,7 +563,11 @@ unsigned int			Universe::bytes() const
 }
 void				Universe::pre_step()
 {
-	if(not _M_branches) _M_branches.reset(new Branches);
+	if(_M_key_frame.size() == 0) {
+		abort();
+	}
+
+	if(!_M_branches) _M_branches.reset(new Branches);
 	_M_branches->init(_M_key_frame);
 }
 void				Universe::refresh_name()

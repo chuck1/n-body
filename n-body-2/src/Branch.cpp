@@ -313,18 +313,25 @@ bool			Branch::is_valid()
 {
 	if(DEBUG_BRANCH) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 	auto W = _M_x1_glm - _M_x0_glm;
-	//printf("W\n");
-	//::print(W);
-	if(abs(W.x) < 1e-16) {
-		return false;
+
+	bool ret = true;
+	
+	if(fabs(W.x) < 1e-16) {
+		ret = false;
 	}
-	if(abs(W.y) < 1e-16) {
-		return false;
+	if(fabs(W.y) < 1e-16) {
+		ret = false;
 	}
-	if(abs(W.z) < 1e-16) {
-		return false;
+	if(fabs(W.z) < 1e-16) {
+		ret = false;
 	}
-	return true;
+	
+	if(ret == false) {
+		printf("W\n");
+		::print(W);
+	}
+
+	return ret;
 }
 
 
