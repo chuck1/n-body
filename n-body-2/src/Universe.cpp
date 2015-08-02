@@ -604,6 +604,9 @@ int				Universe::parse_args(int ac, char** av)
 		("omega", po::value<float>(), "rotational speed of new body formation")
 		("hcp-n", po::value< std::vector<int> >(), "for hcp setup, number of bodies in each direction")
 		("no-read-bodies", "debug, do not read bodies array from device")
+		("frames", po::value<int>(), "number of frames to solve")
+		("frames-inner", po::value<int>(), "number of frames per data file")
+		("global-size", po::value<int>(), "global size")
 		;
 
 	po::variables_map vm;
@@ -615,18 +618,38 @@ int				Universe::parse_args(int ac, char** av)
 		return 1;
 	}
 
+	//  solver options
 	// running flags
 	if(vm.count("no-read-bodies")) _M_flag |= FLAG_DEBUG_NO_READ_BODIES;
+	
+	int frames_size = 1000;
+	try {
+		frames_size = vm["frames"].as<int>();
+	} catch (...) {}
+
+	_M_size_inner = 1000;
+	try {
+		_M_size_inner = vm["frames-inner"].as<int>();
+	} catch (...) {}
+
+	_M_global_size = 1;
+	try {
+		_M_global_size = vm["global-size"].as<int>();
+	} catch (...) {}
+	
+	
+	
+	_M_size_outer = ceil(frames_size / _M_size_inner);
+	
+	printf("size-frames = %u\n", frames_size);
+	printf("size-inner  = %u\n", _M_size_inner);
+	printf("size-outer  = %u\n", _M_size_outer);
 
 	// create universe and perform some initialization (some of which should be removed)
 	refresh_name();
 	//alloc(prob._M_num_bodies, prob._M_num_step);
 
 	// defaults and variables for holding options
-	int num_step = 1000;
-	try {
-		num_step = vm["num-steps"].as<int>();
-	} catch (...) {}
 
 	float omega = 0.f;
 	try {
@@ -704,7 +727,7 @@ int				Universe::parse_args(int ac, char** av)
 	} else if(vm.count("load")) {
 		auto fn = vm["load"].as<std::string>();
 
-		read(fn, num_step);
+		read(fn, _M_size_inner);
 
 	}
 

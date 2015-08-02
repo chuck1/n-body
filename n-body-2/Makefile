@@ -65,3 +65,6 @@ cleandata:
 clean:
 	rm -rf build/
 
+cleanvideo:
+	rm -f capture/*
+

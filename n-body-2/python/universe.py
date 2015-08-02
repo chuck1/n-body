@@ -97,12 +97,15 @@ def read_universe_file(filename):
 
 	return frames
 
-def read_universe_files(files_dat):
+def read_universe_files(files_dat, rang):
 	with open(files_dat, 'r') as f:
 		l = f.read().split('\n')
 		l = filter(lambda x: bool(x), l)
 	
 	universes = []
+	
+	if rang:
+		l = l[rang[0]:rang[1]]
 
 	for universe_filename in l:
 		u = read_universe_file(universe_filename)

@@ -51,7 +51,13 @@ struct Universe
 		void				pre_step();
 		int				parse_args(int, char**);
 	public:
+		// solving options
+		unsigned int			_M_size_inner;
+		unsigned int			_M_size_outer;
+		unsigned int			_M_global_size;
 		unsigned long			_M_flag;		
+
+		// data
 		Frames				frames_;
 		static const unsigned int	NAME_SIZE = 32;
 		

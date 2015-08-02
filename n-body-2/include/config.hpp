@@ -1,8 +1,8 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
-#define MAX_GLOBAL_SIZE 10
-#define MAX_LOCAL_SIZE  10
+#define MAX_GLOBAL_SIZE 1000
+#define MAX_LOCAL_SIZE  1000
 
 #define BTREE_MAX_BRANCHES 3200
 

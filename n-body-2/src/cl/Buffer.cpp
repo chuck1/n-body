@@ -70,7 +70,7 @@ void		Buffer::enqueueRead(
 
 void		Buffer::release()
 {
-	printf("clReleaseMemObject\n");
+	//printf("clReleaseMemObject\n");
 	int ret = clReleaseMemObject(_M_id);
 	check(__LINE__, ret);
 }

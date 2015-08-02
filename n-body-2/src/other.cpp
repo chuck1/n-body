@@ -36,6 +36,7 @@ int		get_device_info(cl_device_id device_id)
 	ret = clGetDeviceInfo(device_id, CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE,	sizeof(cl_uint), &device_min_data_type_align_size, NULL);
 	ret = clGetDeviceInfo(device_id, CL_DEVICE_MEM_BASE_ADDR_ALIGN,		sizeof(cl_uint), &device_mem_base_addr_align, NULL);
 
+	if(0) {
 	printf("gpu:\n");
 	printf("%32s = %i\n", "max_compute_units", max_compute_units);
 	printf("%32s = %i\n", "global_mem_size", (int)global_mem_size);
@@ -45,6 +46,7 @@ int		get_device_info(cl_device_id device_id)
 	printf("%32s = %i\n", "device_mem_base_addr_align", (int)device_mem_base_addr_align / 8);
 	printf("%32s = %i\n", "max_work_group_size", (int)max_work_group_size);
 	printf("%32s = %i\n", "max_work_item_dimensions", max_work_item_dimensions);
+	}
 
 	for(unsigned int i = 0; i < max_work_item_dimensions; i++)
 	{

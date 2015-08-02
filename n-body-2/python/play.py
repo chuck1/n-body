@@ -16,6 +16,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
+
 verticies = (
     (1, -1, -1),
     (1, 1, -1),
@@ -98,27 +99,44 @@ def main(frames, args):
 
     init()
 
-    gluPerspective(45, (display[0]/display[1]), 0.1, 500.0)
+    gluPerspective(45, (display[0]/display[1]), 0.1, 5000.0)
 
     #glTranslatef(0.0,0.0, -5)
+
+    interval = 1
 
     t = 0
     
     x, m, xmin, xmax = frames[t].stats()
     ex = xmax - xmin
-    eye_distance = np.max(ex) * 2.
+    eye_distance = np.max(ex) * 5.
 
     while True:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+	    if event.type == pygame.KEYDOWN:
+		print event.key
+		if event.key == 27:
+                    pygame.quit()
+                    quit()
+		elif event.key == 44:
+		    interval = max(interval - 1, 1)
+		elif event.key == 46:
+       		    interval = interval + 1
+             
+	    elif event.type == pygame.MOUSEBUTTONDOWN:
+                print event.button
+                if event.button == 4: # wheel up
+		    eye_distance /= 1.5
+                elif event.button == 5: # wheel down
+       		    eye_distance *= 1.5
+     	    elif event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
 
-        t = (t + 1) % len(frames)
+        t = (t + interval) % len(frames)
 
 
-
-	print t
+	#print t
 	
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
@@ -129,9 +147,9 @@ def main(frames, args):
 
 	x, m, xmin, xmax = frame.stats()
 
-	if t % 10 == 0:
-            ex = xmax - xmin
-            eye_distance = np.max(ex) * 2.
+	#if t % 10 == 0:
+        #    ex = xmax - xmin
+        #    eye_distance = np.max(ex) * 2.
 
 	#ex = xmax - xmin
 	
@@ -146,7 +164,7 @@ def main(frames, args):
               x[0],x[1],x[2],
               0,1,0)
 
-	print frame.bodies[0].x
+	#print frame.bodies[0].x
 
         glPushMatrix()
         draw_frame(frame)
@@ -171,17 +189,20 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--capture", action="store_true")
 	parser.add_argument("inputfile", nargs="*")
+	parser.add_argument("--range", nargs="+", type=int)
 	args = parser.parse_args()	
 
+	print args.range
+	
 	if args.inputfile:
 		files = args.inputfile
 	else:
 		files = glob.glob('files*')
-
-	universes = universe.read_universe_files(files[0])
-
+	
+	universes = universe.read_universe_files(files[0], args.range)
+	
 	frames = functools.reduce(operator.add, universes)
-
+	
 	main(frames, args)
 
 

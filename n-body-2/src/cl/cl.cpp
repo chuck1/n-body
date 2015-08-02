@@ -27,7 +27,7 @@ Context::Context(cl_context c): _M_id(c)
 {}
 Context::~Context()
 {
-	printf("clReleaseContext\n");
+	//printf("clReleaseContext\n");
 	int ret = clReleaseContext(_M_id);
 	check(__LINE__, ret);
 }
