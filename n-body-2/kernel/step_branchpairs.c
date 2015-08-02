@@ -60,29 +60,36 @@ void			mark_collision(
 void			step_pairs_in_branch(
 		__global struct kBranch * branch,
 		__global struct kCollisionBuffer * cb,
-		__global struct kBody * bodies)
+		__global struct kBody * bodies,
+		unsigned int num_bodies)
 {
+	float D[3];
+	float len_D;
+	float v[3];
+
 	// for each pair of bodies in the branch
 	for(unsigned int j = 0; j < branch->_M_num_elements; j++) {
 		for(unsigned int k = j + 1; k < branch->_M_num_elements; k++) {
 			unsigned int body_idx_0 = branch->_M_elements[j];
 			unsigned int body_idx_1 = branch->_M_elements[k];
 
+			if((body_idx_0 >= num_bodies) || (body_idx_1 >= num_bodies)) {
+				return;
+			}
+			
 			__global struct kBody * pb0 = bodies + body_idx_0;
 			__global struct kBody * pb1 = bodies + body_idx_1;
 
 			//ssert(pb0 != pb1);
-			float D[3];
 			vec_sub_3(D, pb0->x, pb1->x);
 
-			float len_D = vec_length(D);
+			len_D = vec_length(D);
 
 			// radius sum
 			float RS = pb0->radius + pb1->radius;
 			// penetration (positive means penetrating)
 			float pen = RS - len_D;
 			// relative velocity of body 1 wrt body 0 (body 0 stationary)
-			float v[3];
 			vec_sub_3(v, pb1->v, pb0->v);
 			// relative speed along positive p_vector (moving toward each other is positive)
 			float v_p = vec_dot(v,D) / len_D;
@@ -127,12 +134,12 @@ bool			branch_pair_should_calc(
 __kernel void			step_branchpairs(
 		__global struct kBranches * branches,
 		__global struct kCollisionBuffer * cb,
-		__global struct kBody * bodies
+		__global struct kBody * bodies,
+		unsigned int num_bodies
 		//__global struct 
 		  /*
 		  Pair * pairs,
 		  unsigned int * map,
-		  unsigned int num_bodies
 		  */
 		)
 {
@@ -143,9 +150,14 @@ __kernel void			step_branchpairs(
 	unsigned int i_local0;
 	unsigned int i_local1;
 
+
 	//divide(branches->_M_num_branch_pairs, i_local0, i_local1);
 	divide(branches->_M_num_branches, &i_local0, &i_local1);
 	
+	float r[3];
+	float D[3];
+	float f, f0, f1;
+
 	//if(DEBUG) rintf("branch pairs %6i to %6i\n", i_local0, i_local1);
 	
 	/* compute */
@@ -162,13 +174,15 @@ __kernel void			step_branchpairs(
 
 			//__local float * x0 = b0->x;
 			//__local float * x1 = b1->x;
-			__local float * x0;// = b0->_M_mc;
-			__local float * x1;// = b1->_M_mc;
+			//__local float * x0;// = b0->_M_mc;
+			//__local float * x1;// = b1->_M_mc;
+
+			__local float x0[3];
+			__local float x1[3];
 
 			async_work_group_copy(x0, b0->_M_mc, 3, 0);
 			async_work_group_copy(x1, b1->_M_mc, 3, 0);
 			
-			float r[3];
 			vec_sub_2(r, x0, x1);
 			float d = vec_length(r);
 
@@ -202,11 +216,10 @@ __kernel void			step_branchpairs(
 					for(unsigned int i = 0; i < b0->_M_num_elements; i++) {
 						__global struct kBody * pb = bodies + b0->_M_elements[i];
 
-						float D[3];
 						vec_sub_3(D, b1->_M_mc, pb->x);
 						float len_D = vec_length(D);
 
-						float f = gravity(pb->mass, b1->_M_mass, len_D, -1, 0);
+						f = gravity(pb->mass, b1->_M_mass, len_D, -1, 0);
 
 						//ssert(b1->_M_mass > 0);
 
@@ -218,11 +231,10 @@ __kernel void			step_branchpairs(
 					for(unsigned int i = 0; i < b1->_M_num_elements; i++) {
 						__global struct kBody * pb = bodies + b1->_M_elements[i];
 							
-						float D[3];
 						vec_sub_3(D, b0->_M_mc, pb->x);
 						float len_D = vec_length(D);
 	
-						float f = gravity(pb->mass, b0->_M_mass, len_D, -1, 0);
+						f = gravity(pb->mass, b0->_M_mass, len_D, -1, 0);
 	
 						//ssert(b0->_M_mass > 0);
 	
@@ -238,7 +250,7 @@ __kernel void			step_branchpairs(
 					for(unsigned int i = 0; i < b0->_M_num_elements; i++)  {
 						__global struct kBody * pb = bodies + b0->_M_elements[i];
 		
-						float f0 = gravity(pb->mass, b1->_M_mass, d, -1, 0);
+						f0 = gravity(pb->mass, b1->_M_mass, d, -1, 0);
 	
 						//ssert(b1->_M_mass > 0);
 	
@@ -250,7 +262,7 @@ __kernel void			step_branchpairs(
 					for(unsigned int i = 0; i < b1->_M_num_elements; i++) {
 						__global struct kBody * pb = bodies + b1->_M_elements[i];
 	
-						float f1 = gravity(pb->mass, b0->_M_mass, d, -1, 0);
+						f1 = gravity(pb->mass, b0->_M_mass, d, -1, 0);
 						//ssert(b0->_M_mass > 0);
 	
 						//if(DEBUG) rintf("inter-branch body branch0 f = %f\n", f1);
@@ -311,7 +323,11 @@ __kernel void			step_branchpairs(
 
 	// also must calc forces between bodies in same branch!
 	for(unsigned int i = i_local0; i < i_local1; i++) {
-		step_pairs_in_branch(&(branches->_M_branches[i]), cb, bodies);
+		step_pairs_in_branch(
+			&(branches->_M_branches[i]),
+			cb,
+			bodies,
+			num_bodies);
 	}
 
 	//if(DEBUG) rintf(

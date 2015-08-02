@@ -112,7 +112,8 @@ void			update_branches(
 void			step_branchpairs(
 		__global struct kBranches * branches,
 		__global struct kCollisionBuffer * cb,
-		__global struct kBody * bodies
+		__global struct kBody * bodies,
+		unsigned int num_bodies
 		);
 void			refresh_branch_mass(
 		__global struct kBranches * branches,

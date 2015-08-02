@@ -2,6 +2,11 @@
 
 #include <free.hpp>
 
+float radius(float m)
+{
+	return pow(m / 900.0 * 3.0 / 4.0 / M_PI, 0.3333333333);
+}
+
 void print(glm::vec3 const & v)
 {
 	printf("%16e%16e%16e\n", v.x, v.y, v.z);

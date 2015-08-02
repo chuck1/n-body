@@ -62,15 +62,15 @@ Branch &	Branch::operator=(Branch const & b)
 }
 void			Branch::print(Branches & b, std::string pre)
 {
-	if(_M_flag & FLAG_IS_LEAF)
-	{
-		std::cout << pre << "leaf: " << _M_num_elements << std::endl;
-	}
-	else
-	{
+	if(_M_flag & FLAG_IS_LEAF) {
+		std::cout << pre << "leaf: " << _M_num_elements << " { ";
+		for(int i = 0; i < _M_num_elements; ++i) {
+			std::cout << _M_elements[i] << " ";
+		}
+		std::cout << "}" << std::endl;
+	} else {
 		std::cout << pre << "{" << std::endl;
-		for(int i = 0; i < 8; i++)
-		{
+		for(int i = 0; i < 8; i++) {
 			b.get_branch(_M_branches[i]).print(b, pre + "    ");
 		}
 		std::cout << pre << "}" << std::endl;

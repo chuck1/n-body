@@ -17,11 +17,14 @@
 
 //cl_mem memobj_map = NULL;
 
-Program * program = NULL;
+size_t global_size = 16;
+size_t local_size  = 1;
 
-Kernel* kernel_reset_bodies = 0;
-Kernel* kernel_step_bodies = 0;
-Kernel* kernel_step_branchpairs = 0;
+std::shared_ptr<Program> program;
+
+std::shared_ptr<Kernel> kernel_reset_bodies;
+std::shared_ptr<Kernel> kernel_step_bodies;
+std::shared_ptr<Kernel> kernel_step_branchpairs;
 
 //cl_kernel kernel_collisions = NULL;
 //cl_kernel kernel_clear_bodies_num_collisions = NULL;
@@ -31,6 +34,17 @@ cl_platform_id platform_id[10];
 cl_uint ret_num_devices;
 cl_uint ret_num_platforms;
 cl_int ret;
+
+
+std::shared_ptr<CommandQueue> command_queue;
+std::shared_ptr<Context> context;
+std::shared_ptr<Device> device;
+
+std::shared_ptr<Buffer> memobj_debug;
+std::shared_ptr<Buffer> memobj_bodies;
+std::shared_ptr<Buffer> memobj_branches;
+std::shared_ptr<Buffer> memobj_cb;
+std::shared_ptr<Buffer> memobj_flag_multi_coll;
 
 /*
 int		cleanup() {
@@ -56,18 +70,6 @@ int		cleanup() {
 }
 */
 
-size_t global_size = 2;
-size_t local_size  = 1;
-
-CommandQueue* command_queue = 0;
-Context* context = 0;
-Device* device = 0;
-
-Buffer* memobj_debug = 0;
-Buffer* memobj_bodies = 0;
-Buffer* memobj_branches = 0;
-Buffer* memobj_cb = 0;
-Buffer* memobj_flag_multi_coll = 0;
 
 void	setup()
 {
@@ -98,7 +100,7 @@ void	setup()
 	// Get Device Info
 	ret = get_device_info(device_id);
 
-	device = new Device(device_id);
+	device.reset(new Device(device_id));
 
 	context = device->createContext();
 
@@ -247,7 +249,7 @@ void	solve_system(
 		
 		u->pre_step();
 
-		u->_M_branches->print();
+		//u->_M_branches->print();
 
 		run_step_branchpairs();
 		
@@ -306,7 +308,7 @@ void	solve_system(
 		save_frame(u);
 
 		//f.print();
-		db->print();
+		//db->print();
 	}
 
 	// performance info
@@ -332,7 +334,7 @@ int		main_cpu(
 
 		uni->write();
 
-		// append filename
+		// append filename to files.dat
 		//filenames.push_back(u->getFilename());
 		std::ofstream ofs;
 		ofs.open(filename, std::ofstream::out | std::ofstream::app);
@@ -346,11 +348,13 @@ int		main_cpu(
 		} else {
 			uni->get_frame(0) = uni->get_frame(uni->frames_.frames_.size() - 1);
 		}
+
+		uni->first_step_ += uni->frames_.frames_.size();
+
 		// reset frame vector
 		// why do this?
-		uni->frames_.frames_.resize(1);
+		uni->frames_.frames_.clear();
 		
-		uni->first_step_ += uni->frames_.frames_.size();
 
 		// check abort signal	
 		//if(should_exit == 1) break;
@@ -368,6 +372,7 @@ void	memory_usage(Universe * u)
 
 	printf("memory\n");
 	printf("  debug    %lu\n", sizeof(Debug));
+	printf("  Body     %lu\n", sizeof(Body));
 	printf("  bodies   %lu\n", f.size() * sizeof(Body));
 	printf("  branches %lu\n", sizeof(Branches));
 }
@@ -424,7 +429,7 @@ int	main(int ac, char ** av)
 	//ret = clEnqueueWriteBuffer(command_queue, memobj_dt,       CL_TRUE, 0, sizeof(float),                    &timestep, 0, NULL, NULL);
 
 	// Create Kernel Program from the source
-	program = new Program(create_program_from_file(context->_M_id, device->_M_id));
+	program.reset(new Program(create_program_from_file(context->_M_id, device->_M_id)));
 
 	// Create OpenCL Kernel /
 	//kernel_pairs = clCreateKernel(program, "step_pairs", &ret); check(__LINE__, ret);
@@ -459,6 +464,7 @@ int	main(int ac, char ** av)
 	kernel_step_branchpairs->SetKernelArg(0, sizeof(cl_mem), (void *)&memobj_branches->_M_id);
 	kernel_step_branchpairs->SetKernelArg(1, sizeof(cl_mem), (void *)&memobj_cb->_M_id);
 	kernel_step_branchpairs->SetKernelArg(2, sizeof(cl_mem), (void *)&memobj_bodies->_M_id);
+	kernel_step_branchpairs->SetKernelArg(3, sizeof(unsigned int), (void *)&num_bodies);
 
 	kernel_step_bodies->SetKernelArg(0, sizeof(cl_mem),       (void *)&memobj_bodies->_M_id);
 	kernel_step_bodies->SetKernelArg(1, sizeof(float),        (void *)&u->_M_timestep);
@@ -529,8 +535,6 @@ int	main(int ac, char ** av)
 	 uni->write();
 	*/
 	//ret = cleanup();
-
-	memobj_bodies->release();
 
 	// print results
 	for(int i = 0; i < num_bodies; ++i) f.b(i)->print();

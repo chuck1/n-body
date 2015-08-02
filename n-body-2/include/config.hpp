@@ -4,6 +4,6 @@
 #define MAX_GLOBAL_SIZE 10
 #define MAX_LOCAL_SIZE  10
 
-#define BTREE_MAX_BRANCHES 320
+#define BTREE_MAX_BRANCHES 3200
 
 #endif

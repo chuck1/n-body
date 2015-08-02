@@ -11,10 +11,6 @@
 */
 #include "other.hpp"
 
-float radius(float m)
-{
-	return pow(m / 900.0 * 3.0 / 4.0 / M_PI, 0.3333333333);
-}
 
 int		get_device_info(cl_device_id device_id)
 {
@@ -30,20 +26,20 @@ int		get_device_info(cl_device_id device_id)
 	cl_uint		device_min_data_type_align_size;
 	cl_uint		device_mem_base_addr_align;
 
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &max_compute_units, NULL);
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &global_mem_size, NULL);
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &local_mem_size, NULL);
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &max_work_group_size, NULL);
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(cl_uint), &max_work_item_dimensions, NULL);
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_COMPUTE_UNITS,		sizeof(cl_uint), &max_compute_units, NULL);
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_GLOBAL_MEM_SIZE,		sizeof(cl_ulong), &global_mem_size, NULL);
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_LOCAL_MEM_SIZE,		sizeof(cl_ulong), &local_mem_size, NULL);
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE,		sizeof(size_t), &max_work_group_size, NULL);
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,	sizeof(cl_uint), &max_work_item_dimensions, NULL);
 	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_ITEM_SIZES, max_work_item_dimensions * sizeof(size_t), &max_work_item_sizes, NULL);
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &device_max_mem_alloc_size, NULL);
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE, sizeof(cl_uint), &device_min_data_type_align_size, NULL);
-	ret = clGetDeviceInfo(device_id, CL_DEVICE_MEM_BASE_ADDR_ALIGN, sizeof(cl_uint), &device_mem_base_addr_align, NULL);
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE,		sizeof(cl_ulong), &device_max_mem_alloc_size, NULL);
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE,	sizeof(cl_uint), &device_min_data_type_align_size, NULL);
+	ret = clGetDeviceInfo(device_id, CL_DEVICE_MEM_BASE_ADDR_ALIGN,		sizeof(cl_uint), &device_mem_base_addr_align, NULL);
 
 	printf("gpu:\n");
 	printf("%32s = %i\n", "max_compute_units", max_compute_units);
 	printf("%32s = %i\n", "global_mem_size", (int)global_mem_size);
-	printf("%32s = %i\n", "local_mem_size", (int)local_mem_size);
+	printf("%32s = %i\n", "CL_DEVICE_LOCAL_MEM_SIZE", (int)local_mem_size);
 	printf("%32s = %i\n", "device_max_mem_alloc_size", (int)device_max_mem_alloc_size);
 	printf("%32s = %i\n", "device_min_data_type_align_size", (int)device_min_data_type_align_size);
 	printf("%32s = %i\n", "device_mem_base_addr_align", (int)device_mem_base_addr_align / 8);

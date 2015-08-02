@@ -23,9 +23,7 @@ static std::vector<std::string> fileNames;
 
 int resolution = 16;
 
-
 static int ct = 0;
-
 
 // glut_example.c
 // Stanford University, CS248, Fall 2000
@@ -627,7 +625,9 @@ int main(int argc, char** argv)
 	//u[universe_index]->list(u.num_step-100);
 
 	// GLUT Window Initialization:
-	glutInit (&argc, argv);
+	//glutInit (&argc, argv);
+
+	glutInit(&argc,argv);
 	glutInitWindowSize (g_Width, g_Height);
 	glutInitDisplayMode ( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow ("CS248 GLUT example");

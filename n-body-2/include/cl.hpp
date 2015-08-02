@@ -1,6 +1,6 @@
 #ifndef CL_HPP
 #define CL_HPP
-
+#include <memory>
 #include <CL/cl.h>
 
 class Buffer;
@@ -11,41 +11,41 @@ class Device
 {
 	public:
 		Device(cl_device_id d): _M_id(d) {}
-		Context*		createContext();
+		std::shared_ptr<Context>		createContext();
 		cl_device_id		_M_id;
 };
 
-class Context
+class Context: public std::enable_shared_from_this<Context>
 {
 	public:
-		Context(cl_context c): _M_id(c) {}
-		CommandQueue*		createCommandQueue(Device*);
-		Buffer*			createBuffer(std::string name, unsigned long);
+		Context(cl_context);
+		~Context();
+		std::shared_ptr<CommandQueue>		createCommandQueue(std::shared_ptr<Device>);
+		std::shared_ptr<Buffer>			createBuffer(std::string name, unsigned long);
 		cl_context		_M_id;
 };
 
 class Buffer
 {
 	public:
-		Buffer(std::string name, cl_mem m):
-			_M_name(name),
-			_M_id(m)
-		{}
+		Buffer(std::shared_ptr<Context>, std::string name, cl_mem m);
+		~Buffer();
 		void			enqueueWrite(
-				CommandQueue* cq,
+				std::shared_ptr<CommandQueue> cq,
 				size_t offset,
 				size_t size,
 				const void* ptr);
 		void			enqueueRead(
-				CommandQueue* cq,
+				std::shared_ptr<CommandQueue> cq,
 				size_t offset,
 				size_t size,
 				void* ptr);
 		void			release();
 
-		std::string		_M_name;
-		size_t			_M_size;
-		cl_mem			_M_id;
+		std::shared_ptr<Context>	_M_context;
+		std::string			_M_name;
+		size_t				_M_size;
+		cl_mem				_M_id;
 };
 
 class Kernel
@@ -71,7 +71,7 @@ class Program
 {
 public:
 	Program(cl_program);
-	Kernel *		createKernel(const char *);
+	std::shared_ptr<Kernel>		createKernel(const char *);
 	cl_program		_M_program;
 };
 
