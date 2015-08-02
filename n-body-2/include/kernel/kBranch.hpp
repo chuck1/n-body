@@ -65,7 +65,11 @@ struct kBranch
 	unsigned char		_M_flag;
 };
 
-
+int		kbranch_add_to_children(
+			__global struct kBranch * branch,
+			__global struct kBranches * branches,
+			__global struct kBody const * bodies,
+			unsigned int body_idx);
 void		kbranch_send_to_parent(
 			__global struct kBranch * branch,
 			__global struct kBranches * branches,

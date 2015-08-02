@@ -62,10 +62,6 @@ float						rsqrt(float);
 #endif
 */
 
-void						divide(
-		unsigned int n,
-		unsigned int * i_local0,
-		unsigned int * i_local1);
 
 void			step_bodies(
 		__global struct kBody * bodies,

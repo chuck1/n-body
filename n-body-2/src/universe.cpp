@@ -27,6 +27,7 @@ void		print(float * a)
 
 
 Universe::Universe():
+	_M_flag(0),
 	first_step_(0),
 	_M_timestep(10)
 {
@@ -601,6 +602,7 @@ int				Universe::parse_args(int ac, char** av)
 		("num-steps", po::value<int>(), "number of bodies")
 		("mass", po::value<float>(), "mass of new bodies")
 		("hcp-n", po::value< std::vector<int> >(), "for hcp setup, number of bodies in each direction")
+		("no-read-bodies", "debug, do not read bodies array from device")
 		;
 
 	po::variables_map vm;
@@ -611,6 +613,9 @@ int				Universe::parse_args(int ac, char** av)
 		std::cout << desc << "\n";
 		return 1;
 	}
+
+	// running flags
+	if(vm.count("no-read-bodies")) _M_flag |= FLAG_DEBUG_NO_READ_BODIES;
 
 	// create universe and perform some initialization (some of which should be removed)
 	refresh_name();

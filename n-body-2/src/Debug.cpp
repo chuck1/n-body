@@ -1,6 +1,9 @@
 #include <cstdio>
 
+#include <Body.hpp>
+#include <Branches.hpp>
 #include <Debug.hpp>
+#include <CollisionBuffer.hpp>
 
 void	Debug::print()
 {
@@ -16,5 +19,10 @@ void	Debug::print()
 					_M_i_local_1[l + g * _M_local_size]);
 		}
 	}
+	printf("  %16s%16s%16s\n", "", "device", "cpu");
+	printf("  %16s%16lu%16lu\n", "sizeof(Debug)", _M_sizeof_kdebug, sizeof(Debug));
+	printf("  %16s%16lu%16lu\n", "sizeof(Body)", _M_sizeof_kbody, sizeof(Body));
+	printf("  %16s%16lu%16lu\n", "sizeof(Branches)", _M_sizeof_kbranches, sizeof(Branches));
+	printf("  %16s%16lu%16lu\n", "sizeof(CollisionBuffer)", _M_sizeof_kcollisionbuffer, sizeof(CollisionBuffer));
 }
 

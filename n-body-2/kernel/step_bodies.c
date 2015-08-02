@@ -1,7 +1,8 @@
 
 #include "include/kernel/kDebug.hpp"
 #include "include/kernel/kBody.hpp"
-#include "include/kernel.hpp"
+#include "include/kernel/kCollisionBuffer.hpp"
+#include "include/kernel/other.hpp"
 
 bool	feq(float const * f0, float const * f1)
 {
@@ -25,16 +26,27 @@ __kernel void step_bodies(
 	unsigned int i_local0;
 	unsigned int i_local1;
 
+	int marker = __LINE__;
+
 	divide(num_bodies, &i_local0, &i_local1);
 
 	// debug info
 	int i = get_local_id(0) + get_global_id(0) * get_local_size(0);
 	db->_M_i_local_0[i] = i_local0;
 	db->_M_i_local_1[i] = i_local1;
-	db->_M_n = num_bodies;
-	db->_M_global_size = get_num_groups(0);
-	db->_M_local_size = get_local_size(0);
-
+	
+	if(get_global_id(0) == 0) {
+		db->_M_n = num_bodies;
+		db->_M_global_size = get_global_size(0);
+		db->_M_local_size = get_local_size(0);
+		
+		db->_M_sizeof_kdebug = sizeof(struct kDebug);
+		db->_M_sizeof_kbody = sizeof(struct kBody);
+		db->_M_sizeof_kbranches = sizeof(struct kBranches);
+		db->_M_sizeof_kcollisionbuffer = sizeof(struct kCollisionBuffer);
+	}
+	
+	
 	/*
 	   printf("local_block = %i\n", local_block);
 	   printf("block = %i\n", block);

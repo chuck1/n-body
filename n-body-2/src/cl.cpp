@@ -78,10 +78,10 @@ void			Buffer::enqueueWrite(
 	check(__FILE__, __LINE__, ret, _M_name);
 }
 void		Buffer::enqueueRead(
-		CommandQueue* cq,
-		size_t offset,
-		size_t size,
-		void* ptr)
+			CommandQueue* cq,
+			size_t offset,
+			size_t size,
+			void* ptr)
 {
 	assert(size == _M_size);
 

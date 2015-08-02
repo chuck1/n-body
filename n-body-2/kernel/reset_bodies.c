@@ -18,7 +18,7 @@ __kernel void			reset_bodies(
 	unsigned int i_local0;
 	unsigned int i_local1;
 	
-	divide(num_bodies, i_local0, i_local1);
+	divide(num_bodies, &i_local0, &i_local1);
 
 	// debug info
 	int i = get_local_id(0) + get_local_size(0) * get_num_groups(0);

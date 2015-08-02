@@ -1,3 +1,5 @@
+#include <sstream>
+#include <map>
 #include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
@@ -174,17 +176,33 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 
 	return program;
 }
+std::string	error_string(int ec)
+{
+	std::map<int, std::string> m;
+	m[-5] = "CL_OUT_OF_RESOURCES";
+	
+	auto it = m.find(ec);
+	if(it == m.end()) {
+		std::stringstream ss;
+		ss << ec;
+		return ss.str();
+	} else {
+		return it->second;
+	}
+}
 void check(int line, int ret)
 {
 	if(ret) {
-		printf("%i: %i\n", line, ret);
+		std::string es = error_string(ret);
+		printf("%i: %s\n", line, es.c_str());
 		abort();
 	}
 }
 void check(const char * f, int line, int ret, std::string msg)
 {
 	if(ret) {
-		printf("%s:%i: %i: %s\n", f, line, ret, msg.c_str());
+		std::string es = error_string(ret);
+		printf("%s:%i: %s: %s\n", f, line,  es.c_str(), msg.c_str());
 		abort();
 	}
 }

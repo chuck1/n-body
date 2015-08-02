@@ -11,6 +11,12 @@ struct kDebug
 	unsigned int	_M_n;
 	unsigned int	_M_i_local_0[MAX_GLOBAL_SIZE * MAX_LOCAL_SIZE];
 	unsigned int	_M_i_local_1[MAX_GLOBAL_SIZE * MAX_LOCAL_SIZE];
+	int		_M_marker;
+
+	unsigned long	_M_sizeof_kdebug;
+	unsigned long	_M_sizeof_kbody;
+	unsigned long	_M_sizeof_kbranches;
+	unsigned long	_M_sizeof_kcollisionbuffer;
 };
 
 #endif

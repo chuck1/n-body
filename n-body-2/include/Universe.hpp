@@ -24,6 +24,10 @@ float	radius(float m);
 struct Universe
 {
 	public:
+		enum {
+			FLAG_DEBUG_NO_READ_BODIES = 1 << 0
+		};
+
 		Universe();
 		void				refresh_name();
 		Body*				b(int t);
@@ -47,8 +51,8 @@ struct Universe
 		void				pre_step();
 		int				parse_args(int, char**);
 	public:
+		unsigned long			_M_flag;		
 		Frames				frames_;
-		
 		static const unsigned int	NAME_SIZE = 32;
 		
 		//int				num_steps_;

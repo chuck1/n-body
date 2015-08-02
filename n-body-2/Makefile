@@ -44,3 +44,6 @@ cleandata:
 	rm -f data/*
 	rm -f files_*
 
+clean:
+	rm -rf build/
+

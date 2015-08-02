@@ -26,7 +26,8 @@ Kernel* kernel_step_branchpairs = 0;
 //cl_kernel kernel_collisions = NULL;
 //cl_kernel kernel_clear_bodies_num_collisions = NULL;
 
-cl_platform_id platform_id = NULL;
+int platform_id_size = 10;
+cl_platform_id platform_id[10];
 cl_uint ret_num_devices;
 cl_uint ret_num_platforms;
 cl_int ret;
@@ -55,7 +56,7 @@ int		cleanup() {
 }
 */
 
-size_t global_size = 1;
+size_t global_size = 2;
 size_t local_size  = 1;
 
 CommandQueue* command_queue = 0;
@@ -74,14 +75,19 @@ void	setup()
 
 	// Get Platform and Device Info
 	printf("Get Platform and Device Info\n");
-	ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms); check(__LINE__, ret);
+	ret = clGetPlatformIDs(
+			platform_id_size,
+			platform_id,
+			&ret_num_platforms); check(__LINE__, ret);
+
+	printf("num platforms: %i\n", ret_num_platforms);
 
 	// Get Platform and Device Info
 
 	cl_device_id device_id = NULL;
 
 	ret = clGetDeviceIDs(
-			platform_id,
+			platform_id[0],
 			CL_DEVICE_TYPE_DEFAULT,
 			1,
 			&device_id,
@@ -171,9 +177,10 @@ void	run_step_bodies()
 			&local_size,
 			0,
 			NULL,
-			NULL); check(__LINE__, ret);
-
-	clFinish(command_queue->_M_id); check(__LINE__, ret);
+			NULL);
+	check(__LINE__, ret);
+	clFinish(command_queue->_M_id);
+	check(__LINE__, ret);
 }
 void	run_reset_bodies()
 {
@@ -195,7 +202,6 @@ void	info()
 {
 	printf("sizeof(kBranches) = %lu\n", sizeof(kBranches));
 }
-
 void	read(
 		Universe * u,
 		kDebug * db)
@@ -203,12 +209,15 @@ void	read(
 	Frame & f = u->_M_key_frame;
 
 	// Store data for timestep
-
-	memobj_bodies->enqueueRead(
-			command_queue,
-			0,
-			f.size() * sizeof(Body),
-			f.b(0));
+	
+	if(u->_M_flag & Universe::FLAG_DEBUG_NO_READ_BODIES) {
+	} else {
+		memobj_bodies->enqueueRead(
+				command_queue,
+				0,
+				f.size() * sizeof(Body),
+				f.b(0));
+	}
 
 	memobj_debug->enqueueRead(
 			command_queue,
@@ -223,9 +232,6 @@ void	save_frame(Universe * u)
 	// save data
 	u->frames_.frames_.push_back(f);
 }
-
-
-
 void	solve_system(
 		Universe * u,
 		Debug * db)
@@ -240,6 +246,8 @@ void	solve_system(
 		if((t % (num_step / 10)) == 0) printf("t = %5i\n", t);
 		
 		u->pre_step();
+
+		u->_M_branches->print();
 
 		run_step_branchpairs();
 		
@@ -293,17 +301,17 @@ void	solve_system(
 		clFinish(command_queue->_M_id); check(__LINE__, ret);
 
 */
+		read(u, db);
 
 		save_frame(u);
 
-		read(u, db);
-		
 		//f.print();
-		//db->print();
+		db->print();
 	}
 
 	// performance info
-	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - program_time_start);
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::system_clock::now() - program_time_start);
 	float duration_real = (float)duration.count() / 1000.0;
 	printf("real time = %f\n", duration_real);
 
@@ -333,7 +341,9 @@ int		main_cpu(
 
 		// copy last frame to first frame
 		// why?
-		if(!uni->frames_.frames_.empty()) {
+		if(uni->frames_.frames_.empty()) {
+			printf("WARNING: frames is empty\n");
+		} else {
 			uni->get_frame(0) = uni->get_frame(uni->frames_.frames_.size() - 1);
 		}
 		// reset frame vector
@@ -357,7 +367,9 @@ void	memory_usage(Universe * u)
 	Frame & f = u->_M_key_frame;
 
 	printf("memory\n");
-	printf("  bodies   %lu\n", f.size() * sizeof(kBody));
+	printf("  debug    %lu\n", sizeof(Debug));
+	printf("  bodies   %lu\n", f.size() * sizeof(Body));
+	printf("  branches %lu\n", sizeof(Branches));
 }
 int	main(int ac, char ** av)
 {

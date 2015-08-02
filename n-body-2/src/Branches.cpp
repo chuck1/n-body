@@ -135,7 +135,7 @@ int			Branches::alloc(Branch & b)
 	if((_M_num_branches + 8) > BTREE_MAX_BRANCHES) {
 		printf("_M_num_branches    %i\n", _M_num_branches);
 		printf("BTREE_MAX_BRANCHES %i\n", BTREE_MAX_BRANCHES);
-		assert(0);
+		abort();
 	}
 
 	for(unsigned int i = 0; i < 8; i++)

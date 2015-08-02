@@ -111,7 +111,8 @@ bool			branch_pair_should_calc(
 {
 	if(!(b0->_M_flag & KBRANCH_FLAG_IS_LEAF)) {
 		return false;
-	} if(!(b1->_M_flag & KBRANCH_FLAG_IS_LEAF)) {
+	}
+	if(!(b1->_M_flag & KBRANCH_FLAG_IS_LEAF)) {
 		return false;
 	}
 	if(b0->_M_num_elements == 0) {
