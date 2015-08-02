@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 import sys
 import functools, operator
@@ -102,7 +104,7 @@ def main(frames, args):
 
     t = 0
     
-    x, m, xmin, xmax = frames[0].stats()
+    x, m, xmin, xmax = frames[t].stats()
     ex = xmax - xmin
     eye_distance = np.max(ex) * 2.
 
@@ -114,6 +116,8 @@ def main(frames, args):
 
         t = (t + 1) % len(frames)
 
+
+
 	print t
 	
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
@@ -124,6 +128,10 @@ def main(frames, args):
 	frame = frames[t]
 
 	x, m, xmin, xmax = frame.stats()
+
+	if t % 10 == 0:
+            ex = xmax - xmin
+            eye_distance = np.max(ex) * 2.
 
 	#ex = xmax - xmin
 	

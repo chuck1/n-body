@@ -99,7 +99,8 @@ void			Frame::collision_coarse(
 			n0,
 			n0,
 			-w,
-			glm::vec3(v,0,0));
+			glm::vec3(v,0,0),
+			0);
 
 	hexagonal_close_packed(
 			m,
@@ -107,7 +108,8 @@ void			Frame::collision_coarse(
 			n1,
 			n1,
 			w,
-			glm::vec3(-v,0,0));
+			glm::vec3(-v,0,0),
+			0);
 }
 void			Frame::sphere(float m, float w, float v)
 {
@@ -253,7 +255,8 @@ void			Frame::hexagonal_close_packed(
 		unsigned int ny,
 		unsigned int nz,
 		glm::vec3 o,
-		glm::vec3 v)
+		glm::vec3 v,
+		float omega)
 {
 	/* randomly place bodies in a sphere of diameter w
 	 * give bodies velocity components between -v and v
@@ -271,6 +274,25 @@ void			Frame::hexagonal_close_packed(
 
 	//printf("%12u%12u%12u\n", nx, ny, nz);
 
+	// center of mass of lattice
+	float x = 0;
+	float y = 0;
+	float z = 0;
+	
+	for(ix = 0; ix < nx; ix++) {
+		for(iy = 0; iy < ny; iy++) {
+			for(iz = 0; iz < nz; iz++) {
+				x = (2.f * ix + ((iy+iz) % 2));
+				y = (sqrt(3) * (iy + (iz % 2) / 3.f));
+				z = 2.f * sqrt(6.f) / 3.f * iz;
+			}
+		}
+	}
+	x /= (float)nx; x += o.x;
+	y /= (float)ny; y += o.y;
+	z /= (float)nz; z += o.z;
+	glm::vec3 c(x,y,z);	
+
 	for(ix = 0; ix < nx; ix++) {
 		for(iy = 0; iy < ny; iy++) {
 			for(iz = 0; iz < nz; iz++) {
@@ -280,24 +302,34 @@ void			Frame::hexagonal_close_packed(
 				b.x[1] = (sqrt(3) * (iy + (iz % 2) / 3.f));
 				b.x[2] = 2.f * sqrt(6.f) / 3.f * iz;
 
-				//printf("%12u%12u%12u%12f%12f%12f\n", ix, iy, iz, b.x[0], b.x[1], b.x[2]);
+				//printf("%12u%12u%12u%12f%12f%12f\n",
+				//ix, iy, iz, b.x[0], b.x[1], b.x[2]);
 
 				b.x *= dx;
 
 				b.x += o;
+				
+				// vector from center to body
+				auto D = b.x - c;
+				// isolate xy-plane
+				D.z = 0;
+				// distance of body from z-axis
+				auto d = glm::length(D);
 
+				// rotational velocity				
+				auto v_rot = glm::cross(glm::vec3(0,0,1), D) * omega;
+				
 				//::print(b.x);
 				//printf("w = %12f d = %12f\n", w, d);
 
 				/*
-				if(v > 0.0)
-				{
+				if(v > 0.0) {
 					b.v[0] = (float)(rand() % (int)v) - v * 0.5;
 					b.v[1] = (float)(rand() % (int)v) - v * 0.5;
 					b.v[2] = (float)(rand() % (int)v) - v * 0.5;
 				}*/
 
-				b.v = v;
+				b.v = v + v_rot;
 
 				b.mass = m;
 				b.radius = radius(b.mass);

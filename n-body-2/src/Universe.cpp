@@ -601,6 +601,7 @@ int				Universe::parse_args(int ac, char** av)
 		("num-bodies", po::value<int>(), "number of bodies")
 		("num-steps", po::value<int>(), "number of bodies")
 		("mass", po::value<float>(), "mass of new bodies")
+		("omega", po::value<float>(), "rotational speed of new body formation")
 		("hcp-n", po::value< std::vector<int> >(), "for hcp setup, number of bodies in each direction")
 		("no-read-bodies", "debug, do not read bodies array from device")
 		;
@@ -627,6 +628,11 @@ int				Universe::parse_args(int ac, char** av)
 		num_step = vm["num-steps"].as<int>();
 	} catch (...) {}
 
+	float omega = 0.f;
+	try {
+		omega = vm["omega"].as<float>();
+	} catch (...) {}
+	
 	float mass = 10000.f;
 	try {
 		mass = vm["mass"].as<float>();
@@ -657,7 +663,8 @@ int				Universe::parse_args(int ac, char** av)
 						n[1],
 						n[2],
 						glm::vec3(),
-						glm::vec3());
+						glm::vec3(),
+						omega);
 			} else if(n.size() == 1) {
 				f.hexagonal_close_packed(
 						mass,
@@ -665,7 +672,8 @@ int				Universe::parse_args(int ac, char** av)
 						n[0],
 						n[0],
 						glm::vec3(),
-						glm::vec3());
+						glm::vec3(),
+						omega);
 			} else {
 				printf("wrong number of values for --hcp-n");
 				exit(1);

@@ -63,7 +63,8 @@ struct Frame
 				unsigned int ny,
 				unsigned int nz,
 				glm::vec3 o,
-				glm::vec3 v);
+				glm::vec3 v,
+				float omega);
 
 		unsigned int		count_dead();
 		unsigned int		count_alive();
