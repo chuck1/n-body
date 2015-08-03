@@ -637,10 +637,14 @@ int				Universe::parse_args(int ac, char** av)
 		_M_global_size = vm["global-size"].as<int>();
 	} catch (...) {}
 	
-	
-	
-	_M_size_outer = ceil(frames_size / _M_size_inner);
-	
+	if(frames_size < _M_size_inner) {
+		_M_size_inner = frames_size;
+		_M_size_outer = 1;
+	} else {
+		_M_size_outer = frames_size / _M_size_inner;
+		if((frames_size % _M_size_inner) != 0) _M_size_outer++;
+	}
+
 	printf("size-frames = %u\n", frames_size);
 	printf("size-inner  = %u\n", _M_size_inner);
 	printf("size-outer  = %u\n", _M_size_outer);

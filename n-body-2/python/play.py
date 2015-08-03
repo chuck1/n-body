@@ -103,10 +103,13 @@ def main(frames, args):
 
     #glTranslatef(0.0,0.0, -5)
 
-    interval = 1
+    stride = 1
+    if args.stride:
+       stride = args.stride
 
     t = 0
-    
+    f = 0   
+ 
     x, m, xmin, xmax = frames[t].stats()
     ex = xmax - xmin
     eye_distance = np.max(ex) * 5.
@@ -133,7 +136,7 @@ def main(frames, args):
                 pygame.quit()
                 quit()
 
-        t = (t + interval) % len(frames)
+        t = (t + stride) % len(frames)
 
 
 	#print t
@@ -179,10 +182,10 @@ def main(frames, args):
         pygame.display.flip()
 
 	if args.capture:
-            screenshot("capture/frame_{}.png".format(t))
+            screenshot("capture/frame_{}.png".format(f))
+            f += 1
 
         pygame.time.wait(10)
-
 
 if __name__ == '__main__':
 
@@ -190,6 +193,7 @@ if __name__ == '__main__':
 	parser.add_argument("--capture", action="store_true")
 	parser.add_argument("inputfile", nargs="*")
 	parser.add_argument("--range", nargs="+", type=int)
+	parser.add_argument("--stride", type=int)
 	args = parser.parse_args()	
 
 	print args.range

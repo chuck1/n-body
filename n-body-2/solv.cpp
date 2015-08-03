@@ -67,8 +67,8 @@ public:
 
 Timer timer_kernel_step_branchpairs;
 Timer timer_kernel_step_bodies;
-unsigned long time_kernel_step_branchpairs = 0;
-unsigned long time_kernel_step_bodies = 0;
+unsigned int time_kernel_step_branchpairs = 0;
+unsigned int time_kernel_step_bodies = 0;
 
 /*
 int		cleanup() {
@@ -213,8 +213,11 @@ void	run_step_bodies(size_t gs)
 			0,
 			NULL,
 			NULL);
+
 	check(__LINE__, ret);
+
 	clFinish(command_queue->_M_id);
+
 	check(__LINE__, ret);
 
 	if(PROF) time_kernel_step_bodies += timer_kernel_step_bodies.end();
@@ -280,10 +283,9 @@ void	solve_system(
 	// performance info
 	auto program_time_start = std::chrono::system_clock::now();
 
-	int num_step = 1000;
-	for(unsigned int t = 0; t < num_step; t++) {
+	for(unsigned int t = 0; t < u->_M_size_inner; t++) {
 		if(u->_M_flag & 0) {
-			if((t % (num_step / 10)) == 0) printf("t = %5i\n", t);
+			if((t % (u->_M_size_inner / 10)) == 0) printf("t = %5i\n", t);
 		}
 		u->pre_step();
 
@@ -329,11 +331,13 @@ void	solve_system(
 		//db->print();
 	}
 
+	if(0) {
 	// performance info
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::system_clock::now() - program_time_start);
 	float duration_real = (float)duration.count() / 1000.0;
 	printf("real time = %f\n", duration_real);
+	}
 
 }
 int		main_cpu(
@@ -515,8 +519,8 @@ int	main(int ac, char ** av)
 	
 	if(PROF) {
 		printf("kernel profile\n");
-		printf("  step_bodies      %lu\n", time_kernel_step_bodies);
-		printf("  step_branchpairs %lu\n", time_kernel_step_branchpairs);
+		printf("  step_bodies      %u\n", time_kernel_step_bodies);
+		printf("  step_branchpairs %u\n", time_kernel_step_branchpairs);
 	}
 
 	/*
