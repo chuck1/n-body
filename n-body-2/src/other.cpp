@@ -100,6 +100,7 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 		"./kernel/reset_bodies.c",
 		"./kernel/step_branchpairs.c",
 		"./kernel/update_branches.c",
+		"./kernel/branch.c",
 		"./kernel/other.c",
 		"./kernel/vec.c"
 	};
@@ -177,7 +178,8 @@ cl_program create_program_from_file(cl_context context, cl_device_id device_id)
 std::string	error_string(int ec)
 {
 	std::map<int, std::string> m;
-	m[-5] = "CL_OUT_OF_RESOURCES";
+	m[ -5] = "CL_OUT_OF_RESOURCES";
+	m[-46] = "CL_INVALID_KERNEL_NAME";
 	
 	auto it = m.find(ec);
 	if(it == m.end()) {

@@ -38,11 +38,6 @@ struct Coor
  */
 struct Branch
 {
-	enum
-	{
-		FLAG_IS_LEAF    = 1 << 0,
-		FLAG_HAS_PARENT = 1 << 1,
-	};
 	
 	Branch();
 	Branch(Branch&&);

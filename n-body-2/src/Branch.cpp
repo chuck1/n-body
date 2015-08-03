@@ -13,7 +13,7 @@
 Branch::Branch():
 	_M_branches{0,0,0,0,0,0,0,0},
 	_M_num_elements(0),
-	_M_flag(FLAG_IS_LEAF)
+	_M_flag(KBRANCH_FLAG_IS_LEAF)
 {
 	//if(DEBUG_BRANCH) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 }
@@ -39,7 +39,7 @@ Branch::Branch(unsigned int idx, unsigned int parent_idx, unsigned int level, gl
 	_M_num_elements(0),
 	_M_x0_glm(x0),
 	_M_x1_glm(x1),
-	_M_flag(FLAG_IS_LEAF)
+	_M_flag(KBRANCH_FLAG_IS_LEAF)
 {
 	//if(DEBUG_BRANCH) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 }
@@ -62,7 +62,7 @@ Branch &	Branch::operator=(Branch const & b)
 }
 void			Branch::print(Branches & b, std::string pre)
 {
-	if(_M_flag & FLAG_IS_LEAF) {
+	if(_M_flag & KBRANCH_FLAG_IS_LEAF) {
 		std::cout << pre << "leaf: " << _M_num_elements << " { ";
 		for(int i = 0; i < _M_num_elements; ++i) {
 			std::cout << _M_elements[i] << " ";
@@ -83,9 +83,9 @@ void			Branch::fiss(Branches & branches, Body const * bodies)
 {
 	//if(DEBUG_BRANCH || 0) printf("%s %p\n", __PRETTY_FUNCTION__, this);
 
-	_M_flag &= ~FLAG_IS_LEAF;
+	_M_flag &= ~KBRANCH_FLAG_IS_LEAF;
 
-	assert(!(_M_flag & FLAG_IS_LEAF));
+	assert(!(_M_flag & KBRANCH_FLAG_IS_LEAF));
 
 	// allocate my children
 	branches.alloc(*this);
@@ -141,7 +141,7 @@ int			Branch::add(Branches & branches, Body const * bodies, unsigned int body_id
 		return 1;
 	}
 
-	if(_M_flag & FLAG_IS_LEAF)
+	if(_M_flag & KBRANCH_FLAG_IS_LEAF)
 	{
 		if(DEBUG_BRANCH) printf("add to this\n");
 
@@ -213,7 +213,7 @@ void			Branch::refresh_mass(Branches * branches, Body * bodies)
 }
 void			Branch::mass_center(Branches * branches, Body * bodies, float * x, float * m) const
 {
-	if(_M_flag & FLAG_IS_LEAF)
+	if(_M_flag & KBRANCH_FLAG_IS_LEAF)
 	{
 		x[0] = 0.0;
 		x[1] = 0.0;
@@ -273,7 +273,7 @@ void			Branch::send_to_parent(Branches * branches, Body * bodies, unsigned int i
 {
 	unsigned int body_idx = _M_elements[i];
 
-	if(_M_flag & FLAG_HAS_PARENT) {
+	if(_M_flag & KBRANCH_FLAG_HAS_PARENT) {
 		Branch & parent = branches->_M_branches[_M_parent_idx];
 
 		if(parent._M_num_elements >= BTREE_LEAF_SIZE)

@@ -1,5 +1,6 @@
 
 #include "include/kernel/kCollisionBuffer.hpp"
+#include "include/kernel/kBranch.hpp"
 #include "include/kernel/other.hpp"
 
 //#include <kernel.hpp>
@@ -16,7 +17,7 @@
 
 
 // move bodies around in branches according to changes in position
-void			update_branches(
+__kernel void			update_branches(
 		__global struct kBranches * branches,
 		__global struct kBody * bodies
 		)
@@ -25,9 +26,9 @@ void			update_branches(
 
 	unsigned int i_local0;
 	unsigned int i_local1;
-
-	for(int level = (int)branches->_M_lowest_level; level >= 0; level--) // for each level, starting at lowest level
-	{
+	
+	// for each level, starting at lowest level
+	for(int level = (int)branches->_M_lowest_level; level >= 0; level--)  {
 		// sync workgroup threads
 		// only syncs the workgroup!
 		barrier(CLK_GLOBAL_MEM_FENCE);
@@ -36,18 +37,15 @@ void			update_branches(
 		
 		// for each branch at that level
 		for(unsigned int idx = i_local0; idx < i_local1; idx++) { 
-
-			//rintf("level = %3i branch index %3i\n", level, idx);
-
+			
 			__global struct kBranch * branch = branches->_M_branches + idx;
 
 			if(branch->_M_level != (unsigned int)level) continue;
 
-			if(branch->_M_flag & KBRANCH_FLAG_IS_LEAF)
-			{
+			if(branch->_M_flag & KBRANCH_FLAG_IS_LEAF) {
 				unsigned int i = 0;
 				while(i < branch->_M_num_elements) {
-					//rintf("i = %i branch->_M_num_elements = %i\n", i, branch->_M_num_elements);
+					// if the branch is a terminal node, check each element in the branch
 
 					unsigned int body_idx = branch->_M_elements[i];
 
@@ -62,14 +60,17 @@ void			update_branches(
 								(body->x[1] > branch->_M_x1[1]) ||
 								(body->x[2] > branch->_M_x1[2])
 						  ) {
-							//if(DEBUG) rintf("send to parent %i\n", body_idx);
-
+							// body is outside the boundaries; send it to parent
 							// must be atmoic somehow...
+							//   maybe the parent should have a seperate array of elements
+							//   for each child branch to store these bodies
 							kbranch_send_to_parent(branch, branches, bodies, i);
 						} else {
+							// keep body
 							i++;
 						}
 					} else {
+						// body is dead, delete it
 						kbranch_erase(branch, i);
 					}
 				}
@@ -88,19 +89,17 @@ void			update_branches(
 							(body->x[1] > branch->_M_x1[1]) ||
 							(body->x[2] > branch->_M_x1[2])
 					  ) {
-						//if(DEBUG) rintf("send to parent %i\n", body_idx);
-
-						// atmoic
+						// body is outside the boundaries; send it to parent
+						// atmoic...
 						kbranch_send_to_parent(branch, branches, bodies, i);
 					} else {
 						//if(DEBUG) rintf("add to children %i\n", body_idx);
 
-						// atmoic
+						// atmoic...
 						kbranch_add_to_children(branch, branches, bodies, body_idx);
 
 						kbranch_erase(branch, i);
 					}
-					i++;
 				}
 			}
 		}

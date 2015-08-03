@@ -21,6 +21,9 @@ struct kBranches
 };
 
 
+int			kbranches_alloc(
+		__global struct kBranches * branches,
+		__global struct kBranch * b);
 
 
 

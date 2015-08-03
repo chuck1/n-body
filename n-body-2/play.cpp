@@ -184,7 +184,7 @@ inline void	RenderObjects2(int t)
 }
 void		render_branch(Branch & b)
 {
-	if(b._M_flag & Branch::FLAG_IS_LEAF) {
+	if(b._M_flag & KBRANCH_FLAG_IS_LEAF) {
 		if(b._M_num_elements > 0) {
 			glm::vec3 c = (b._M_x0_glm + b._M_x1_glm) * 0.5f;
 			glm::vec3 w = b._M_x1_glm - b._M_x0_glm;

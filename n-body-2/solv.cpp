@@ -27,6 +27,7 @@ std::shared_ptr<Program> program;
 std::shared_ptr<Kernel> kernel_reset_bodies;
 std::shared_ptr<Kernel> kernel_step_bodies;
 std::shared_ptr<Kernel> kernel_step_branchpairs;
+std::shared_ptr<Kernel> kernel_update_branches;
 
 //cl_kernel kernel_collisions = NULL;
 //cl_kernel kernel_clear_bodies_num_collisions = NULL;
@@ -456,6 +457,7 @@ int	main(int ac, char ** av)
 	//kernel_pairs = clCreateKernel(program, "step_pairs", &ret); check(__LINE__, ret);
 
 	kernel_step_branchpairs = program->createKernel("step_branchpairs");
+	kernel_update_branches  = program->createKernel("update_branches");
 	kernel_step_bodies      = program->createKernel("step_bodies");
 	kernel_reset_bodies     = program->createKernel("reset_bodies");
 	

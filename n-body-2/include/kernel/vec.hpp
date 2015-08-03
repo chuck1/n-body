@@ -2,9 +2,21 @@
 bool	vec_all_greater_than(
 		float * a,
 		float * b);
+bool	vec_all_greater_than_eq(
+		float * a,
+		float * b);
 bool	vec_all_less_than(
 		float * a,
 		float * b);
+bool	vec_all_greater_than_2(
+		__global float const * a,
+		__global float const * b);
+bool	vec_all_greater_than_eq_2(
+		__global float const * a,
+		__global float const * b);
+bool	vec_all_less_than_2(
+		__global float const * a,
+		__global float const * b);
 float	vec_dot(
 		float * a,
 		float * b);

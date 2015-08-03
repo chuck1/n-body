@@ -1,4 +1,31 @@
 
+bool	vec_all_greater_than_2(
+		__global float const * a,
+		__global float const * b)
+{
+	if(a[0] <= b[0]) return false;
+	if(a[1] <= b[1]) return false;
+	if(a[2] <= b[2]) return false;
+	return true;
+}
+bool	vec_all_greater_than_eq_2(
+		__global float const * a,
+		__global float const * b)
+{
+	if(a[0] < b[0]) return false;
+	if(a[1] < b[1]) return false;
+	if(a[2] < b[2]) return false;
+	return true;
+}
+bool	vec_all_less_than_2(
+		__global float const * a,
+		__global float const * b)
+{
+	if(a[0] >= b[0]) return false;
+	if(a[1] >= b[1]) return false;
+	if(a[2] >= b[2]) return false;
+	return true;
+}
 bool	vec_all_greater_than(
 		float * a,
 		float * b)
@@ -6,6 +33,15 @@ bool	vec_all_greater_than(
 	if(a[0] <= b[0]) return false;
 	if(a[1] <= b[1]) return false;
 	if(a[2] <= b[2]) return false;
+	return true;
+}
+bool	vec_all_greater_than_eq(
+		float * a,
+		float * b)
+{
+	if(a[0] < b[0]) return false;
+	if(a[1] < b[1]) return false;
+	if(a[2] < b[2]) return false;
 	return true;
 }
 bool	vec_all_less_than(

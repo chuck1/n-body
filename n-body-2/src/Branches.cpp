@@ -198,7 +198,7 @@ int			Branches::alloc(Branch & b)
 				}*/
 
 				c = Branch(idx, b._M_idx, b._M_level + 1, x0, x1);
-				c._M_flag |= Branch::FLAG_HAS_PARENT;
+				c._M_flag |= KBRANCH_FLAG_HAS_PARENT;
 				c._M_width = glm::length(c._M_x1_glm - c._M_x0_glm);
 
 

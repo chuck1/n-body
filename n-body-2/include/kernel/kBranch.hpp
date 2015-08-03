@@ -30,6 +30,8 @@ struct kCoor
 struct kBranches;
 struct kBody;
 
+
+
 /**
  * branch in binary-tree
  *
@@ -65,19 +67,28 @@ struct kBranch
 	unsigned char		_M_flag;
 };
 
+int		kbranch_add(
+			__global struct kBranch * branch,
+			__global struct kBranches * branches,
+			__global struct kBody const * bodies,
+			unsigned int body_idx);
 int		kbranch_add_to_children(
 			__global struct kBranch * branch,
 			__global struct kBranches * branches,
 			__global struct kBody const * bodies,
 			unsigned int body_idx);
-void		kbranch_send_to_parent(
+int		kbranch_send_to_parent(
 			__global struct kBranch * branch,
 			__global struct kBranches * branches,
 			__global struct kBody * bodies,
 			unsigned int i);
-void		kbranch_erase(
+int		kbranch_erase(
 			__global struct kBranch * branch,
 			unsigned int i);
+void			kbranch_fiss(
+		__global struct kBranch * branch,
+		__global struct kBranches * branches,
+		__global struct kBody const * bodies);
 
 
 #endif
