@@ -1,7 +1,8 @@
 #ifndef KBRANCH_HPP
 #define KBRANCH_HPP
 
-#define BTREE_LEAF_SIZE 16
+#define KBRANCH_ELEMENTS_LEN			(16)
+#define KBRANCH_ELEMENTS_LEN_PLUS_BUFFER	(KBRANCH_ELEMENTS_LEN+16)
 
 #define KBRANCH_FLAG_IS_LEAF      1 << 0
 #define KBRANCH_FLAG_HAS_PARENT   1 << 1
@@ -48,7 +49,7 @@ struct kBranch
 	// body indicies (indicies in body array, frame.b(i))
 	// tree must be rebuilt when frame is reduced!
 	// elements array must be sorted every time an element is removed!
-	unsigned int		_M_elements[BTREE_LEAF_SIZE];
+	unsigned int		_M_elements[KBRANCH_ELEMENTS_LEN_PLUS_BUFFER];
 	// number of elements
 	unsigned int		_M_num_elements;
 	// extents

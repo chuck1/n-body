@@ -12,8 +12,10 @@
 
 #include "include/decl.hpp"
 
-#define EC_PARENT_FULL				-1;
-#define EC_BRANCH_ELEMENTS_OUT_OF_RANGE		-2;
+#define EC_PARENT_FULL					-1;
+#define EC_BRANCH_ELEMENTS_OUT_OF_RANGE			-2;
+#define EC_BRANCH_ELEMENT_LEN_PLUS_BUFFER_EXCEEDED	-3;
+
 
 /*
 #ifdef CPU

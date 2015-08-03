@@ -101,13 +101,14 @@ int			kbranch_add(
 	// because recursion is not allowed. Instead, make multiple passes in which
 	// non-terminal nodes send their children down the tree
 	//if(branch->_M_flag & KBRANCH_FLAG_IS_LEAF) {
-		if(branch->_M_num_elements == BTREE_LEAF_SIZE) {
+		if(branch->_M_num_elements >= KBRANCH_ELEMENTS_LEN_PLUS_BUFFER) {
 			// this leaf is full, need to fiss
-			kbranch_fiss(branch, branches, bodies);
+			// NO this is recursion
+			//kbranch_fiss(branch, branches, bodies);
 			
 			// NO this is recursion, wait for another pass
 			//return kbranch_add_to_children(branch, branches, bodies, body_idx);
-			return 0;
+			return EC_BRANCH_ELEMENT_LEN_PLUS_BUFFER_EXCEEDED;
 		} else {
 			branch->_M_elements[branch->_M_num_elements] = body_idx;
 			branch->_M_num_elements++;
