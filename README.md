@@ -1,4 +1,11 @@
 n-body
 ======
 
-c++ n-body simulation attempting to use OpenCL
+GPU N-body simulation
+
+Outline
+=======
+
+
+
+
