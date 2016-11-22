@@ -1,11 +1,14 @@
-n-body
+N-Body
 ======
 
-GPU N-body simulation
+GPU N-Body simulation
 
 Outline
 =======
 
+Data:
 
-
+* Verse
+  * Body Collection
+    * Body
 
