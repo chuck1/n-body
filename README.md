@@ -27,3 +27,18 @@ Octree
 The octree divides space recursively into cubes. A cube is split into eight smaller cube if its population exceeds a limit.
 The eight subcubes of a cube can be recombined if they themselves are not divided and if together they contain less bodies than the split limit.
 
+The octree data class also stores three lists: the near pairs list, the far pairs list, and the near-far pair list.
+The near pairs list is a list of pair of regions where the individual body-body forces must be calculated.
+The far pairs list...
+The near-far pairs list...
+
+Whenever the octree is reorganized, 
+
+Calculation
+===========
+
+* Reset acceleration
+* Add acceleration
+  * Iterate over distant regions
+    * Iterate
+
