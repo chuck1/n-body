@@ -13,6 +13,7 @@ Data:
     * Verse
       * Body Collection
         * Body
+* Colliding Bodies List
 * Octree
 
 Time Series
@@ -34,11 +35,26 @@ The near-far pairs list...
 
 Whenever the octree is reorganized, 
 
-Calculation
-===========
+Calculation Without Octree
+==========================
+* Reset acceleration
+* Add acceleration
+  * Iterate over every pair of bodies
+    * Calculate the acceleration on each of these bodies
+    * Determine and mark coliding bodies
+* Apply the acceleration and velocity to each body
+* Collisions
+  * Iterate over every coliding pair of bodies
+    * Resolve collision
+
+
+Calculation With Octree
+==========================
 
 * Reset acceleration
 * Add acceleration
-  * Iterate over distant regions
-    * Iterate
+  * Iterate the far pairs list
+  * Iterate the near pairs list
+  * ...
+* ...
 
